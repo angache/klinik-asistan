@@ -8,6 +8,7 @@ import '../services/database_service.dart';
 import '../services/session_controller.dart';
 import '../widgets/patient_card.dart';
 import 'auth_gate.dart';
+import 'follow_ups_screen.dart';
 import 'join_requests_screen.dart';
 import 'manage_clinics_screen.dart';
 
@@ -36,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _hasMore = true;
   Object? _error;
   Timer? _debounce;
+  int _followUpAttention = 0;
 
   static const _pageSize = DatabaseService.defaultPatientPageSize;
 
@@ -44,6 +46,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _load(reset: true);
+    _loadFollowUpBadge();
+  }
+
+  Future<void> _loadFollowUpBadge() async {
+    try {
+      final n = await widget.db.countAttentionFollowUps();
+      if (!mounted) return;
+      setState(() => _followUpAttention = n);
+    } catch (_) {
+      // tablo henüz yoksa sessiz geç
+    }
   }
 
   @override
@@ -386,6 +399,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(_themeIcon(context)),
           ),
           IconButton(
+            tooltip: 'Takipler',
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => FollowUpsScreen(db: widget.db),
+                ),
+              );
+              await _loadFollowUpBadge();
+            },
+            icon: Badge(
+              isLabelVisible: _followUpAttention > 0,
+              label: Text('$_followUpAttention'),
+              child: const Icon(Icons.event_note_outlined),
+            ),
+          ),
+          IconButton(
             tooltip: 'Klinikler',
             onPressed: _showClinicInfo,
             icon: Badge(
@@ -410,6 +439,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
+          if (_followUpAttention > 0)
+            MaterialBanner(
+              content: Text(
+                '$_followUpAttention takip bugün veya gecikmiş',
+              ),
+              leading: Icon(Icons.notification_important, color: scheme.error),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => FollowUpsScreen(db: widget.db),
+                      ),
+                    );
+                    await _loadFollowUpBadge();
+                  },
+                  child: const Text('Gör'),
+                ),
+              ],
+            ),
           Material(
             elevation: 1,
             color: scheme.surface,

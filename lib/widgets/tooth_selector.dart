@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// FDI odontogram — birden fazla diş seçilebilir.
-class ToothSelector extends StatelessWidget {
+enum JawQuadrant {
+  upperRight('Üst sağ', ToothSelector.upperRight),
+  upperLeft('Üst sol', ToothSelector.upperLeft),
+  lowerRight('Alt sağ', ToothSelector.lowerRight),
+  lowerLeft('Alt sol', ToothSelector.lowerLeft);
+
+  const JawQuadrant(this.label, this.teeth);
+  final String label;
+  final List<String> teeth;
+}
+
+/// FDI odontogram — chart, çeyrek büyütme ve yazarak seçim.
+class ToothSelector extends StatefulWidget {
   const ToothSelector({
     super.key,
     required this.selected,
@@ -16,6 +28,13 @@ class ToothSelector extends StatelessWidget {
   static const lowerRight = ['48', '47', '46', '45', '44', '43', '42', '41'];
   static const lowerLeft = ['31', '32', '33', '34', '35', '36', '37', '38'];
 
+  static const Set<String> allTeeth = {
+    ...upperRight,
+    ...upperLeft,
+    ...lowerRight,
+    ...lowerLeft,
+  };
+
   /// Chart sırasına göre (üst sağ→sol, alt sol→sağ üzerinden orta hat).
   static const List<String> allInChartOrder = [
     ...upperRight,
@@ -24,21 +43,88 @@ class ToothSelector extends StatelessWidget {
     '41', '42', '43', '44', '45', '46', '47', '48',
   ];
 
+  @override
+  State<ToothSelector> createState() => _ToothSelectorState();
+}
+
+class _ToothSelectorState extends State<ToothSelector> {
+  late final TextEditingController _fdiCtrl;
+  final _fdiFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _fdiCtrl = TextEditingController(
+      text: formatToothSelection(widget.selected),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant ToothSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_fdiFocus.hasFocus) {
+      final next = formatToothSelection(widget.selected);
+      if (_fdiCtrl.text != next) {
+        _fdiCtrl.value = TextEditingValue(
+          text: next,
+          selection: TextSelection.collapsed(offset: next.length),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _fdiCtrl.dispose();
+    _fdiFocus.dispose();
+    super.dispose();
+  }
+
   void _toggle(String tooth) {
-    final next = Set<String>.from(selected);
+    final next = Set<String>.from(widget.selected);
     if (next.contains(tooth)) {
       next.remove(tooth);
     } else {
       next.add(tooth);
     }
-    onChanged(next);
+    widget.onChanged(next);
+  }
+
+  void _applyFdiText(String raw) {
+    final parsed = parseToothSelection(raw)
+        .where(ToothSelector.allTeeth.contains)
+        .toSet();
+    widget.onChanged(parsed);
+    final pretty = formatToothSelection(parsed);
+    if (_fdiCtrl.text != pretty) {
+      _fdiCtrl.value = TextEditingValue(
+        text: pretty,
+        selection: TextSelection.collapsed(offset: pretty.length),
+      );
+    }
+  }
+
+  Future<void> _openQuadrant(JawQuadrant quadrant) async {
+    HapticFeedback.mediumImpact();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return _QuadrantZoomSheet(
+          quadrant: quadrant,
+          selected: widget.selected,
+          onChanged: widget.onChanged,
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final label = formatToothSelection(selected);
+    final label = formatToothSelection(widget.selected);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +138,7 @@ class ToothSelector extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            if (selected.isNotEmpty) ...[
+            if (widget.selected.isNotEmpty) ...[
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -72,15 +158,45 @@ class ToothSelector extends StatelessWidget {
               IconButton(
                 tooltip: 'Seçimi temizle',
                 visualDensity: VisualDensity.compact,
-                onPressed: () => onChanged({}),
+                onPressed: () {
+                  widget.onChanged({});
+                  _fdiCtrl.clear();
+                },
                 icon: const Icon(Icons.close, size: 18),
               ),
             ],
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _fdiCtrl,
+          focusNode: _fdiFocus,
+          keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            labelText: 'Yazarak seç (FDI)',
+            hintText: 'örn. 15  veya  14-17  veya  36,37',
+            suffixIcon: IconButton(
+              tooltip: 'Uygula',
+              onPressed: () {
+                _applyFdiText(_fdiCtrl.text);
+                _fdiFocus.unfocus();
+              },
+              icon: const Icon(Icons.check),
+            ),
+          ),
+          onSubmitted: (v) {
+            _applyFdiText(v);
+            _fdiFocus.unfocus();
+          },
+          onEditingComplete: () {
+            _applyFdiText(_fdiCtrl.text);
+            _fdiFocus.unfocus();
+          },
+        ),
+        const SizedBox(height: 8),
         Text(
-          'Birden fazla diş için dokunarak seçin',
+          'Dokun: seç · Uzun bas: çeyreği büyüt · Aşağı kaydır veya Tamam: küçült',
           style: textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant,
           ),
@@ -90,7 +206,7 @@ class ToothSelector extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
           decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest.withOpacity(0.35),
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: scheme.outlineVariant),
           ),
@@ -106,10 +222,11 @@ class ToothSelector extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _ArchRow(
-                right: upperRight,
-                left: upperLeft,
-                selected: selected,
+                right: JawQuadrant.upperRight,
+                left: JawQuadrant.upperLeft,
+                selected: widget.selected,
                 onToggle: _toggle,
+                onZoom: _openQuadrant,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -142,10 +259,11 @@ class ToothSelector extends StatelessWidget {
                 ),
               ),
               _ArchRow(
-                right: lowerRight,
-                left: lowerLeft,
-                selected: selected,
+                right: JawQuadrant.lowerRight,
+                left: JawQuadrant.lowerLeft,
+                selected: widget.selected,
                 onToggle: _toggle,
+                onZoom: _openQuadrant,
               ),
               const SizedBox(height: 8),
               Text(
@@ -156,6 +274,18 @@ class ToothSelector extends StatelessWidget {
                   letterSpacing: 1.2,
                 ),
               ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: JawQuadrant.values.map((q) {
+                  return ActionChip(
+                    avatar: const Icon(Icons.zoom_in, size: 16),
+                    label: Text(q.label),
+                    onPressed: () => _openQuadrant(q),
+                  );
+                }).toList(),
+              ),
             ],
           ),
         ),
@@ -164,14 +294,173 @@ class ToothSelector extends StatelessWidget {
   }
 }
 
+/// Büyük çeyrek seçim paneli.
+class _QuadrantZoomSheet extends StatelessWidget {
+  const _QuadrantZoomSheet({
+    required this.quadrant,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final JawQuadrant quadrant;
+  final Set<String> selected;
+  final ValueChanged<Set<String>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bottom = MediaQuery.viewPaddingOf(context).bottom;
+
+    return _QuadrantZoomBody(
+      quadrant: quadrant,
+      initial: selected,
+      onChanged: onChanged,
+      bottomPadding: bottom,
+      scheme: scheme,
+    );
+  }
+}
+
+class _QuadrantZoomBody extends StatefulWidget {
+  const _QuadrantZoomBody({
+    required this.quadrant,
+    required this.initial,
+    required this.onChanged,
+    required this.bottomPadding,
+    required this.scheme,
+  });
+
+  final JawQuadrant quadrant;
+  final Set<String> initial;
+  final ValueChanged<Set<String>> onChanged;
+  final double bottomPadding;
+  final ColorScheme scheme;
+
+  @override
+  State<_QuadrantZoomBody> createState() => _QuadrantZoomBodyState();
+}
+
+class _QuadrantZoomBodyState extends State<_QuadrantZoomBody> {
+  late Set<String> _local;
+
+  @override
+  void initState() {
+    super.initState();
+    _local = Set<String>.from(widget.initial);
+  }
+
+  void _toggle(String tooth) {
+    setState(() {
+      if (_local.contains(tooth)) {
+        _local.remove(tooth);
+      } else {
+        _local.add(tooth);
+      }
+    });
+    widget.onChanged(Set<String>.from(_local));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final label = formatToothSelection(
+      _local.where(widget.quadrant.teeth.contains),
+    );
+    final teeth = widget.quadrant.teeth;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 4, 20, 16 + widget.bottomPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.quadrant.label,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label.isEmpty ? 'Diş seçin' : 'Seçili: $label',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: widget.scheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const gap = 10.0;
+                final cell = (constraints.maxWidth - gap * 3) / 4;
+                final size = cell.clamp(56.0, 88.0);
+
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        for (var i = 0; i < 4; i++) ...[
+                          if (i > 0) const SizedBox(width: gap),
+                          SizedBox(
+                            width: size,
+                            height: size,
+                            child: _ToothCell(
+                              number: teeth[i],
+                              isSelected: _local.contains(teeth[i]),
+                              onTap: () => _toggle(teeth[i]),
+                              large: true,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: gap),
+                    Row(
+                      children: [
+                        for (var i = 4; i < 8; i++) ...[
+                          if (i > 4) const SizedBox(width: gap),
+                          SizedBox(
+                            width: size,
+                            height: size,
+                            child: _ToothCell(
+                              number: teeth[i],
+                              isSelected: _local.contains(teeth[i]),
+                              onTap: () => _toggle(teeth[i]),
+                              large: true,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tamam'),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Aşağı kaydırarak da kapatabilirsiniz',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: widget.scheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Seçili dişleri klinik aralık formatına çevirir.
-/// Örn. {14,15,16,17} → "14-17", {35,36,37,38,41,42,43,44,45} → "35-45"
 String formatToothSelection(Iterable<String> teeth) {
   final set = teeth.map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
   if (set.isEmpty) return '';
   if (set.length == 1) return set.first;
 
-  // Üst ark sırası (18→28), alt ark sırası (38→48 üzerinden orta hat)
   const upperArc = [
     ...ToothSelector.upperRight,
     ...ToothSelector.upperLeft,
@@ -192,7 +481,6 @@ String formatToothSelection(Iterable<String> teeth) {
     parts.addAll(_rangesAlongArc(lowerArc, lowerSel.toSet()));
   }
 
-  // Hiçbir arkta yoksa (bozuk veri) düz sayısal aralık
   if (parts.isEmpty) {
     final nums = set.map(int.parse).toList()..sort();
     return _numericRanges(nums);
@@ -218,7 +506,6 @@ List<String> _rangesAlongArc(List<String> arc, Set<String> selected) {
     } else {
       final a = arc[start];
       final b = arc[end];
-      // Aynı kadranda artan numara (14-17); orta hat aşımında ark sırası (35-45)
       if (a[0] == b[0]) {
         final ai = int.parse(a);
         final bi = int.parse(b);
@@ -281,7 +568,6 @@ Set<String> parseToothSelection(String? raw) {
       if (bits.length == 2) {
         final a = bits[0].trim();
         final b = bits[1].trim();
-        // Arc üzerinde a→b arasını doldur
         for (final arc in [
           [
             ...ToothSelector.upperRight,
@@ -315,12 +601,14 @@ class _ArchRow extends StatelessWidget {
     required this.left,
     required this.selected,
     required this.onToggle,
+    required this.onZoom,
   });
 
-  final List<String> right;
-  final List<String> left;
+  final JawQuadrant right;
+  final JawQuadrant left;
   final Set<String> selected;
   final ValueChanged<String> onToggle;
+  final ValueChanged<JawQuadrant> onZoom;
 
   @override
   Widget build(BuildContext context) {
@@ -331,9 +619,10 @@ class _ArchRow extends StatelessWidget {
       children: [
         Expanded(
           child: _Quadrant(
-            teeth: right,
+            quadrant: right,
             selected: selected,
             onToggle: onToggle,
+            onZoom: () => onZoom(right),
           ),
         ),
         Padding(
@@ -349,9 +638,10 @@ class _ArchRow extends StatelessWidget {
         ),
         Expanded(
           child: _Quadrant(
-            teeth: left,
+            quadrant: left,
             selected: selected,
             onToggle: onToggle,
+            onZoom: () => onZoom(left),
           ),
         ),
       ],
@@ -361,40 +651,49 @@ class _ArchRow extends StatelessWidget {
 
 class _Quadrant extends StatelessWidget {
   const _Quadrant({
-    required this.teeth,
+    required this.quadrant,
     required this.selected,
     required this.onToggle,
+    required this.onZoom,
   });
 
-  final List<String> teeth;
+  final JawQuadrant quadrant;
   final Set<String> selected;
   final ValueChanged<String> onToggle;
+  final VoidCallback onZoom;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const gap = 3.0;
-        final cell = (constraints.maxWidth - gap * 7) / 8;
-        final height = (cell * 1.25).clamp(28.0, 40.0);
+    final teeth = quadrant.teeth;
 
-        return Row(
-          children: [
-            for (var i = 0; i < teeth.length; i++) ...[
-              if (i > 0) const SizedBox(width: gap),
-              SizedBox(
-                width: cell,
-                height: height,
-                child: _ToothCell(
-                  number: teeth[i],
-                  isSelected: selected.contains(teeth[i]),
-                  onTap: () => onToggle(teeth[i]),
+    return GestureDetector(
+      onLongPress: onZoom,
+      behavior: HitTestBehavior.translucent,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const gap = 3.0;
+          final cell = (constraints.maxWidth - gap * 7) / 8;
+          final height = (cell * 1.25).clamp(28.0, 40.0);
+
+          return Row(
+            children: [
+              for (var i = 0; i < teeth.length; i++) ...[
+                if (i > 0) const SizedBox(width: gap),
+                SizedBox(
+                  width: cell,
+                  height: height,
+                  child: _ToothCell(
+                    number: teeth[i],
+                    isSelected: selected.contains(teeth[i]),
+                    onTap: () => onToggle(teeth[i]),
+                    onLongPress: onZoom,
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -404,11 +703,15 @@ class _ToothCell extends StatelessWidget {
     required this.number,
     required this.isSelected,
     required this.onTap,
+    this.onLongPress,
+    this.large = false,
   });
 
   final String number;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
@@ -416,20 +719,21 @@ class _ToothCell extends StatelessWidget {
 
     return Material(
       color: isSelected ? scheme.primary : scheme.surface,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(large ? 14 : 8),
       elevation: isSelected ? 1 : 0,
       shadowColor: scheme.primary.withValues(alpha: 0.35),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(large ? 14 : 8),
         child: Container(
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 1),
+          padding: EdgeInsets.symmetric(horizontal: large ? 4 : 1),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(large ? 14 : 8),
             border: Border.all(
               color: isSelected ? scheme.primary : scheme.outlineVariant,
-              width: 1,
+              width: large ? 1.5 : 1,
             ),
           ),
           child: FittedBox(
@@ -440,7 +744,7 @@ class _ToothCell extends StatelessWidget {
               softWrap: false,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: large ? 22 : 13,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected ? scheme.onPrimary : scheme.onSurface,
                 height: 1,

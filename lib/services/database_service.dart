@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../config/supabase_config.dart';
+import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
@@ -416,5 +417,86 @@ class DatabaseService {
 
   Future<void> deleteVoiceMemo(VoiceMemo memo) async {
     await _client.from('ses_kayitlari').delete().eq('id', memo.id);
+  }
+
+  // ── Takipler / kontroller ─────────────────────────────────
+
+  Future<FollowUp> createFollowUp({
+    required String hastaId,
+    required String baslik,
+    required DateTime planlananTarih,
+    String? aciklama,
+    String? seansNotuId,
+  }) async {
+    final d = planlananTarih;
+    final row = await _client
+        .from('takipler')
+        .insert({
+          'klinik_id': _requireKlinikId,
+          'hasta_id': hastaId,
+          'baslik': baslik.trim(),
+          'planlanan_tarih':
+              '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+          if (aciklama != null && aciklama.trim().isNotEmpty)
+            'aciklama': aciklama.trim(),
+          if (seansNotuId != null) 'seans_notu_id': seansNotuId,
+          if (_userId != null) 'olusturan_user_id': _userId,
+        })
+        .select()
+        .single();
+    return FollowUp.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  /// Açık takipler — gecikenler önce, sonra tarihe göre.
+  Future<List<FollowUp>> getOpenFollowUps({int limit = 100}) async {
+    final rows = await _client
+        .from('takipler')
+        .select('*, hastalar(ad_soyad)')
+        .eq('klinik_id', _requireKlinikId)
+        .eq('tamamlandi', false)
+        .order('planlanan_tarih', ascending: true)
+        .limit(limit);
+
+    return (rows as List)
+        .map((e) => FollowUp.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<List<FollowUp>> getFollowUpsForPatient(String hastaId) async {
+    final rows = await _client
+        .from('takipler')
+        .select('*, hastalar(ad_soyad)')
+        .eq('hasta_id', hastaId)
+        .order('planlanan_tarih', ascending: true);
+
+    return (rows as List)
+        .map((e) => FollowUp.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<int> countAttentionFollowUps() async {
+    final today = DateTime.now();
+    final todayStr =
+        '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    final rows = await _client
+        .from('takipler')
+        .select('id')
+        .eq('klinik_id', _requireKlinikId)
+        .eq('tamamlandi', false)
+        .lte('planlanan_tarih', todayStr);
+
+    return (rows as List).length;
+  }
+
+  Future<void> completeFollowUp(String id) async {
+    await _client.from('takipler').update({
+      'tamamlandi': true,
+      'tamamlanma_tarihi': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', id);
+  }
+
+  Future<void> deleteFollowUp(String id) async {
+    await _client.from('takipler').delete().eq('id', id);
   }
 }

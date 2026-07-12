@@ -8,6 +8,7 @@ import '../data/treatment_templates.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
+import 'follow_up_planner.dart';
 import 'kanal_params_section.dart';
 import 'photo_preview.dart';
 import 'tooth_selector.dart';
@@ -76,6 +77,11 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   File? _photo;
   bool _saving = false;
 
+  bool _planFollowUp = false;
+  int? _followUpPresetDays = 30;
+  DateTime? _followUpCustomDate;
+  final _followUpNoteCtrl = TextEditingController();
+
   final _picker = ImagePicker();
 
   TextEditingController _controllerFor(String kod) {
@@ -100,6 +106,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   void dispose() {
     _noteController.dispose();
     _titleController.dispose();
+    _followUpNoteCtrl.dispose();
     for (final c in _kanalControllers.values) {
       c.dispose();
     }
@@ -399,6 +406,24 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
           islemBaslik: title,
           notIcerik: note,
           fotografUrl: sharedPhotoUrl,
+        );
+      }
+
+      if (_planFollowUp) {
+        final when = _followUpPresetDays != null
+            ? FollowUpPlanner.dateFromPreset(_followUpPresetDays!)
+            : _followUpCustomDate;
+        if (when == null) {
+          throw Exception('Takip tarihi seçin');
+        }
+        final followNote = _followUpNoteCtrl.text.trim();
+        await widget.db.createFollowUp(
+          hastaId: widget.patient.id,
+          baslik: followNote.isNotEmpty
+              ? followNote
+              : '$title — kontrol',
+          planlananTarih: when,
+          aciklama: followNote.isEmpty ? null : followNote,
         );
       }
 
@@ -708,6 +733,33 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           ),
                         ],
                       ),
+                    const SizedBox(height: 16),
+                    FollowUpPlanner(
+                      enabled: _planFollowUp,
+                      onEnabledChanged: (v) =>
+                          setState(() => _planFollowUp = v),
+                      presetDays: _followUpPresetDays,
+                      onPresetChanged: (d) => setState(() {
+                        _followUpPresetDays = d;
+                        _followUpCustomDate = null;
+                      }),
+                      customDate: _followUpCustomDate,
+                      onPickDate: () async {
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: now.add(const Duration(days: 30)),
+                          firstDate: now,
+                          lastDate: now.add(const Duration(days: 365 * 3)),
+                        );
+                        if (picked == null) return;
+                        setState(() {
+                          _followUpCustomDate = picked;
+                          _followUpPresetDays = null;
+                        });
+                      },
+                      noteController: _followUpNoteCtrl,
+                    ),
                   ],
                 ),
               ),
