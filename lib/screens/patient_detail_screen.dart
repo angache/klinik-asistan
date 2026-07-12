@@ -16,10 +16,16 @@ class PatientDetailScreen extends StatefulWidget {
     super.key,
     required this.patient,
     required this.db,
+    this.embedded = false,
+    this.onClose,
   });
 
   final Patient patient;
   final DatabaseService db;
+
+  /// Masaüstü split view: true ise kendi Navigator stack'i yok.
+  final bool embedded;
+  final VoidCallback? onClose;
 
   @override
   State<PatientDetailScreen> createState() => _PatientDetailScreenState();
@@ -38,6 +44,15 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     super.initState();
     _patient = widget.patient;
     _reload();
+  }
+
+  @override
+  void didUpdateWidget(covariant PatientDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.patient.id != widget.patient.id) {
+      _patient = widget.patient;
+      _reload();
+    }
   }
 
   Future<void> _reload() async {
@@ -165,7 +180,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     if (ok != true) return;
     try {
       await widget.db.deletePatient(_patient.id);
-      if (mounted) Navigator.pop(context, true);
+      if (!mounted) return;
+      if (widget.embedded) {
+        widget.onClose?.call();
+      } else {
+        Navigator.pop(context, true);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -228,6 +248,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: !widget.embedded,
         title: Text(patient.adSoyad),
         actions: [
           IconButton(
@@ -246,6 +267,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 const PopupMenuItem(value: 'delete', child: Text('Sil')),
             ],
           ),
+          if (widget.embedded)
+            IconButton(
+              tooltip: 'Kapat',
+              onPressed: widget.onClose,
+              icon: const Icon(Icons.close),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

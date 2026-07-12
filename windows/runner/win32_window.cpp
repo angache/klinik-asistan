@@ -216,6 +216,18 @@ Win32Window::MessageHandler(HWND hwnd,
     case WM_DWMCOLORIZATIONCOLORCHANGED:
       UpdateTheme(hwnd);
       return 0;
+
+    case WM_GETMINMAXINFO: {
+      auto info = reinterpret_cast<MINMAXINFO*>(lparam);
+      UINT dpi = 96;
+      if (hwnd != nullptr) {
+        dpi = GetDpiForWindow(hwnd);
+      }
+      const double scale = dpi / 96.0;
+      info->ptMinTrackSize.x = static_cast<LONG>(1024 * scale);
+      info->ptMinTrackSize.y = static_cast<LONG>(640 * scale);
+      return 0;
+    }
   }
 
   return DefWindowProc(window_handle_, message, wparam, lparam);

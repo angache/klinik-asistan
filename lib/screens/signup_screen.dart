@@ -45,12 +45,17 @@ class _SignupScreenState extends State<SignupScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabs,
-        children: [
-          _CreateClinicForm(session: widget.session),
-          _JoinClinicForm(session: widget.session),
-        ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: TabBarView(
+            controller: _tabs,
+            children: [
+              _CreateClinicForm(session: widget.session),
+              _JoinClinicForm(session: widget.session),
+            ],
+          ),
+        ),
       ),
     );
   }

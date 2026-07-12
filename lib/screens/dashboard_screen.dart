@@ -13,6 +13,7 @@ import 'clinic_members_screen.dart';
 import 'follow_ups_screen.dart';
 import 'join_requests_screen.dart';
 import 'manage_clinics_screen.dart';
+import 'patient_detail_screen.dart';
 import '../services/notification_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -42,8 +43,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Timer? _debounce;
   int _followUpAttention = 0;
   String? _followUpError;
+  Patient? _selectedPatient;
 
   static const _pageSize = DatabaseService.defaultPatientPageSize;
+  static const _wideBreakpoint = 1000.0;
 
   @override
   void initState() {
@@ -475,65 +478,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          if (_followUpAttention > 0)
-            MaterialBanner(
-              content: Text(
-                '$_followUpAttention takip bugün veya gecikmiş',
-              ),
-              leading: Icon(Icons.notification_important, color: scheme.error),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => FollowUpsScreen(db: widget.db),
-                      ),
-                    );
-                    await _loadFollowUpBadge();
-                  },
-                  child: const Text('Gör'),
-                ),
-              ],
-            ),
-          if (_followUpError != null)
-            MaterialBanner(
-              content: Text('Takipler yüklenemedi: $_followUpError'),
-              leading: Icon(Icons.error_outline, color: scheme.error),
-              actions: [
-                TextButton(
-                  onPressed: _loadFollowUpBadge,
-                  child: const Text('Tekrar dene'),
-                ),
-              ],
-            ),
-          Material(
-            elevation: 1,
-            color: scheme.surface,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: SearchBar(
-                controller: _searchController,
-                hintText: 'Hasta ara (ad veya telefon)…',
-                leading: const Icon(Icons.search),
-                trailing: [
-                  if (_searchController.text.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= _wideBreakpoint;
+          final listPane = Column(
+            children: [
+              if (_followUpAttention > 0)
+                MaterialBanner(
+                  content: Text(
+                    '$_followUpAttention takip bugün veya gecikmiş',
+                  ),
+                  leading:
+                      Icon(Icons.notification_important, color: scheme.error),
+                  actions: [
+                    TextButton(
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => FollowUpsScreen(db: widget.db),
+                          ),
+                        );
+                        await _loadFollowUpBadge();
                       },
+                      child: const Text('Gör'),
                     ),
-                ],
-                onChanged: _onSearchChanged,
-                elevation: const WidgetStatePropertyAll(0),
+                  ],
+                ),
+              if (_followUpError != null)
+                MaterialBanner(
+                  content: Text('Takipler yüklenemedi: $_followUpError'),
+                  leading: Icon(Icons.error_outline, color: scheme.error),
+                  actions: [
+                    TextButton(
+                      onPressed: _loadFollowUpBadge,
+                      child: const Text('Tekrar dene'),
+                    ),
+                  ],
+                ),
+              Material(
+                elevation: 1,
+                color: scheme.surface,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: SearchBar(
+                    controller: _searchController,
+                    hintText: 'Hasta ara (ad veya telefon)…',
+                    leading: const Icon(Icons.search),
+                    trailing: [
+                      if (_searchController.text.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged('');
+                          },
+                        ),
+                    ],
+                    onChanged: _onSearchChanged,
+                    elevation: const WidgetStatePropertyAll(0),
+                  ),
+                ),
               ),
-            ),
-          ),
-          Expanded(child: _buildBody(scheme)),
-        ],
+              Expanded(child: _buildBody(scheme, wide: wide)),
+            ],
+          );
+
+          if (!wide) return listPane;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: (constraints.maxWidth * 0.36).clamp(320.0, 440.0),
+                child: listPane,
+              ),
+              VerticalDivider(
+                width: 1,
+                thickness: 1,
+                color: scheme.outlineVariant,
+              ),
+              Expanded(
+                child: _selectedPatient == null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.person_search_outlined,
+                              size: 56,
+                              color: scheme.outline,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Detay için bir hasta seçin',
+                              style: TextStyle(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      )
+                    : PatientDetailScreen(
+                        key: ValueKey(_selectedPatient!.id),
+                        patient: _selectedPatient!,
+                        db: widget.db,
+                        embedded: true,
+                        onClose: () {
+                          setState(() => _selectedPatient = null);
+                          _load(reset: true);
+                          _loadFollowUpBadge();
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddPatient,
@@ -561,7 +618,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     };
   }
 
-  Widget _buildBody(ColorScheme scheme) {
+  Widget _buildBody(ColorScheme scheme, {required bool wide}) {
     if (_loading && _patients.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -651,9 +708,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             );
           }
+          final patient = _patients[index];
           return PatientCard(
-            patient: _patients[index],
+            patient: patient,
             db: widget.db,
+            selected: wide && _selectedPatient?.id == patient.id,
+            onOpen: wide
+                ? () => setState(() => _selectedPatient = patient)
+                : null,
           );
         },
       ),

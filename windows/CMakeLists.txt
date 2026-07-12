@@ -31,6 +31,8 @@ set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
+# MSVC 14.5x: permission_handler_windows still uses experimental/coroutine.
+add_definitions(-D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
 
 # Compilation settings that should be applied to most targets.
 #
@@ -53,9 +55,14 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 add_subdirectory("runner")
 
 
-# Generated plugin build rules, which manage building the plugins and adding
-# them to the application.
-include(flutter/generated_plugins.cmake)
+# Generated plugin build rules. Windows yerel bildirim native eklentisi
+# (flutter_local_notifications_windows) ATL ister; NotificationService zaten
+# masaüstünde no-op olduğu için burada filtrelenir.
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/flutter/generated_plugins.cmake" _GEN_PLUGINS)
+string(REGEX REPLACE "[ \t]*flutter_local_notifications_windows[ \t\r\n]*" "\n" _GEN_PLUGINS "${_GEN_PLUGINS}")
+set(_FILTERED_PLUGINS "${CMAKE_CURRENT_BINARY_DIR}/generated_plugins_filtered.cmake")
+file(WRITE "${_FILTERED_PLUGINS}" "${_GEN_PLUGINS}")
+include("${_FILTERED_PLUGINS}")
 
 
 # === Installation ===
