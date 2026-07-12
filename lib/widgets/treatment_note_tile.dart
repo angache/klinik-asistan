@@ -38,6 +38,42 @@ class TreatmentNoteTile extends StatelessWidget {
     }
   }
 
+  Future<void> _delete(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Seans notunu sil'),
+        content: const Text(
+          'Bu not ve varsa önceki sürümleri kalıcı olarak silinecek.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await db.deleteNote(note);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Seans notu silindi')),
+      );
+      await onChanged?.call();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Seans notu silinemedi: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -162,6 +198,12 @@ class TreatmentNoteTile extends StatelessWidget {
                 icon: const Icon(Icons.history, size: 18),
                 label: const Text('Geçmiş'),
               ),
+              if (db.canManageRecords)
+                TextButton.icon(
+                  onPressed: () => _delete(context),
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Sil'),
+                ),
             ],
           ),
         ],

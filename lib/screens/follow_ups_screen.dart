@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/follow_up.dart';
-import '../models/patient.dart';
 import '../services/database_service.dart';
+import '../services/notification_service.dart';
 import 'patient_detail_screen.dart';
 
 class FollowUpsScreen extends StatefulWidget {
@@ -32,6 +32,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
   Future<void> _complete(FollowUp f) async {
     try {
       await widget.db.completeFollowUp(f.id);
+      await NotificationService.instance.cancelFollowUp(f.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Tamamlandı: ${f.baslik}')),
@@ -41,6 +42,58 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('İşlem başarısız: $e')),
+      );
+    }
+  }
+
+  Future<void> _delete(FollowUp f) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Takibi sil'),
+        content: Text('${f.baslik} silinsin mi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await widget.db.deleteFollowUp(f.id);
+      await NotificationService.instance.cancelFollowUp(f.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Silindi: ${f.baslik}')),
+      );
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Silinemedi: $e')),
+      );
+    }
+  }
+
+  Future<void> _openPatient(FollowUp f) async {
+    try {
+      final patient = await widget.db.getPatient(f.hastaId);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PatientDetailScreen(patient: patient, db: widget.db),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hasta açılamadı: $e')),
       );
     }
   }
@@ -185,21 +238,13 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
               icon: const Icon(Icons.check_circle_outline),
             ),
             IconButton(
+              tooltip: 'Sil',
+              onPressed: () => _delete(f),
+              icon: const Icon(Icons.delete_outline),
+            ),
+            IconButton(
               tooltip: 'Hastaya git',
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => PatientDetailScreen(
-                      patient: Patient(
-                        id: f.hastaId,
-                        adSoyad: f.hastaAdSoyad ?? 'Hasta',
-                        olusturmaTarihi: DateTime.now(),
-                      ),
-                      db: widget.db,
-                    ),
-                  ),
-                );
-              },
+              onPressed: () => _openPatient(f),
               icon: const Icon(Icons.person_outline),
             ),
           ],

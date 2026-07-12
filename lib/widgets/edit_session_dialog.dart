@@ -405,6 +405,13 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                             fontWeight: FontWeight.w600,
                           ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
                     const SizedBox(height: 8),
                     if (_newPhoto != null)
                       LocalPhotoPreview(

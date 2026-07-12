@@ -33,6 +33,10 @@ const List<TreatmentTemplate> kTreatmentTemplates = [
   ),
   TreatmentTemplate(
     kategori: 'Tedavi',
+    baslik: 'Kuafaj',
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
     baslik: 'Diş Çekimi',
   ),
   TreatmentTemplate(

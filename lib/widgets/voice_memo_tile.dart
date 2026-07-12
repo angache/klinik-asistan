@@ -91,7 +91,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
 
       await _player.setAudioContext(
         AudioContext(
-          android: AudioContextAndroid(
+          android: const AudioContextAndroid(
             isSpeakerphoneOn: true,
             stayAwake: false,
             contentType: AndroidContentType.speech,
@@ -136,11 +136,14 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
       patient: widget.patient,
       db: widget.db,
     );
-    if (saved != true || !mounted) return;
+    if (saved == null || !mounted) return;
 
     setState(() => _busy = true);
     try {
-      await widget.db.markVoiceMemoProcessed(memoId: widget.memo.id);
+      await widget.db.markVoiceMemoProcessed(
+        memoId: widget.memo.id,
+        seansNotuId: saved.id,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sesli not işlendi olarak işaretlendi')),

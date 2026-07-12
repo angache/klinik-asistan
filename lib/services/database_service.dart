@@ -4,11 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../config/supabase_config.dart';
+import '../models/clinic.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
 import 'session_controller.dart';
+import 'storage_media.dart';
 
 class DatabaseService {
   DatabaseService({
@@ -20,6 +22,13 @@ class DatabaseService {
   final SessionController _session;
   final SupabaseClient _client;
   final _uuid = const Uuid();
+
+  SessionController get session => _session;
+
+  bool get canManageRecords {
+    final m = _session.member;
+    return m != null && (m.isAdmin || m.isDoctor);
+  }
 
   String get _requireKlinikId {
     final id = _session.klinikId;
@@ -45,7 +54,10 @@ class DatabaseService {
     final from = offset < 0 ? 0 : offset;
     final to = from + limit - 1;
 
-    var builder = _client.from('hastalar').select().eq('klinik_id', klinikId);
+    var builder = _client
+        .from('hastalar')
+        .select('*, seans_notlari(islem_baslik, tarih, guncel)')
+        .eq('klinik_id', klinikId);
 
     final q = query?.trim();
     if (q != null && q.isNotEmpty) {
@@ -87,6 +99,37 @@ class DatabaseService {
         .select()
         .single();
 
+    return Patient.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<Patient> updatePatient({
+    required String id,
+    required String adSoyad,
+    String? telefon,
+  }) async {
+    final phone = telefon?.trim();
+    final row = await _client
+        .from('hastalar')
+        .update({
+          'ad_soyad': adSoyad.trim(),
+          'telefon': (phone == null || phone.isEmpty) ? null : phone,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+    return Patient.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<void> deletePatient(String id) async {
+    await _client.from('hastalar').delete().eq('id', id);
+  }
+
+  Future<Patient> getPatient(String id) async {
+    final row = await _client
+        .from('hastalar')
+        .select('*, seans_notlari(islem_baslik, tarih, guncel)')
+        .eq('id', id)
+        .single();
     return Patient.fromJson(Map<String, dynamic>.from(row));
   }
 
@@ -416,7 +459,66 @@ class DatabaseService {
   }
 
   Future<void> deleteVoiceMemo(VoiceMemo memo) async {
+    final path = StorageMedia.pathFromUrl(memo.dosyaUrl);
     await _client.from('ses_kayitlari').delete().eq('id', memo.id);
+    if (path != null && path.isNotEmpty) {
+      try {
+        await _client.storage.from(SupabaseConfig.storageBucket).remove([path]);
+      } catch (_) {}
+    }
+  }
+
+  Future<void> deleteNote(TreatmentNote note) async {
+    // Zincirin tüm sürümlerini sil (kök + kok_id)
+    final root = note.rootId;
+    final rows = await _client
+        .from('seans_notlari')
+        .select('id, fotograf_url')
+        .eq('hasta_id', note.hastaId)
+        .or('id.eq.$root,kok_id.eq.$root');
+
+    final list = (rows as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+    final ids = list.map((e) => e['id'] as String).toList();
+    if (ids.isEmpty) return;
+
+    for (final row in list) {
+      final url = row['fotograf_url'] as String?;
+      if (url == null || url.isEmpty) continue;
+      final path = StorageMedia.pathFromUrl(url);
+      if (path == null) continue;
+      try {
+        await _client.storage.from(SupabaseConfig.storageBucket).remove([path]);
+      } catch (_) {}
+    }
+
+    await _client.from('seans_notlari').delete().inFilter('id', ids);
+  }
+
+  Future<List<ClinicMember>> getClinicMembers() async {
+    final klinikId = _requireKlinikId;
+    final rows = await _client
+        .from('klinik_uyeleri')
+        .select()
+        .eq('klinik_id', klinikId)
+        .order('olusturma_tarihi', ascending: true);
+    return (rows as List)
+        .map((e) => ClinicMember.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<void> updateMemberRole({
+    required String memberId,
+    required ClinicRole rol,
+  }) async {
+    await _client.from('klinik_uyeleri').update({
+      'rol': rol.value,
+    }).eq('id', memberId);
+  }
+
+  Future<void> removeMember(String memberId) async {
+    await _client.from('klinik_uyeleri').delete().eq('id', memberId);
   }
 
   // ── Takipler / kontroller ─────────────────────────────────

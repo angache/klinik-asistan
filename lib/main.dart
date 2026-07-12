@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
 import 'screens/auth_gate.dart';
 import 'services/database_service.dart';
+import 'services/notification_service.dart';
 import 'services/session_controller.dart';
 import 'theme/app_theme.dart';
 
@@ -14,6 +15,7 @@ Future<void> main() async {
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.anonKey,
   );
+  await NotificationService.instance.init();
 
   final session = SessionController();
   final db = DatabaseService(session: session);

@@ -27,9 +27,15 @@ flutter create . --project-name klinik_asistan --org com.klinik --platforms=andr
 
 Aktif proje: **dentasist** (`hdgyzlrgcrrkoupgvfzd`). Bilgiler `lib/config/supabase_config.dart` içinde.
 
-1. SQL Editor’de `supabase/schema.sql` çalıştırın (bir kez).
-2. Storage’da `seans-fotograflari` bucket’ının public olduğundan emin olun.
+1. SQL Editor’de migration'ları şu sırayla çalıştırın: `schema.sql`, `migration_storage_auth.sql`, `migration_member_admin.sql`, `migration_join_requests.sql`, `migration_followups.sql`.
+2. Storage bucket'ı artık özeldir; erişim kimlik doğrulamalı Storage politikalarıyla sağlanır.
 3. Key değişirse config dosyasını güncelleyin.
+
+## Özellikler
+
+- Supabase Auth ile oturum açma ve kullanıcıya özel veri erişimi
+- Birden çok klinik, klinik değiştirme, katılım istekleri ve üye yönetimi
+- Seans notuna bağlı takip/kontrol planlama ve yerel bildirimler
 
 ### 3. Çalıştırma
 
@@ -51,6 +57,7 @@ adb install -r build\app\outputs\flutter-apk\app-release.apk
 | `INTERNET` | Supabase API / Storage |
 | `CAMERA` | Seans fotoğrafı çekme |
 | `READ_EXTERNAL_STORAGE` (API ≤ 32) | Galeriden seçim |
+| `POST_NOTIFICATIONS` (API ≥ 33) | Takip hatırlatmaları |
 
 `image_picker` FileProvider yolları: `res/xml/flutter_image_picker_file_paths.xml`
 

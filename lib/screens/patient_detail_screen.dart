@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
 import '../services/database_service.dart';
-import '../theme/app_theme.dart';
+import '../services/notification_service.dart';
 import '../widgets/new_session_dialog.dart';
 import '../widgets/treatment_note_tile.dart';
 import '../widgets/voice_memo_tile.dart';
@@ -25,14 +26,17 @@ class PatientDetailScreen extends StatefulWidget {
 }
 
 class _PatientDetailScreenState extends State<PatientDetailScreen> {
+  late Patient _patient;
   List<TreatmentNote> _notes = [];
   List<VoiceMemo> _voices = [];
+  List<FollowUp> _followUps = [];
   bool _loading = true;
   Object? _error;
 
   @override
   void initState() {
     super.initState();
+    _patient = widget.patient;
     _reload();
   }
 
@@ -42,14 +46,18 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       _error = null;
     });
     try {
-      final notes =
-          await widget.db.getNotesForPatient(widget.patient.id);
-      final voices =
-          await widget.db.getVoiceMemosForPatient(widget.patient.id);
+      final results = await Future.wait([
+        widget.db.getNotesForPatient(_patient.id),
+        widget.db.getVoiceMemosForPatient(_patient.id),
+        widget.db.getFollowUpsForPatient(_patient.id),
+      ]);
       if (!mounted) return;
       setState(() {
-        _notes = notes;
-        _voices = voices;
+        _notes = results[0] as List<TreatmentNote>;
+        _voices = results[1] as List<VoiceMemo>;
+        _followUps = (results[2] as List<FollowUp>)
+            .where((followUp) => !followUp.tamamlandi)
+            .toList();
         _loading = false;
       });
     } catch (e) {
@@ -64,10 +72,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   Future<void> _openNewSession() async {
     final saved = await showNewSessionDialog(
       context: context,
-      patient: widget.patient,
+      patient: _patient,
       db: widget.db,
     );
-    if (saved == true && mounted) {
+    if (saved != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Seans notu kaydedildi')),
       );
@@ -78,7 +86,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   Future<void> _openVoiceRecord() async {
     final saved = await showVoiceRecordDialog(
       context: context,
-      patient: widget.patient,
+      patient: _patient,
       db: widget.db,
     );
     if (saved == true && mounted) {
@@ -89,10 +97,131 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     }
   }
 
+  Future<void> _editPatient() async {
+    final nameCtrl = TextEditingController(text: _patient.adSoyad);
+    final phoneCtrl = TextEditingController(text: _patient.telefon ?? '');
+    final updated = await showDialog<Patient>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hastayı düzenle'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Ad Soyad'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: 'Telefon'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (nameCtrl.text.trim().isEmpty) return;
+              final patient = await widget.db.updatePatient(
+                id: _patient.id,
+                adSoyad: nameCtrl.text,
+                telefon: phoneCtrl.text,
+              );
+              if (ctx.mounted) Navigator.pop(ctx, patient);
+            },
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    if (updated != null && mounted) setState(() => _patient = updated);
+  }
+
+  Future<void> _deletePatient() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hastayı sil'),
+        content: Text('${_patient.adSoyad} ve ilişkili kayıtları silinsin mi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await widget.db.deletePatient(_patient.id);
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hasta silinemedi: $e')),
+      );
+    }
+  }
+
+  Future<void> _completeFollowUp(FollowUp followUp) async {
+    try {
+      await widget.db.completeFollowUp(followUp.id);
+      await NotificationService.instance.cancelFollowUp(followUp.id);
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Takip tamamlanamadı: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteFollowUp(FollowUp followUp) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Takibi sil'),
+        content: Text('${followUp.baslik} silinsin mi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await widget.db.deleteFollowUp(followUp.id);
+      await NotificationService.instance.cancelFollowUp(followUp.id);
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Takip silinemedi: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final patient = widget.patient;
+    final patient = _patient;
     final phone = patient.telefon?.trim();
     final pending = _voices.where((v) => !v.islenen).toList();
     final done = _voices.where((v) => v.islenen).toList();
@@ -100,29 +229,29 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(patient.adSoyad),
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'voice',
+        actions: [
+          IconButton(
+            tooltip: 'Sesli not',
             onPressed: _openVoiceRecord,
-            backgroundColor: AppTheme.voiceAccent,
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.mic),
-            label: const Text('Sesli Not'),
+            icon: const Icon(Icons.mic_outlined),
           ),
-          const SizedBox(height: 10),
-          FloatingActionButton.extended(
-            heroTag: 'session',
-            onPressed: _openNewSession,
-            backgroundColor: AppTheme.waTeal,
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.add),
-            label: const Text('Yeni Seans'),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'edit') _editPatient();
+              if (value == 'delete') _deletePatient();
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+              if (widget.db.canManageRecords)
+                const PopupMenuItem(value: 'delete', child: Text('Sil')),
+            ],
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openNewSession,
+        icon: const Icon(Icons.add),
+        label: const Text('Yeni Seans'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -214,7 +343,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       );
     }
 
-    final empty = _notes.isEmpty && _voices.isEmpty;
+    final empty = _notes.isEmpty && _voices.isEmpty && _followUps.isEmpty;
     if (empty) {
       return RefreshIndicator(
         onRefresh: _reload,
@@ -249,6 +378,44 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
         children: [
+          if (_followUps.isNotEmpty) ...[
+            Text(
+              'Açık takipler',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            ..._followUps.map(
+              (followUp) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  title: Text(followUp.baslik),
+                  subtitle: Text(
+                    '${followUp.planDateOnly.day.toString().padLeft(2, '0')}.'
+                    '${followUp.planDateOnly.month.toString().padLeft(2, '0')}.'
+                    '${followUp.planDateOnly.year}',
+                  ),
+                  trailing: Wrap(
+                    children: [
+                      IconButton(
+                        tooltip: 'Tamamla',
+                        onPressed: () => _completeFollowUp(followUp),
+                        icon: const Icon(Icons.check_circle_outline),
+                      ),
+                      IconButton(
+                        tooltip: 'Sil',
+                        onPressed: () => _deleteFollowUp(followUp),
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (pending.isNotEmpty) ...[
             Text(
               'Bekleyen sesli notlar',
@@ -261,7 +428,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             ...pending.map(
               (m) => VoiceMemoTile(
                 memo: m,
-                patient: widget.patient,
+                patient: _patient,
                 db: widget.db,
                 onChanged: _reload,
               ),
@@ -288,7 +455,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             ..._notes.map(
               (n) => TreatmentNoteTile(
                 note: n,
-                patient: widget.patient,
+                patient: _patient,
                 db: widget.db,
                 onChanged: _reload,
               ),
@@ -306,7 +473,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             ...done.map(
               (m) => VoiceMemoTile(
                 memo: m,
-                patient: widget.patient,
+                patient: _patient,
                 db: widget.db,
                 onChanged: _reload,
               ),

@@ -8,17 +8,18 @@ import '../data/treatment_templates.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
+import '../services/notification_service.dart';
 import 'follow_up_planner.dart';
 import 'kanal_params_section.dart';
 import 'photo_preview.dart';
 import 'tooth_selector.dart';
 
-Future<bool?> showNewSessionDialog({
+Future<TreatmentNote?> showNewSessionDialog({
   required BuildContext context,
   required Patient patient,
   required DatabaseService db,
 }) {
-  return showDialog<bool>(
+  return showDialog<TreatmentNote>(
     context: context,
     barrierDismissible: false,
     builder: (_) => NewSessionDialog(patient: patient, db: db),
@@ -170,8 +171,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
     if (tooth == null) return;
     _persistActiveKanal();
     final draft = _kanalByTooth.putIfAbsent(tooth, _KanalDraft.new);
-    final available =
-        availableExtraCanals(tooth, extras: draft.ekstraKanallar);
+    final available = availableExtraCanals(tooth, extras: draft.ekstraKanallar);
 
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -365,6 +365,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
     try {
       String? sharedPhotoUrl;
+      TreatmentNote? createdNote;
       if (_photo != null) {
         sharedPhotoUrl = await widget.db.uploadSessionPhoto(
           hastaId: widget.patient.id,
@@ -382,7 +383,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
               extras: draft.ekstraKanallar,
             ),
           );
-          await widget.db.saveNoteWithOptionalPhoto(
+          final savedNote = await widget.db.saveNoteWithOptionalPhoto(
             hastaId: widget.patient.id,
             kapsam: TreatmentScope.tekDis,
             disNo: tooth,
@@ -393,13 +394,14 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
             notIcerik: note,
             fotografUrl: sharedPhotoUrl,
           );
+          createdNote ??= savedNote;
         }
       } else {
         final disNo = _kapsam == TreatmentScope.tekDis
             ? formatToothSelection(_selectedTeeth)
             : null;
 
-        await widget.db.saveNoteWithOptionalPhoto(
+        createdNote = await widget.db.saveNoteWithOptionalPhoto(
           hastaId: widget.patient.id,
           kapsam: _kapsam,
           disNo: disNo,
@@ -407,6 +409,11 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
           notIcerik: note,
           fotografUrl: sharedPhotoUrl,
         );
+      }
+
+      final noteForFollowUp = createdNote;
+      if (noteForFollowUp == null) {
+        throw StateError('Seans notu oluşturulamadı');
       }
 
       if (_planFollowUp) {
@@ -417,18 +424,18 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
           throw Exception('Takip tarihi seçin');
         }
         final followNote = _followUpNoteCtrl.text.trim();
-        await widget.db.createFollowUp(
+        final followUp = await widget.db.createFollowUp(
           hastaId: widget.patient.id,
-          baslik: followNote.isNotEmpty
-              ? followNote
-              : '$title — kontrol',
+          baslik: followNote.isNotEmpty ? followNote : '$title — kontrol',
           planlananTarih: when,
           aciklama: followNote.isEmpty ? null : followNote,
+          seansNotuId: noteForFollowUp.id,
         );
+        await NotificationService.instance.scheduleFollowUp(followUp);
       }
 
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(noteForFollowUp);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -445,8 +452,9 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       for (final t in kTreatmentTemplates) t.kategori,
     }.toList();
 
-    final kanalMulti =
-        _showKanal && _kapsam == TreatmentScope.tekDis && _selectedTeeth.isNotEmpty;
+    final kanalMulti = _showKanal &&
+        _kapsam == TreatmentScope.tekDis &&
+        _selectedTeeth.isNotEmpty;
     final saveLabel = _saving
         ? 'Kaydediliyor…'
         : (kanalMulti && _selectedTeeth.length > 1)
@@ -705,6 +713,13 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                       'Fotoğraf',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                     ),
                     const SizedBox(height: 8),

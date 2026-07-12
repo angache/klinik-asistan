@@ -162,7 +162,16 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
                   color: scheme.onSurfaceVariant,
                 ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
+          Text(
+            'Ses yalnızca doktor/asistanın seans özeti içindir. '
+            'Hasta konuşması kaydedilmez.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 16),
           Text(
             _timeLabel,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(

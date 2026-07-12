@@ -3,14 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
 import '../services/session_controller.dart';
 import '../widgets/patient_card.dart';
 import 'auth_gate.dart';
+import 'clinic_members_screen.dart';
 import 'follow_ups_screen.dart';
 import 'join_requests_screen.dart';
 import 'manage_clinics_screen.dart';
+import '../services/notification_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
@@ -38,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Object? _error;
   Timer? _debounce;
   int _followUpAttention = 0;
+  String? _followUpError;
 
   static const _pageSize = DatabaseService.defaultPatientPageSize;
 
@@ -51,11 +55,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadFollowUpBadge() async {
     try {
-      final n = await widget.db.countAttentionFollowUps();
+      final results = await Future.wait([
+        widget.db.countAttentionFollowUps(),
+        widget.db.getOpenFollowUps(),
+      ]);
+      await NotificationService.instance.syncOpenFollowUps(
+        results[1] as List<FollowUp>,
+      );
       if (!mounted) return;
-      setState(() => _followUpAttention = n);
-    } catch (_) {
-      // tablo henüz yoksa sessiz geç
+      setState(() {
+        _followUpAttention = results[0] as int;
+        _followUpError = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString();
+      final friendly = msg.contains('SocketException') ||
+              msg.contains('Failed host lookup') ||
+              msg.contains('ClientException')
+          ? 'İnternet bağlantısı yok veya sunucuya ulaşılamıyor. Takip listesi yüklenemedi.'
+          : 'Takipler yüklenemedi. migration_followups.sql çalıştırıldı mı?\n$msg';
+      setState(() => _followUpError = friendly);
     }
   }
 
@@ -228,6 +248,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _openClinicMembers() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ClinicMembersScreen(
+          db: widget.db,
+          session: widget.session,
+        ),
+      ),
+    );
+  }
+
   void _showClinicInfo() {
     final clinic = widget.session.clinic;
     final member = widget.session.member;
@@ -267,9 +298,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         selected
                             ? Icons.check_circle
                             : Icons.apartment_outlined,
-                        color: selected
-                            ? Theme.of(ctx).colorScheme.primary
-                            : null,
+                        color:
+                            selected ? Theme.of(ctx).colorScheme.primary : null,
                       ),
                       title: Text(m.clinic.ad),
                       subtitle: Text('${m.member.rol.label} · ${m.clinic.kod}'),
@@ -334,6 +364,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 8),
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openClinicMembers();
+                    },
+                    icon: const Icon(Icons.group_outlined),
+                    label: const Text('Üyeler'),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton.tonalIcon(
                     onPressed: () {
@@ -424,9 +463,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: widget.session.pendingJoinCountForActiveClinic > 0
                   ? Text('${widget.session.pendingJoinCountForActiveClinic}')
                   : null,
-              smallSize: widget.session.pendingJoinCountForActiveClinic > 0
-                  ? null
-                  : 8,
+              smallSize:
+                  widget.session.pendingJoinCountForActiveClinic > 0 ? null : 8,
               child: const Icon(Icons.apartment_outlined),
             ),
           ),
@@ -456,6 +494,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     await _loadFollowUpBadge();
                   },
                   child: const Text('Gör'),
+                ),
+              ],
+            ),
+          if (_followUpError != null)
+            MaterialBanner(
+              content: Text('Takipler yüklenemedi: $_followUpError'),
+              leading: Icon(Icons.error_outline, color: scheme.error),
+              actions: [
+                TextButton(
+                  onPressed: _loadFollowUpBadge,
+                  child: const Text('Tekrar dene'),
                 ),
               ],
             ),
