@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import '../services/storage_media.dart';
 
 /// Diyalog içi yerel fotoğraf önizlemesi.
 class LocalPhotoPreview extends StatelessWidget {
@@ -45,8 +48,8 @@ class LocalPhotoPreview extends StatelessWidget {
   }
 }
 
-/// Not listesinde küçük ağ fotoğrafı önizlemesi.
-class NetworkPhotoThumbnail extends StatelessWidget {
+/// Storage'dan imzalı URL / byte ile çalışan ağ fotoğrafı.
+class NetworkPhotoThumbnail extends StatefulWidget {
   const NetworkPhotoThumbnail({
     super.key,
     required this.url,
@@ -57,22 +60,64 @@ class NetworkPhotoThumbnail extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
+  State<NetworkPhotoThumbnail> createState() => _NetworkPhotoThumbnailState();
+}
+
+class _NetworkPhotoThumbnailState extends State<NetworkPhotoThumbnail> {
+  late Future<Uint8List> _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = StorageMedia.downloadBytes(widget.url);
+  }
+
+  @override
+  void didUpdateWidget(covariant NetworkPhotoThumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      _bytes = StorageMedia.downloadBytes(widget.url);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
-        child: Image.network(
-          url,
-          height: 72,
-          width: 96,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
-            height: 72,
-            width: 96,
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: const Icon(Icons.broken_image_outlined),
-          ),
+        child: FutureBuilder<Uint8List>(
+          future: _bytes,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return Container(
+                height: 72,
+                width: 96,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: const Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            }
+            if (snapshot.hasError || snapshot.data == null) {
+              return Container(
+                height: 72,
+                width: 96,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: const Icon(Icons.broken_image_outlined),
+              );
+            }
+            return Image.memory(
+              snapshot.data!,
+              height: 72,
+              width: 96,
+              fit: BoxFit.cover,
+            );
+          },
         ),
       ),
     );

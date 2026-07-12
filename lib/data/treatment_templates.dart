@@ -24,7 +24,36 @@ const List<TreatmentTemplate> kTreatmentTemplates = [
   ),
   TreatmentTemplate(
     kategori: 'Tedavi',
+    baslik: 'Kanal Yenileme',
+    isKanal: true,
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
     baslik: 'Kompozit Dolgu',
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
+    baslik: 'Diş Çekimi',
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
+    baslik: 'Komplikasyonlu Çekim',
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
+    baslik: 'Cerrahi Çekim',
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
+    baslik: 'Alveolit Tedavisi (Pansuman)',
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
+    baslik: 'Küretaj',
+  ),
+  TreatmentTemplate(
+    kategori: 'Tedavi',
+    baslik: 'Beyazlatma',
   ),
   TreatmentTemplate(
     kategori: 'Protez',
@@ -32,19 +61,31 @@ const List<TreatmentTemplate> kTreatmentTemplates = [
   ),
   TreatmentTemplate(
     kategori: 'Protez',
-    baslik: 'Altyapı Provası',
+    baslik: 'Altyapı Prova',
   ),
   TreatmentTemplate(
     kategori: 'Protez',
-    baslik: 'Dent Provası',
+    baslik: 'Dentin Prova',
   ),
   TreatmentTemplate(
     kategori: 'Protez',
-    baslik: 'Simantasyon',
+    baslik: 'Geçici Simantasyon',
+  ),
+  TreatmentTemplate(
+    kategori: 'Protez',
+    baslik: 'Daimi Simantasyon',
+  ),
+  TreatmentTemplate(
+    kategori: 'Protez',
+    baslik: 'Gece Plağı Ölçüsü',
   ),
   TreatmentTemplate(
     kategori: 'Genel',
     baslik: 'Detertraj (Temizlik)',
+  ),
+  TreatmentTemplate(
+    kategori: 'Genel',
+    baslik: 'Kontrol',
   ),
 ];
 

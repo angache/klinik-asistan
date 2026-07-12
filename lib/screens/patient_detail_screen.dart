@@ -4,6 +4,7 @@ import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
 import '../services/database_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/new_session_dialog.dart';
 import '../widgets/treatment_note_tile.dart';
 import '../widgets/voice_memo_tile.dart';
@@ -107,15 +108,17 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           FloatingActionButton.extended(
             heroTag: 'voice',
             onPressed: _openVoiceRecord,
+            backgroundColor: AppTheme.voiceAccent,
+            foregroundColor: Colors.white,
             icon: const Icon(Icons.mic),
             label: const Text('Sesli Not'),
-            backgroundColor: scheme.tertiaryContainer,
-            foregroundColor: scheme.onTertiaryContainer,
           ),
           const SizedBox(height: 10),
           FloatingActionButton.extended(
             heroTag: 'session',
             onPressed: _openNewSession,
+            backgroundColor: AppTheme.waTeal,
+            foregroundColor: Colors.white,
             icon: const Icon(Icons.add),
             label: const Text('Yeni Seans'),
           ),

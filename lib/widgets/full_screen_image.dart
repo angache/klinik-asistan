@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
-class FullScreenImage extends StatelessWidget {
+import '../services/storage_media.dart';
+
+class FullScreenImage extends StatefulWidget {
   const FullScreenImage({super.key, required this.imageUrl});
 
   final String imageUrl;
@@ -15,6 +19,19 @@ class FullScreenImage extends StatelessWidget {
   }
 
   @override
+  State<FullScreenImage> createState() => _FullScreenImageState();
+}
+
+class _FullScreenImageState extends State<FullScreenImage> {
+  late Future<Uint8List> _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = StorageMedia.downloadBytes(widget.imageUrl);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
@@ -24,28 +41,32 @@ class FullScreenImage extends StatelessWidget {
         title: const Text('Seans Fotoğrafı'),
       ),
       body: Center(
-        child: InteractiveViewer(
-          minScale: 0.8,
-          maxScale: 4,
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.contain,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
+        child: FutureBuilder<Uint8List>(
+          future: _bytes,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
               return const CircularProgressIndicator(color: Colors.white);
-            },
-            errorBuilder: (_, __, ___) => const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.broken_image, color: Colors.white54, size: 48),
-                SizedBox(height: 8),
-                Text(
-                  'Fotoğraf yüklenemedi',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
+            }
+            if (snapshot.hasError || snapshot.data == null) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.broken_image, color: Colors.white54, size: 48),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Fotoğraf yüklenemedi\n${snapshot.error ?? ''}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
+              );
+            }
+            return InteractiveViewer(
+              minScale: 0.8,
+              maxScale: 4,
+              child: Image.memory(snapshot.data!, fit: BoxFit.contain),
+            );
+          },
         ),
       ),
     );

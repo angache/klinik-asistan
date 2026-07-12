@@ -340,7 +340,7 @@ class _ArchRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Container(
             width: 1.5,
-            height: 36,
+            height: 40,
             decoration: BoxDecoration(
               color: scheme.outline,
               borderRadius: BorderRadius.circular(1),
@@ -376,6 +376,7 @@ class _Quadrant extends StatelessWidget {
       builder: (context, constraints) {
         const gap = 3.0;
         final cell = (constraints.maxWidth - gap * 7) / 8;
+        final height = (cell * 1.25).clamp(28.0, 40.0);
 
         return Row(
           children: [
@@ -383,7 +384,7 @@ class _Quadrant extends StatelessWidget {
               if (i > 0) const SizedBox(width: gap),
               SizedBox(
                 width: cell,
-                height: 36,
+                height: height,
                 child: _ToothCell(
                   number: teeth[i],
                   isSelected: selected.contains(teeth[i]),
@@ -417,26 +418,33 @@ class _ToothCell extends StatelessWidget {
       color: isSelected ? scheme.primary : scheme.surface,
       borderRadius: BorderRadius.circular(8),
       elevation: isSelected ? 1 : 0,
-      shadowColor: scheme.primary.withOpacity(0.35),
+      shadowColor: scheme.primary.withValues(alpha: 0.35),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Container(
           alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 1),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected ? scheme.primary : scheme.outlineVariant,
-              width: isSelected ? 1.5 : 1,
+              width: 1,
             ),
           ),
-          child: Text(
-            number,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected ? scheme.onPrimary : scheme.onSurface,
-              height: 1,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              number,
+              maxLines: 1,
+              softWrap: false,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? scheme.onPrimary : scheme.onSurface,
+                height: 1,
+              ),
             ),
           ),
         ),

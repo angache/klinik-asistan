@@ -2,14 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../main.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
+import '../services/session_controller.dart';
 import '../widgets/patient_card.dart';
+import 'auth_gate.dart';
+import 'join_requests_screen.dart';
+import 'manage_clinics_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key, required this.db});
+  const DashboardScreen({
+    super.key,
+    required this.db,
+    required this.session,
+  });
 
   final DatabaseService db;
+  final SessionController session;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -168,14 +178,229 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> _confirmSignOut() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Çıkış yap'),
+        content: const Text('Hesabınızdan çıkmak istiyor musunuz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Çıkış'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await widget.session.signOut();
+  }
+
+  Future<void> _openJoinRequests() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => JoinRequestsScreen(session: widget.session),
+      ),
+    );
+  }
+
+  Future<void> _openManageClinics() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ManageClinicsScreen(session: widget.session),
+      ),
+    );
+  }
+
+  void _showClinicInfo() {
+    final clinic = widget.session.clinic;
+    final member = widget.session.member;
+    if (clinic == null || member == null) return;
+    final memberships = widget.session.memberships;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Kliniklerim',
+                    style: Theme.of(ctx).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${member.adSoyad} · ${member.rol.label}',
+                    style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...memberships.map((m) {
+                    final selected = m.klinikId == clinic.id;
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        selected
+                            ? Icons.check_circle
+                            : Icons.apartment_outlined,
+                        color: selected
+                            ? Theme.of(ctx).colorScheme.primary
+                            : null,
+                      ),
+                      title: Text(m.clinic.ad),
+                      subtitle: Text('${m.member.rol.label} · ${m.clinic.kod}'),
+                      trailing: selected
+                          ? IconButton(
+                              tooltip: 'Kodu kopyala',
+                              onPressed: () =>
+                                  copyClinicCode(ctx, m.clinic.kod),
+                              icon: const Icon(Icons.copy),
+                            )
+                          : null,
+                      onTap: selected
+                          ? null
+                          : () async {
+                              Navigator.pop(ctx);
+                              await widget.session.selectClinic(m.klinikId);
+                            },
+                    );
+                  }),
+                  const Divider(height: 28),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.vpn_key_outlined),
+                    title: const Text('Aktif klinik kodu'),
+                    subtitle: Text(
+                      clinic.kod,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    trailing: IconButton(
+                      tooltip: 'Kopyala',
+                      onPressed: () => copyClinicCode(ctx, clinic.kod),
+                      icon: const Icon(Icons.copy),
+                    ),
+                  ),
+                  Text(
+                    'Kodu paylaşın; katılan kişi onayınızı bekler. '
+                    'Anında üye olmaz.',
+                    style: Theme.of(ctx).textTheme.bodySmall,
+                  ),
+                  if (widget.session.isActiveClinicAdmin) ...[
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _openJoinRequests();
+                      },
+                      icon: Badge(
+                        isLabelVisible:
+                            widget.session.pendingJoinCountForActiveClinic > 0,
+                        label: Text(
+                          '${widget.session.pendingJoinCountForActiveClinic}',
+                        ),
+                        child: const Icon(Icons.person_add_alt_1),
+                      ),
+                      label: Text(
+                        widget.session.pendingJoinCountForActiveClinic > 0
+                            ? 'Katılım istekleri (${widget.session.pendingJoinCountForActiveClinic})'
+                            : 'Katılım istekleri',
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openManageClinics();
+                    },
+                    icon: const Icon(Icons.add_business_outlined),
+                    label: const Text('Başka klinik ekle / katıl'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _confirmSignOut();
+                    },
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Çıkış yap'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final clinicName = widget.session.clinic?.ad ?? 'Klinik Asistan';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Klinik Asistan'),
+        title: InkWell(
+          onTap: _showClinicInfo,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    clinicName,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.expand_more,
+                  size: 20,
+                  color: scheme.onPrimary.withValues(alpha: 0.9),
+                ),
+              ],
+            ),
+          ),
+        ),
         actions: [
+          IconButton(
+            tooltip: _themeTooltip(context),
+            onPressed: () => KlinikAsistanApp.of(context)?.cycleThemeMode(),
+            icon: Icon(_themeIcon(context)),
+          ),
+          IconButton(
+            tooltip: 'Klinikler',
+            onPressed: _showClinicInfo,
+            icon: Badge(
+              isLabelVisible:
+                  widget.session.pendingJoinCountForActiveClinic > 0 ||
+                      widget.session.hasMultipleClinics,
+              label: widget.session.pendingJoinCountForActiveClinic > 0
+                  ? Text('${widget.session.pendingJoinCountForActiveClinic}')
+                  : null,
+              smallSize: widget.session.pendingJoinCountForActiveClinic > 0
+                  ? null
+                  : 8,
+              child: const Icon(Icons.apartment_outlined),
+            ),
+          ),
           IconButton(
             tooltip: 'Yeni Hasta',
             onPressed: _showAddPatient,
@@ -206,9 +431,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
                 onChanged: _onSearchChanged,
                 elevation: const WidgetStatePropertyAll(0),
-                backgroundColor: WidgetStatePropertyAll(
-                  scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                ),
               ),
             ),
           ),
@@ -221,6 +443,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         label: const Text('Hasta Ekle'),
       ),
     );
+  }
+
+  IconData _themeIcon(BuildContext context) {
+    final mode = KlinikAsistanApp.of(context)?.themeMode ?? ThemeMode.system;
+    return switch (mode) {
+      ThemeMode.light => Icons.light_mode_outlined,
+      ThemeMode.dark => Icons.dark_mode_outlined,
+      ThemeMode.system => Icons.brightness_auto_outlined,
+    };
+  }
+
+  String _themeTooltip(BuildContext context) {
+    final mode = KlinikAsistanApp.of(context)?.themeMode ?? ThemeMode.system;
+    return switch (mode) {
+      ThemeMode.light => 'Açık tema (WhatsApp)',
+      ThemeMode.dark => 'Koyu tema (WhatsApp)',
+      ThemeMode.system => 'Sistem teması',
+    };
   }
 
   Widget _buildBody(ColorScheme scheme) {

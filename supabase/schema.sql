@@ -94,3 +94,7 @@ create policy "seans_foto_anon_upload"
 create policy "seans_foto_anon_update"
   on storage.objects for update
   using (bucket_id = 'seans-fotograflari');
+
+create policy "seans_foto_anon_delete"
+  on storage.objects for delete
+  using (bucket_id = 'seans-fotograflari');

@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/patient.dart';
 import '../models/voice_memo.dart';
 import '../services/database_service.dart';
+import '../services/storage_media.dart';
+import '../theme/app_theme.dart';
 import 'new_session_dialog.dart';
 
 class VoiceMemoTile extends StatefulWidget {
@@ -29,12 +34,19 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
   final _player = AudioPlayer();
   bool _playing = false;
   bool _busy = false;
+  bool _loadingAudio = false;
 
   @override
   void initState() {
     super.initState();
     _player.onPlayerComplete.listen((_) {
       if (mounted) setState(() => _playing = false);
+    });
+    _player.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      if (state == PlayerState.stopped || state == PlayerState.completed) {
+        setState(() => _playing = false);
+      }
     });
   }
 
@@ -44,17 +56,70 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
     super.dispose();
   }
 
+  Future<File> _cacheRemoteAudio(String url) async {
+    final path = StorageMedia.pathFromUrl(url);
+    final ext = (path ?? url).split('.').last.toLowerCase();
+    final safeExt = (ext.length <= 4 && ext.isNotEmpty) ? ext : 'wav';
+    final dir = await getTemporaryDirectory();
+    final file = File(
+      '${dir.path}${Platform.pathSeparator}voice_cache_${widget.memo.id}.$safeExt',
+    );
+
+    if (await file.exists() && await file.length() > 0) {
+      return file;
+    }
+
+    final bytes = await StorageMedia.downloadBytes(url);
+    if (bytes.isEmpty) {
+      throw Exception('Ses dosyası boş');
+    }
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
+  }
+
   Future<void> _togglePlay() async {
     if (_playing) {
       await _player.stop();
       setState(() => _playing = false);
       return;
     }
+
+    setState(() => _loadingAudio = true);
     try {
-      await _player.play(UrlSource(widget.memo.dosyaUrl));
-      setState(() => _playing = true);
+      // Uzaktan URL yerine yerel dosya — Android MEDIA_ERROR_UNKNOWN azaltır
+      final file = await _cacheRemoteAudio(widget.memo.dosyaUrl);
+
+      await _player.setAudioContext(
+        AudioContext(
+          android: AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: false,
+            contentType: AndroidContentType.speech,
+            usageType: AndroidUsageType.media,
+            audioFocus: AndroidAudioFocus.gain,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+          ),
+        ),
+      );
+      await _player.setReleaseMode(ReleaseMode.stop);
+      await _player.play(
+        DeviceFileSource(file.path),
+        mode: PlayerMode.mediaPlayer,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _playing = true;
+        _loadingAudio = false;
+      });
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _playing = false;
+        _loadingAudio = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Çalınamadı: $e')),
       );
@@ -136,10 +201,10 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
       decoration: BoxDecoration(
         color: memo.islenen
             ? scheme.surfaceContainerHighest.withValues(alpha: 0.35)
-            : scheme.tertiaryContainer.withValues(alpha: 0.4),
+            : AppTheme.voiceAccent.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: memo.islenen ? scheme.outlineVariant : scheme.tertiary,
+          color: memo.islenen ? scheme.outlineVariant : AppTheme.voiceAccent,
         ),
       ),
       child: Column(
@@ -150,7 +215,9 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
               Icon(
                 Icons.mic,
                 size: 18,
-                color: memo.islenen ? scheme.onSurfaceVariant : scheme.tertiary,
+                color: memo.islenen
+                    ? scheme.onSurfaceVariant
+                    : AppTheme.voiceAccentDark,
               ),
               const SizedBox(width: 6),
               Text(
@@ -159,7 +226,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
                   fontWeight: FontWeight.w700,
                   color: memo.islenen
                       ? scheme.onSurfaceVariant
-                      : scheme.onTertiaryContainer,
+                      : AppTheme.voiceAccentDark,
                 ),
               ),
               const Spacer(),
@@ -180,8 +247,14 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
           Row(
             children: [
               IconButton.filledTonal(
-                onPressed: _busy ? null : _togglePlay,
-                icon: Icon(_playing ? Icons.stop : Icons.play_arrow),
+                onPressed: (_busy || _loadingAudio) ? null : _togglePlay,
+                icon: _loadingAudio
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(_playing ? Icons.stop : Icons.play_arrow),
                 tooltip: _playing ? 'Durdur' : 'Dinle',
               ),
               if (!memo.islenen)

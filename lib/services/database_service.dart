@@ -7,13 +7,28 @@ import '../config/supabase_config.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
+import 'session_controller.dart';
 
 class DatabaseService {
-  DatabaseService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+  DatabaseService({
+    required SessionController session,
+    SupabaseClient? client,
+  })  : _session = session,
+        _client = client ?? Supabase.instance.client;
 
+  final SessionController _session;
   final SupabaseClient _client;
   final _uuid = const Uuid();
+
+  String get _requireKlinikId {
+    final id = _session.klinikId;
+    if (id == null || id.isEmpty) {
+      throw StateError('Klinik seçili değil — önce giriş yapın.');
+    }
+    return id;
+  }
+
+  String? get _userId => _session.user?.id;
 
   // ── Hastalar ──────────────────────────────────────────────
 
@@ -25,10 +40,11 @@ class DatabaseService {
     int offset = 0,
     int limit = defaultPatientPageSize,
   }) async {
+    final klinikId = _requireKlinikId;
     final from = offset < 0 ? 0 : offset;
     final to = from + limit - 1;
 
-    var builder = _client.from('hastalar').select();
+    var builder = _client.from('hastalar').select().eq('klinik_id', klinikId);
 
     final q = query?.trim();
     if (q != null && q.isNotEmpty) {
@@ -62,6 +78,7 @@ class DatabaseService {
     final row = await _client
         .from('hastalar')
         .insert({
+          'klinik_id': _requireKlinikId,
           'ad_soyad': adSoyad.trim(),
           if (telefon != null && telefon.trim().isNotEmpty)
             'telefon': telefon.trim(),
@@ -173,6 +190,8 @@ class DatabaseService {
   }) async {
     final payload = {
       'hasta_id': hastaId,
+      'klinik_id': _requireKlinikId,
+      if (_userId != null) 'olusturan_user_id': _userId,
       'kapsam': kapsam.value,
       'dis_no': kapsam == TreatmentScope.tekDis ? disNo : null,
       'islem_baslik': islemBaslik,
@@ -376,6 +395,7 @@ class DatabaseService {
         .from('ses_kayitlari')
         .insert({
           'hasta_id': hastaId,
+          'klinik_id': _requireKlinikId,
           'dosya_url': url,
           if (sureSaniye != null) 'sure_saniye': sureSaniye,
         })

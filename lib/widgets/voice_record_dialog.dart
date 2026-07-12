@@ -8,6 +8,7 @@ import 'package:record/record.dart';
 
 import '../models/patient.dart';
 import '../services/database_service.dart';
+import '../theme/app_theme.dart';
 
 Future<bool?> showVoiceRecordDialog({
   required BuildContext context,
@@ -71,14 +72,16 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
     }
 
     final dir = await getTemporaryDirectory();
+    // WAV: Android MediaPlayer'da m4a/URL sorunlarını azaltır
     final path =
-        '${dir.path}${Platform.pathSeparator}ses_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        '${dir.path}${Platform.pathSeparator}ses_${DateTime.now().millisecondsSinceEpoch}.wav';
 
     await _recorder.start(
       const RecordConfig(
-        encoder: AudioEncoder.aacLc,
-        bitRate: 128000,
-        sampleRate: 44100,
+        encoder: AudioEncoder.wav,
+        numChannels: 1,
+        sampleRate: 16000,
+        bitRate: 256000,
       ),
       path: path,
     );
@@ -188,12 +191,12 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
                 shape: const CircleBorder(),
                 backgroundColor: _recording
                     ? scheme.errorContainer
-                    : scheme.primaryContainer,
+                    : AppTheme.voiceAccent.withValues(alpha: 0.2),
               ),
               child: Icon(
                 _recording ? Icons.mic : Icons.mic_none,
                 size: 36,
-                color: _recording ? scheme.error : scheme.primary,
+                color: _recording ? scheme.error : AppTheme.voiceAccentDark,
               ),
             ),
           if (_saving) const CircularProgressIndicator(),
