@@ -2,11 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
+import '../data/treatment_templates.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
+import 'cloud_upload_overlay.dart';
 import 'kanal_params_section.dart';
 import 'photo_preview.dart';
 import 'tooth_selector.dart';
@@ -68,6 +71,11 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
   File? _newPhoto;
   bool _removePhoto = false;
   bool _saving = false;
+  String _uploadMessage = 'Kaydediliyor…';
+  late DateTime _sessionDate;
+  String? _validationError;
+  List<TreatmentTemplate> _templates =
+      List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
 
   bool get _showKanal {
     final t = _titleController.text.toLowerCase();
@@ -75,6 +83,20 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
         (widget.note.kanalBoyu?.isNotEmpty == true) ||
         widget.note.egeSistemi != null ||
         widget.note.kanalIlaci != null;
+  }
+
+  bool get _requiresTooth {
+    if (_showKanal) return true;
+    return findTreatmentTemplate(
+          _titleController.text,
+          inList: _templates,
+        )?.requiresTooth ??
+        false;
+  }
+
+  List<TreatmentScope> get _availableScopes {
+    if (_requiresTooth) return const [TreatmentScope.tekDis];
+    return TreatmentScope.values;
   }
 
   String? get _activeTooth {
@@ -95,6 +117,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
     _egeSistemi = n.egeSistemi;
     _kanalIlaci = n.kanalIlaci;
     _existingPhotoUrl = n.fotografUrl;
+    _sessionDate = n.tarih.toLocal();
 
     final parsed = parseKanalBoyu(n.kanalBoyu);
     final typical = canalsForTooth(
@@ -106,6 +129,15 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
         k: TextEditingController(text: parsed[k] ?? ''),
     };
     _titleController.addListener(() => setState(() {}));
+    _loadTemplates();
+  }
+
+  Future<void> _loadTemplates() async {
+    try {
+      final list = await widget.db.ensureTreatmentTemplates();
+      if (!mounted) return;
+      setState(() => _templates = list);
+    } catch (_) {}
   }
 
   @override
@@ -202,22 +234,51 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
     });
   }
 
+  Future<void> _pickSessionDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _sessionDate.isAfter(today) ? today : _sessionDate,
+      firstDate: DateTime(2000),
+      lastDate: today,
+      helpText: 'İşlem tarihi',
+      cancelText: 'İptal',
+      confirmText: 'Seç',
+    );
+    if (picked == null) return;
+    setState(() {
+      _sessionDate = sessionDateTimeForSave(picked);
+    });
+  }
+
   Future<void> _save() async {
-    if (_kapsam == TreatmentScope.tekDis && _selectedTeeth.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En az bir diş seçin')),
-      );
-      return;
-    }
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İşlem başlığı zorunludur')),
-      );
+      setState(() => _validationError = 'İşlem başlığı zorunludur');
       return;
     }
 
-    setState(() => _saving = true);
+    var kapsam = _kapsam;
+    if (_requiresTooth) {
+      kapsam = TreatmentScope.tekDis;
+      _kapsam = TreatmentScope.tekDis;
+    }
+
+    final needTeeth =
+        _requiresTooth || kapsam == TreatmentScope.tekDis;
+    if (needTeeth && _selectedTeeth.isEmpty) {
+      setState(() => _validationError = 'En az bir diş seçin');
+      return;
+    }
+
+    setState(() {
+      _validationError = null;
+      _saving = true;
+      _uploadMessage = _newPhoto != null
+          ? 'Fotoğraf buluta yükleniyor…'
+          : 'İşlem kaydediliyor…';
+    });
     try {
       String? photoUrl = _removePhoto ? null : _existingPhotoUrl;
       if (_newPhoto != null) {
@@ -225,6 +286,8 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
           hastaId: widget.patient.id,
           file: _newPhoto!,
         );
+        if (!mounted) return;
+        setState(() => _uploadMessage = 'İşlem kaydediliyor…');
       }
 
       final tooth = _selectedTeeth.length == 1 ? _selectedTeeth.first : null;
@@ -235,13 +298,13 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
           ? buildKanalBoyuText(_kanalControllers, onlyCodes: codes)
           : null;
 
-      final disNo = _kapsam == TreatmentScope.tekDis
+      final disNo = kapsam == TreatmentScope.tekDis
           ? formatToothSelection(_selectedTeeth)
           : null;
 
       final result = await widget.db.saveEditedNoteAsNewVersion(
         previous: widget.note,
-        kapsam: _kapsam,
+        kapsam: kapsam,
         disNo: disNo,
         islemBaslik: title,
         kanalBoyu: (kanalBoyu == null || kanalBoyu.isEmpty) ? null : kanalBoyu,
@@ -249,7 +312,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
         kanalIlaci: _showKanal ? _kanalIlaci : null,
         notIcerik: _noteController.text.trim(),
         fotografUrl: photoUrl,
-        tarih: widget.note.tarih,
+        tarih: _sessionDate,
       );
 
       if (!mounted) return;
@@ -263,10 +326,10 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kayıt başarısız: $e')),
-      );
+      setState(() {
+        _saving = false;
+        _validationError = 'Kayıt başarısız: $e';
+      });
     }
   }
 
@@ -276,12 +339,19 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
     final tooth = _selectedTeeth.length == 1 ? _selectedTeeth.first : null;
     final canalCodes =
         visibleCanalsForTooth(tooth, extras: _ekstraKanallar);
+    final scopes = _availableScopes;
+    final showToothSelector =
+        _requiresTooth || _kapsam == TreatmentScope.tekDis;
+    final effectiveKapsam =
+        _requiresTooth ? TreatmentScope.tekDis : _kapsam;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
-        child: Column(
+        child: Stack(
+          children: [
+            Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
@@ -292,7 +362,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Seansı düzenle',
+                          'İşlemi düzenle',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -323,14 +393,47 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kapsam',
+                      'İşlem tarihi',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                     ),
                     const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.event_outlined,
+                        color: scheme.primary,
+                      ),
+                      title: Text(
+                        DateFormat('dd.MM.yyyy HH:mm').format(_sessionDate),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      trailing: TextButton(
+                        onPressed: _saving ? null : _pickSessionDate,
+                        child: const Text('Değiştir'),
+                      ),
+                      onTap: _saving ? null : _pickSessionDate,
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Kapsam',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    if (_requiresTooth) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Bu işlem için diş seçimi zorunlu',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
                     SegmentedButton<TreatmentScope>(
-                      segments: TreatmentScope.values
+                      segments: scopes
                           .map(
                             (s) => ButtonSegment(
                               value: s,
@@ -338,7 +441,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                             ),
                           )
                           .toList(),
-                      selected: {_kapsam},
+                      selected: {effectiveKapsam},
                       onSelectionChanged: (set) {
                         setState(() {
                           _kapsam = set.first;
@@ -354,7 +457,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                         ),
                       ),
                     ),
-                    if (_kapsam == TreatmentScope.tekDis) ...[
+                    if (showToothSelector) ...[
                       const SizedBox(height: 14),
                       ToothSelector(
                         selected: _selectedTeeth,
@@ -463,6 +566,37 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
               ),
             ),
             const Divider(height: 1),
+            if (_validationError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Material(
+                  color: scheme.errorContainer,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 20,
+                          color: scheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _validationError!,
+                            style: TextStyle(
+                              color: scheme.onErrorContainer,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               child: FilledButton.icon(
@@ -475,9 +609,15 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                       )
                     : const Icon(Icons.save),
                 label: Text(
-                  _saving ? 'Kaydediliyor…' : 'Yeni sürüm olarak kaydet',
+                  _saving ? _uploadMessage : 'Yeni sürüm olarak kaydet',
                 ),
               ),
+            ),
+          ],
+            ),
+            CloudUploadOverlay(
+              visible: _saving,
+              message: _uploadMessage,
             ),
           ],
         ),

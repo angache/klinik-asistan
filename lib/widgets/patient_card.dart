@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../models/patient.dart';
 import '../screens/patient_detail_screen.dart';
@@ -40,7 +41,7 @@ class PatientCard extends StatelessWidget {
     );
     if (note == null || !context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Seans notu kaydedildi')),
+      const SnackBar(content: Text('İşlem kaydedildi')),
     );
   }
 
@@ -75,15 +76,19 @@ class PatientCard extends StatelessWidget {
         subtitle: Text(
           [
             (phone != null && phone.isNotEmpty) ? phone : 'Telefon yok',
+            if (patient.planlananBasliklar.isNotEmpty)
+              '→ ${patient.planlananBasliklar.join(', ')}',
             if (patient.sonIslemBaslik?.trim().isNotEmpty == true)
-              patient.sonIslemBaslik!.trim(),
+              patient.sonIslemTarih != null
+                  ? '${DateFormat('dd.MM.yyyy HH:mm').format(patient.sonIslemTarih!.toLocal())} · ${patient.sonIslemBaslik!.trim()}'
+                  : patient.sonIslemBaslik!.trim(),
           ].join('\n'),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              tooltip: 'Yeni seans',
+              tooltip: 'Yeni işlem',
               onPressed: () => _openNewSession(context),
               icon: const Icon(Icons.add_circle_outline),
             ),

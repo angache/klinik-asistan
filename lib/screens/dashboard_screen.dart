@@ -1,20 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
+import '../services/notification_service.dart';
 import '../services/session_controller.dart';
 import '../widgets/patient_card.dart';
 import 'auth_gate.dart';
+import 'clinic_todos_screen.dart';
 import 'clinic_members_screen.dart';
 import 'follow_ups_screen.dart';
 import 'join_requests_screen.dart';
 import 'manage_clinics_screen.dart';
 import 'patient_detail_screen.dart';
-import '../services/notification_service.dart';
+import 'treatment_templates_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
@@ -42,18 +45,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Object? _error;
   Timer? _debounce;
   int _followUpAttention = 0;
+  int _todoAttention = 0;
   String? _followUpError;
   Patient? _selectedPatient;
+  PatientListSort _sort = PatientListSort.lastVisit;
 
   static const _pageSize = DatabaseService.defaultPatientPageSize;
   static const _wideBreakpoint = 1000.0;
+  static const _sortPrefKey = 'patient_list_sort';
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _load(reset: true);
+    _restoreSortAndLoad();
     _loadFollowUpBadge();
+  }
+
+  Future<void> _restoreSortAndLoad() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sortPrefKey);
+      if (raw == PatientListSort.name.name) {
+        _sort = PatientListSort.name;
+      } else {
+        _sort = PatientListSort.lastVisit;
+      }
+    } catch (_) {}
+    if (!mounted) return;
+    await _load(reset: true);
+  }
+
+  Future<void> _setSort(PatientListSort sort) async {
+    if (sort == _sort) return;
+    setState(() => _sort = sort);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sortPrefKey, sort.name);
+    } catch (_) {}
+    await _load(reset: true);
   }
 
   Future<void> _loadFollowUpBadge() async {
@@ -61,6 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final results = await Future.wait([
         widget.db.countAttentionFollowUps(),
         widget.db.getOpenFollowUps(),
+        widget.db.countAttentionClinicTodos(),
       ]);
       await NotificationService.instance.syncOpenFollowUps(
         results[1] as List<FollowUp>,
@@ -68,6 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
       setState(() {
         _followUpAttention = results[0] as int;
+        _todoAttention = results[2] as int;
         _followUpError = null;
       });
     } catch (e) {
@@ -126,6 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         query: _query.isEmpty ? null : _query,
         offset: offset,
         limit: _pageSize,
+        sort: _sort,
       );
 
       if (!mounted) return;
@@ -262,6 +295,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _openTreatmentTemplates() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TreatmentTemplatesScreen(db: widget.db),
+      ),
+    );
+  }
+
   void _showClinicInfo() {
     final clinic = widget.session.clinic;
     final member = widget.session.member;
@@ -376,6 +417,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     icon: const Icon(Icons.group_outlined),
                     label: const Text('Üyeler'),
                   ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openTreatmentTemplates();
+                    },
+                    icon: const Icon(Icons.medical_services_outlined),
+                    label: const Text('İşlem şablonları'),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton.tonalIcon(
                     onPressed: () {
@@ -439,6 +489,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: _themeTooltip(context),
             onPressed: () => KlinikAsistanApp.of(context)?.cycleThemeMode(),
             icon: Icon(_themeIcon(context)),
+          ),
+          IconButton(
+            tooltip: 'Yapılacaklar',
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ClinicTodosScreen(db: widget.db),
+                ),
+              );
+              await _loadFollowUpBadge();
+            },
+            icon: Badge(
+              isLabelVisible: _todoAttention > 0,
+              label: Text('$_todoAttention'),
+              child: const Icon(Icons.checklist_rtl_outlined),
+            ),
           ),
           IconButton(
             tooltip: 'Takipler',
@@ -520,22 +586,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: scheme.surface,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  child: SearchBar(
-                    controller: _searchController,
-                    hintText: 'Hasta ara (ad veya telefon)…',
-                    leading: const Icon(Icons.search),
-                    trailing: [
-                      if (_searchController.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _onSearchChanged('');
-                          },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SearchBar(
+                        controller: _searchController,
+                        hintText: 'Hasta ara (ad veya telefon)…',
+                        leading: const Icon(Icons.search),
+                        trailing: [
+                          if (_searchController.text.isNotEmpty)
+                            IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            ),
+                        ],
+                        onChanged: _onSearchChanged,
+                        elevation: const WidgetStatePropertyAll(0),
+                      ),
+                      const SizedBox(height: 10),
+                      SegmentedButton<PatientListSort>(
+                        segments: const [
+                          ButtonSegment(
+                            value: PatientListSort.name,
+                            label: Text('A–Z'),
+                            icon: Icon(Icons.sort_by_alpha, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: PatientListSort.lastVisit,
+                            label: Text('Son işlem'),
+                            icon: Icon(Icons.schedule, size: 18),
+                          ),
+                        ],
+                        selected: {_sort},
+                        onSelectionChanged: (s) {
+                          if (s.isEmpty) return;
+                          _setSort(s.first);
+                        },
+                        showSelectedIcon: false,
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          textStyle: WidgetStatePropertyAll(
+                            Theme.of(context).textTheme.labelMedium,
+                          ),
                         ),
+                      ),
                     ],
-                    onChanged: _onSearchChanged,
-                    elevation: const WidgetStatePropertyAll(0),
                   ),
                 ),
               ),

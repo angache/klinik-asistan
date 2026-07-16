@@ -16,12 +16,14 @@ class TreatmentNoteTile extends StatelessWidget {
     required this.patient,
     required this.db,
     this.onChanged,
+    this.showDate = true,
   });
 
   final TreatmentNote note;
   final Patient patient;
   final DatabaseService db;
   final Future<void> Function()? onChanged;
+  final bool showDate;
 
   Future<void> _edit(BuildContext context) async {
     final ok = await showEditSessionDialog(
@@ -42,7 +44,7 @@ class TreatmentNoteTile extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Seans notunu sil'),
+        title: const Text('İşlemi sil'),
         content: const Text(
           'Bu not ve varsa önceki sürümleri kalıcı olarak silinecek.',
         ),
@@ -63,13 +65,13 @@ class TreatmentNoteTile extends StatelessWidget {
       await db.deleteNote(note);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seans notu silindi')),
+        const SnackBar(content: Text('İşlem silindi')),
       );
       await onChanged?.call();
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Seans notu silinemedi: $e')),
+        SnackBar(content: Text('İşlem silinemedi: $e')),
       );
     }
   }
@@ -77,7 +79,10 @@ class TreatmentNoteTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dateStr = DateFormat('dd.MM.yyyy').format(note.tarih);
+    final local = note.tarih.toLocal();
+    final dateStr = showDate
+        ? DateFormat('dd.MM.yyyy HH:mm').format(local)
+        : DateFormat('HH:mm').format(local);
 
     return Container(
       width: double.infinity,
@@ -110,6 +115,27 @@ class TreatmentNoteTile extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: scheme.onTertiaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+              if (note.labGitti) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: scheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    note.labBeklenenTarih == null
+                        ? 'Lab'
+                        : 'Lab → ${DateFormat('dd.MM').format(note.labBeklenenTarih!)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSecondaryContainer,
                     ),
                   ),
                 ),

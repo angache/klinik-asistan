@@ -10,6 +10,7 @@ class FollowUp {
   final DateTime? tamamlanmaTarihi;
   final DateTime olusturmaTarihi;
   final String? hastaAdSoyad;
+  final String tur;
 
   const FollowUp({
     required this.id,
@@ -23,6 +24,7 @@ class FollowUp {
     this.tamamlanmaTarihi,
     required this.olusturmaTarihi,
     this.hastaAdSoyad,
+    this.tur = 'genel',
   });
 
   factory FollowUp.fromJson(Map<String, dynamic> json) {
@@ -46,8 +48,11 @@ class FollowUp {
           : null,
       olusturmaTarihi: DateTime.parse(json['olusturma_tarihi'] as String),
       hastaAdSoyad: hastaAd,
+      tur: json['tur'] as String? ?? 'genel',
     );
   }
+
+  bool get isLab => tur == 'lab';
 
   DateTime get planDateOnly => DateTime(
         planlananTarih.year,

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
 import '../data/treatment_templates.dart';
@@ -9,8 +10,8 @@ import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
-import 'follow_up_planner.dart';
 import 'kanal_params_section.dart';
+import 'cloud_upload_overlay.dart';
 import 'photo_preview.dart';
 import 'tooth_selector.dart';
 
@@ -60,7 +61,7 @@ class NewSessionDialog extends StatefulWidget {
 }
 
 class _NewSessionDialogState extends State<NewSessionDialog> {
-  TreatmentScope _kapsam = TreatmentScope.tumAgiz;
+  TreatmentScope? _kapsam;
   Set<String> _selectedTeeth = {};
   TreatmentTemplate? _selectedTemplate;
   bool _showKanal = false;
@@ -77,13 +78,87 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
   File? _photo;
   bool _saving = false;
-
-  bool _planFollowUp = false;
-  int? _followUpPresetDays = 30;
-  DateTime? _followUpCustomDate;
-  final _followUpNoteCtrl = TextEditingController();
+  String _uploadMessage = 'Kaydediliyor…';
+  late DateTime _sessionDate;
+  List<TreatmentTemplate> _templates =
+      List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
+  bool _templatesLoading = true;
+  bool _planForNext = false;
+  bool _labSent = false;
+  DateTime? _labReturnDate;
+  String? _validationError;
 
   final _picker = ImagePicker();
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _sessionDate = DateTime(now.year, now.month, now.day);
+    _loadTemplates();
+  }
+
+  Future<void> _loadTemplates() async {
+    try {
+      final list = await widget.db.ensureTreatmentTemplates();
+      if (!mounted) return;
+      setState(() {
+        _templates = list;
+        _templatesLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _templatesLoading = false);
+    }
+  }
+
+  DateTime get _today {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  bool get _isPastSession => _sessionDate.isBefore(_today);
+
+  bool get _requiresTooth {
+    if (_showKanal) return true;
+    final fromSelection = _selectedTemplate;
+    if (fromSelection != null) return fromSelection.requiresTooth;
+    final fromTitle =
+        findTreatmentTemplate(_titleController.text, inList: _templates);
+    return fromTitle?.requiresTooth ?? false;
+  }
+
+  TreatmentTemplate? get _resolvedTemplate =>
+      _selectedTemplate ??
+      findTreatmentTemplate(_titleController.text, inList: _templates);
+
+  /// Şablonda “Lab takibi” açık olan işlemlerde gösterilir.
+  bool get _labEligible => _resolvedTemplate?.labTakip == true;
+
+  List<TreatmentScope> get _availableScopes {
+    if (_requiresTooth) return const [TreatmentScope.tekDis];
+    return TreatmentScope.values;
+  }
+
+  Future<void> _pickSessionDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _sessionDate,
+      firstDate: DateTime(2000),
+      lastDate: _today,
+      helpText: 'İşlem tarihi',
+      cancelText: 'İptal',
+      confirmText: 'Seç',
+    );
+    if (picked == null) return;
+    setState(() {
+      _sessionDate = DateTime(picked.year, picked.month, picked.day);
+    });
+  }
+
+  DateTime get _sessionDateTimeForSave =>
+      sessionDateTimeForSave(_sessionDate);
 
   TextEditingController _controllerFor(String kod) {
     return _kanalControllers.putIfAbsent(kod, TextEditingController.new);
@@ -105,13 +180,31 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _noteController.dispose();
     _titleController.dispose();
-    _followUpNoteCtrl.dispose();
     for (final c in _kanalControllers.values) {
       c.dispose();
     }
     super.dispose();
+  }
+
+  void _showFormError(String message) {
+    setState(() => _validationError = message);
+    // Dialog üstündeki snackbar görünmez; formu hatalı alana kaydır.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  void _clearFormError() {
+    if (_validationError == null) return;
+    setState(() => _validationError = null);
   }
 
   void _persistActiveKanal() {
@@ -282,15 +375,48 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
   void _applyTemplate(TreatmentTemplate template) {
     setState(() {
+      _validationError = null;
       _selectedTemplate = template;
       _titleController.text = template.baslik;
       _showKanal = template.isKanal;
+      if (template.requiresTooth || template.isKanal) {
+        _kapsam = TreatmentScope.tekDis;
+      }
+      if (!template.labTakip) {
+        _labSent = false;
+        _labReturnDate = null;
+      }
       if (!template.isKanal) {
         _kanalByTooth.clear();
         _activeKanalTooth = null;
         for (final c in _kanalControllers.values) {
           c.clear();
         }
+      } else {
+        _syncKanalDraftsWithSelection(_selectedTeeth);
+      }
+    });
+  }
+
+  void _onTitleChanged(String _) {
+    final match =
+        findTreatmentTemplate(_titleController.text, inList: _templates);
+    setState(() {
+      _selectedTemplate = match;
+      _showKanal = match?.isKanal == true ||
+          _titleController.text.toLowerCase().contains('kanal');
+      if (match?.labTakip != true) {
+        _labSent = false;
+        _labReturnDate = null;
+      }
+      if (_requiresTooth) {
+        _kapsam = TreatmentScope.tekDis;
+      } else if (_kapsam != null && !_availableScopes.contains(_kapsam)) {
+        _kapsam = null;
+      }
+      if (!_showKanal) {
+        _kanalByTooth.clear();
+        _activeKanalTooth = null;
       } else {
         _syncKanalDraftsWithSelection(_selectedTeeth);
       }
@@ -340,28 +466,59 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
     }
   }
 
+  Future<void> _pickLabReturnDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final initial = _labReturnDate ?? today.add(const Duration(days: 7));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isBefore(today) ? today : initial,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+      helpText: 'Beklenen lab dönüşü',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _labReturnDate = picked);
+  }
+
   Future<void> _save() async {
-    if (_kapsam == TreatmentScope.tekDis && _selectedTeeth.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En az bir diş seçin')),
-      );
-      return;
-    }
-
     final title = _titleController.text.trim();
-    final note = _noteController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İşlem başlığı zorunludur')),
-      );
+      _showFormError('İşlem seçin veya işlem başlığı yazın');
       return;
     }
 
-    if (_showKanal && _kapsam == TreatmentScope.tekDis) {
+    final kapsam = _kapsam;
+    if (kapsam == null) {
+      _showFormError('Kapsam seçin');
+      return;
+    }
+
+    final needTeeth =
+        _requiresTooth || kapsam == TreatmentScope.tekDis;
+    if (needTeeth && _selectedTeeth.isEmpty) {
+      _showFormError('En az bir diş seçin');
+      return;
+    }
+
+    final labActive = !_planForNext && _labEligible && _labSent;
+    if (labActive && _labReturnDate == null) {
+      _showFormError('Lab beklenen dönüş tarihini seçin');
+      return;
+    }
+
+    setState(() => _validationError = null);
+    final note = _noteController.text.trim();
+
+    if (_showKanal && kapsam == TreatmentScope.tekDis) {
       _persistActiveKanal();
     }
 
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _uploadMessage =
+          _photo != null ? 'Fotoğraf buluta yükleniyor…' : 'İşlem kaydediliyor…';
+    });
 
     try {
       String? sharedPhotoUrl;
@@ -371,9 +528,11 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
           hastaId: widget.patient.id,
           file: _photo!,
         );
+        if (!mounted) return;
+        setState(() => _uploadMessage = 'İşlem kaydediliyor…');
       }
 
-      if (_showKanal && _kapsam == TreatmentScope.tekDis) {
+      if (_showKanal && kapsam == TreatmentScope.tekDis) {
         // Her diş ayrı seans notu (kanal boyları dişe özel)
         for (final tooth in _orderedTeeth) {
           final draft = _kanalByTooth[tooth] ?? _KanalDraft();
@@ -393,45 +552,48 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
             kanalIlaci: draft.kanalIlaci,
             notIcerik: note,
             fotografUrl: sharedPhotoUrl,
+            tarih: _sessionDateTimeForSave,
+            planlandi: _planForNext,
+            labGitti: labActive,
+            labBeklenenTarih: labActive ? _labReturnDate : null,
           );
           createdNote ??= savedNote;
         }
       } else {
-        final disNo = _kapsam == TreatmentScope.tekDis
+        final disNo = kapsam == TreatmentScope.tekDis
             ? formatToothSelection(_selectedTeeth)
             : null;
 
         createdNote = await widget.db.saveNoteWithOptionalPhoto(
           hastaId: widget.patient.id,
-          kapsam: _kapsam,
+          kapsam: kapsam,
           disNo: disNo,
           islemBaslik: title,
           notIcerik: note,
           fotografUrl: sharedPhotoUrl,
+          tarih: _sessionDateTimeForSave,
+          planlandi: _planForNext,
+          labGitti: labActive,
+          labBeklenenTarih: labActive ? _labReturnDate : null,
         );
       }
 
       final noteForFollowUp = createdNote;
       if (noteForFollowUp == null) {
-        throw StateError('Seans notu oluşturulamadı');
+        throw StateError('İşlem oluşturulamadı');
       }
 
-      if (_planFollowUp) {
-        final when = _followUpPresetDays != null
-            ? FollowUpPlanner.dateFromPreset(_followUpPresetDays!)
-            : _followUpCustomDate;
-        if (when == null) {
-          throw Exception('Takip tarihi seçin');
-        }
-        final followNote = _followUpNoteCtrl.text.trim();
-        final followUp = await widget.db.createFollowUp(
+      if (labActive && _labReturnDate != null) {
+        if (!mounted) return;
+        setState(() => _uploadMessage = 'Lab hatırlatması oluşturuluyor…');
+        final labFollowUp = await widget.db.createLabReminder(
           hastaId: widget.patient.id,
-          baslik: followNote.isNotEmpty ? followNote : '$title — kontrol',
-          planlananTarih: when,
-          aciklama: followNote.isEmpty ? null : followNote,
+          islemBaslik: title,
+          beklenenDonus: _labReturnDate!,
           seansNotuId: noteForFollowUp.id,
+          hastaAdSoyad: widget.patient.adSoyad,
         );
-        await NotificationService.instance.scheduleFollowUp(followUp);
+        await NotificationService.instance.scheduleFollowUp(labFollowUp);
       }
 
       if (!mounted) return;
@@ -439,9 +601,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kayıt başarısız: $e')),
-      );
+      _showFormError('Kayıt başarısız: $e');
     }
   }
 
@@ -449,17 +609,22 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final categories = <String>{
-      for (final t in kTreatmentTemplates) t.kategori,
+      for (final t in _templates) t.kategori,
     }.toList();
 
     final kanalMulti = _showKanal &&
         _kapsam == TreatmentScope.tekDis &&
         _selectedTeeth.isNotEmpty;
     final saveLabel = _saving
-        ? 'Kaydediliyor…'
-        : (kanalMulti && _selectedTeeth.length > 1)
-            ? '${_selectedTeeth.length} diş kaydet'
-            : 'Kaydet';
+        ? _uploadMessage
+        : _planForNext
+            ? 'Sonraki seansa planla'
+            : (kanalMulti && _selectedTeeth.length > 1)
+                ? '${_selectedTeeth.length} diş kaydet'
+                : 'Kaydet';
+    final scopes = _availableScopes;
+    final showToothSelector =
+        _requiresTooth || _kapsam == TreatmentScope.tekDis;
 
     final activeDraft = _activeKanalTooth == null
         ? null
@@ -469,7 +634,9 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
-        child: Column(
+        child: Stack(
+          children: [
+            Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
@@ -480,7 +647,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Yeni Seans Notu',
+                          'Yeni İşlem',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -506,52 +673,77 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
             const Divider(height: 1),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_validationError != null) ...[
+                      Material(
+                        color: scheme.errorContainer,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: scheme.onErrorContainer,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _validationError!,
+                                  style: TextStyle(
+                                    color: scheme.onErrorContainer,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Kapat',
+                                visualDensity: VisualDensity.compact,
+                                onPressed: _clearFormError,
+                                icon: Icon(
+                                  Icons.close,
+                                  color: scheme.onErrorContainer,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
                     Text(
-                      'Kapsam',
+                      'İşlem tarihi',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                     ),
                     const SizedBox(height: 8),
-                    SegmentedButton<TreatmentScope>(
-                      segments: TreatmentScope.values
-                          .map(
-                            (s) => ButtonSegment(
-                              value: s,
-                              label: Text(s.label, textAlign: TextAlign.center),
-                            ),
-                          )
-                          .toList(),
-                      selected: {_kapsam},
-                      onSelectionChanged: (set) {
-                        setState(() {
-                          _kapsam = set.first;
-                          if (_kapsam != TreatmentScope.tekDis) {
-                            _selectedTeeth = {};
-                            if (_showKanal) {
-                              _syncKanalDraftsWithSelection({});
-                            }
-                          }
-                        });
-                      },
-                      style: const ButtonStyle(
-                        visualDensity: VisualDensity.compact,
-                        textStyle: WidgetStatePropertyAll(
-                          TextStyle(fontSize: 12),
-                        ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.event_outlined,
+                        color: scheme.primary,
                       ),
+                      title: Text(
+                        DateFormat('dd.MM.yyyy').format(_sessionDate),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        _isPastSession
+                            ? 'Geçmiş kayıt (defterden aktarım)'
+                            : 'Bugün',
+                      ),
+                      trailing: TextButton(
+                        onPressed: _saving ? null : _pickSessionDate,
+                        child: const Text('Değiştir'),
+                      ),
+                      onTap: _saving ? null : _pickSessionDate,
                     ),
-                    if (_kapsam == TreatmentScope.tekDis) ...[
-                      const SizedBox(height: 14),
-                      ToothSelector(
-                        selected: _selectedTeeth,
-                        onChanged: _onTeethChanged,
-                      ),
-                    ],
                     const SizedBox(height: 18),
                     Text(
                       'İşlem',
@@ -559,9 +751,16 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                             fontWeight: FontWeight.w600,
                           ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'En az bir işlem seçin veya başlık yazın',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
                     const SizedBox(height: 8),
                     ...categories.map((cat) {
-                      final items = kTreatmentTemplates
+                      final items = _templates
                           .where((t) => t.kategori == cat)
                           .toList();
                       return Padding(
@@ -577,19 +776,27 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                   ?.copyWith(color: scheme.primary),
                             ),
                             const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: items.map((t) {
-                                final selected = _selectedTemplate == t;
-                                return FilterChip(
-                                  label: Text(t.baslik),
-                                  selected: selected,
-                                  onSelected: (_) => _applyTemplate(t),
-                                  showCheckmark: false,
-                                );
-                              }).toList(),
-                            ),
+                            if (_templatesLoading)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: LinearProgressIndicator(),
+                              )
+                            else
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: items.map((t) {
+                                  final selected = _selectedTemplate == t ||
+                                      (_selectedTemplate == null &&
+                                          _titleController.text == t.baslik);
+                                  return FilterChip(
+                                    label: Text(t.baslik),
+                                    selected: selected,
+                                    onSelected: (_) => _applyTemplate(t),
+                                    showCheckmark: false,
+                                  );
+                                }).toList(),
+                              ),
                           ],
                         ),
                       );
@@ -597,6 +804,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _titleController,
+                      onChanged: _onTitleChanged,
                       decoration: const InputDecoration(
                         labelText: 'İşlem Başlığı',
                       ),
@@ -612,6 +820,68 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                         alignLabelWithHint: true,
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Kapsam',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _requiresTooth
+                          ? 'Bu işlem için diş seçimi zorunlu'
+                          : _kapsam == null
+                              ? 'Kapsam seçimi zorunlu'
+                              : 'İşleme uygun kapsam',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    SegmentedButton<TreatmentScope>(
+                      emptySelectionAllowed: !_requiresTooth,
+                      segments: scopes
+                          .map(
+                            (s) => ButtonSegment(
+                              value: s,
+                              label: Text(s.label, textAlign: TextAlign.center),
+                            ),
+                          )
+                          .toList(),
+                      selected: {
+                        if (_kapsam != null && scopes.contains(_kapsam))
+                          _kapsam!,
+                      },
+                      onSelectionChanged: (set) {
+                        setState(() {
+                          if (_requiresTooth) {
+                            _kapsam = TreatmentScope.tekDis;
+                            return;
+                          }
+                          _kapsam = set.isEmpty ? null : set.first;
+                          if (_kapsam != TreatmentScope.tekDis) {
+                            _selectedTeeth = {};
+                            if (_showKanal) {
+                              _syncKanalDraftsWithSelection({});
+                            }
+                          }
+                        });
+                      },
+                      style: const ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                        textStyle: WidgetStatePropertyAll(
+                          TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                    if (showToothSelector) ...[
+                      const SizedBox(height: 14),
+                      ToothSelector(
+                        selected: _selectedTeeth,
+                        onChanged: _onTeethChanged,
+                      ),
+                    ],
                     if (_showKanal) ...[
                       const SizedBox(height: 14),
                       if (_kapsam != TreatmentScope.tekDis ||
@@ -748,40 +1018,195 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           ),
                         ],
                       ),
-                    const SizedBox(height: 16),
-                    FollowUpPlanner(
-                      enabled: _planFollowUp,
-                      onEnabledChanged: (v) =>
-                          setState(() => _planFollowUp = v),
-                      presetDays: _followUpPresetDays,
-                      onPresetChanged: (d) => setState(() {
-                        _followUpPresetDays = d;
-                        _followUpCustomDate = null;
-                      }),
-                      customDate: _followUpCustomDate,
-                      onPickDate: () async {
-                        final now = DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: now.add(const Duration(days: 30)),
-                          firstDate: now,
-                          lastDate: now.add(const Duration(days: 365 * 3)),
-                        );
-                        if (picked == null) return;
-                        setState(() {
-                          _followUpCustomDate = picked;
-                          _followUpPresetDays = null;
-                        });
-                      },
-                      noteController: _followUpNoteCtrl,
-                    ),
                   ],
                 ),
               ),
             ),
             const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _planForNext,
+                        onChanged: (_saving || _labSent)
+                            ? null
+                            : (v) => setState(() {
+                                  _planForNext = v ?? false;
+                                  if (_planForNext) {
+                                    _labSent = false;
+                                    _labReturnDate = null;
+                                  }
+                                }),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Sonraki seansa planla',
+                          style: _labSent
+                              ? TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.38),
+                                )
+                              : null,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: _labSent
+                            ? 'Lab’a gittiyse işlem yapılmış sayılır'
+                            : 'Bilgi',
+                        onPressed: () {
+                          showDialog<void>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Sonraki seansa planla'),
+                              content: Text(
+                                _labSent
+                                    ? 'Lab’a gitti işaretliyken bu seçenek kullanılamaz; '
+                                        'işlem bu seans yapılmış kabul edilir.'
+                                    : 'Bu işlem bugün yapılmadı kabul edilir. '
+                                        'Hasta bir sonraki gelişinde üstte uyarılır; '
+                                        '“Yapıldı” dendiğinde o günün işlem geçmişine eklenir.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Tamam'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.info_outline),
+                      ),
+                    ],
+                  ),
+                  if (_labEligible) ...[
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _labSent,
+                          onChanged: (_saving || _planForNext)
+                              ? null
+                              : (v) => setState(() {
+                                    _labSent = v ?? false;
+                                    if (_labSent) {
+                                      _planForNext = false;
+                                      if (_labReturnDate == null) {
+                                        final now = DateTime.now();
+                                        _labReturnDate = DateTime(
+                                          now.year,
+                                          now.month,
+                                          now.day,
+                                        ).add(const Duration(days: 7));
+                                      }
+                                    } else {
+                                      _labReturnDate = null;
+                                    }
+                                  }),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Lab’a gitti',
+                            style: _planForNext
+                                ? TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.38),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Bilgi',
+                          onPressed: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Lab’a gitti'),
+                                content: const Text(
+                                  'İş laboratuvara gönderildiğinde işaretleyin. '
+                                  'Beklenen dönüş tarihinden 1 gün önce takip '
+                                  'listesi ve bildirim hatırlatır. '
+                                  'Bu seçimde işlem yapılmış sayılır; '
+                                  '“Sonraki seansa planla” kapanır.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Tamam'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.info_outline),
+                        ),
+                      ],
+                    ),
+                    if (_labSent)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        child: InkWell(
+                          onTap: _saving ? null : _pickLabReturnDate,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Beklenen lab dönüşü',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                              suffixIcon: Icon(Icons.calendar_today, size: 18),
+                            ),
+                            child: Text(
+                              _labReturnDate == null
+                                  ? 'Tarih seçin'
+                                  : DateFormat('dd.MM.yyyy')
+                                      .format(_labReturnDate!),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            ),
+            if (_validationError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: Material(
+                  color: scheme.errorContainer,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 20,
+                          color: scheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _validationError!,
+                            style: TextStyle(
+                              color: scheme.onErrorContainer,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: FilledButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
@@ -790,9 +1215,15 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.save),
+                    : Icon(_planForNext ? Icons.event_available : Icons.save),
                 label: Text(saveLabel),
               ),
+            ),
+          ],
+            ),
+            CloudUploadOverlay(
+              visible: _saving,
+              message: _uploadMessage,
             ),
           ],
         ),

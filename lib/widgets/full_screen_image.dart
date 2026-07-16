@@ -38,7 +38,7 @@ class _FullScreenImageState extends State<FullScreenImage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Seans Fotoğrafı'),
+        title: const Text('İşlem Fotoğrafı'),
       ),
       body: Center(
         child: FutureBuilder<Uint8List>(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../models/follow_up.dart';
 import '../models/patient.dart';
@@ -6,6 +7,7 @@ import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
+import '../widgets/add_follow_up_dialog.dart';
 import '../widgets/new_session_dialog.dart';
 import '../widgets/treatment_note_tile.dart';
 import '../widgets/voice_memo_tile.dart';
@@ -65,6 +67,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         widget.db.getNotesForPatient(_patient.id),
         widget.db.getVoiceMemosForPatient(_patient.id),
         widget.db.getFollowUpsForPatient(_patient.id),
+        widget.db.getPatient(_patient.id),
       ]);
       if (!mounted) return;
       setState(() {
@@ -73,6 +76,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         _followUps = (results[2] as List<FollowUp>)
             .where((followUp) => !followUp.tamamlandi)
             .toList();
+        _patient = results[3] as Patient;
         _loading = false;
       });
     } catch (e) {
@@ -92,7 +96,13 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     );
     if (saved != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seans notu kaydedildi')),
+        SnackBar(
+          content: Text(
+            saved.planlandi
+                ? 'Sonraki seansa planlandı'
+                : 'İşlem kaydedildi',
+          ),
+        ),
       );
       await _reload();
     }
@@ -194,6 +204,40 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     }
   }
 
+  Future<void> _openAddFollowUp() async {
+    final created = await showAddFollowUpDialog(
+      context: context,
+      patient: _patient,
+      db: widget.db,
+    );
+    if (created == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Takip eklendi: ${created.baslik}')),
+    );
+    await _reload();
+  }
+
+  Future<void> _completePlannedNote(TreatmentNote note) async {
+    try {
+      await widget.db.completePlannedNote(note.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('İşlem yapıldı olarak kaydedildi')),
+      );
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Tamamlanamadı: $e\n'
+            'migration_planlanan_islem.sql çalıştırıldı mı?',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _completeFollowUp(FollowUp followUp) async {
     try {
       await widget.db.completeFollowUp(followUp.id);
@@ -245,12 +289,18 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     final phone = patient.telefon?.trim();
     final pending = _voices.where((v) => !v.islenen).toList();
     final done = _voices.where((v) => v.islenen).toList();
+    final planned = _notes.where((n) => n.planlandi).toList();
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: !widget.embedded,
         title: Text(patient.adSoyad),
         actions: [
+          IconButton(
+            tooltip: 'Takip ekle',
+            onPressed: _openAddFollowUp,
+            icon: const Icon(Icons.event_note_outlined),
+          ),
           IconButton(
             tooltip: 'Sesli not',
             onPressed: _openVoiceRecord,
@@ -278,7 +328,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewSession,
         icon: const Icon(Icons.add),
-        label: const Text('Yeni Seans'),
+        label: const Text('Yeni İşlem'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -332,6 +382,74 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               ),
             ),
           ),
+          if (planned.isNotEmpty)
+            Material(
+              color: scheme.errorContainer.withValues(alpha: 0.75),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.notification_important_outlined,
+                          color: scheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            planned.length == 1
+                                ? 'Planlanan işlem'
+                                : 'Planlanan işlemler (${planned.length})',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: scheme.onErrorContainer,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ...planned.map((note) {
+                      final scope = note.kapsam.badgeLabel(disNo: note.disNo);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '• ${note.islemBaslik} ($scope)',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: scheme.onErrorContainer,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => _completePlannedNote(note),
+                              child: Text(
+                                'Yapıldı',
+                                style: TextStyle(
+                                  color: scheme.onErrorContainer,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
           Expanded(child: _buildList(scheme, pending, done)),
         ],
       ),
@@ -370,7 +488,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       );
     }
 
-    final empty = _notes.isEmpty && _voices.isEmpty && _followUps.isEmpty;
+    final historyNotes = _notes.where((n) => !n.planlandi).toList();
+    final hasPlanned = _notes.any((n) => n.planlandi);
+    final empty = historyNotes.isEmpty &&
+        _voices.isEmpty &&
+        _followUps.isEmpty &&
+        !hasPlanned;
     if (empty) {
       return RefreshIndicator(
         onRefresh: _reload,
@@ -386,7 +509,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                     Icon(Icons.notes_outlined, size: 48, color: scheme.outline),
                     const SizedBox(height: 12),
                     Text(
-                      'Henüz kayıt yok.\nSesli not veya seans ekleyin.',
+                      'Henüz kayıt yok.\nSesli not veya işlem ekleyin.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),
@@ -406,23 +529,44 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
         children: [
           if (_followUps.isNotEmpty) ...[
-            Text(
-              'Açık takipler',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w600),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Açık takipler',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _openAddFollowUp,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Ekle'),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             ..._followUps.map(
               (followUp) => Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
+                  leading: Icon(
+                    followUp.isLab
+                        ? Icons.science_outlined
+                        : Icons.event_note_outlined,
+                  ),
                   title: Text(followUp.baslik),
                   subtitle: Text(
-                    '${followUp.planDateOnly.day.toString().padLeft(2, '0')}.'
-                    '${followUp.planDateOnly.month.toString().padLeft(2, '0')}.'
-                    '${followUp.planDateOnly.year}',
+                    followUp.isLab
+                        ? 'Lab hatırlatma: '
+                            '${followUp.planDateOnly.day.toString().padLeft(2, '0')}.'
+                            '${followUp.planDateOnly.month.toString().padLeft(2, '0')}.'
+                            '${followUp.planDateOnly.year}'
+                        : '${followUp.planDateOnly.day.toString().padLeft(2, '0')}.'
+                            '${followUp.planDateOnly.month.toString().padLeft(2, '0')}.'
+                            '${followUp.planDateOnly.year}',
                   ),
                   trailing: Wrap(
                     children: [
@@ -463,30 +607,23 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             const SizedBox(height: 12),
           ],
           Text(
-            'Seans geçmişi',
+            'İşlem geçmişi',
             style: Theme.of(context)
                 .textTheme
                 .titleSmall
                 ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          if (_notes.isEmpty)
+          if (historyNotes.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                'Henüz seans notu yok.',
+                'Henüz işlem yok.',
                 style: TextStyle(color: scheme.onSurfaceVariant),
               ),
             )
           else
-            ..._notes.map(
-              (n) => TreatmentNoteTile(
-                note: n,
-                patient: _patient,
-                db: widget.db,
-                onChanged: _reload,
-              ),
-            ),
+            ..._buildNotesGroupedByDate(historyNotes),
           if (done.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
@@ -506,6 +643,105 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildNotesGroupedByDate(List<TreatmentNote> notes) {
+    final groups = <DateTime, List<TreatmentNote>>{};
+    for (final note in notes) {
+      final local = note.tarih.toLocal();
+      final day = DateTime(local.year, local.month, local.day);
+      groups.putIfAbsent(day, () => []).add(note);
+    }
+    final days = groups.keys.toList()..sort((a, b) => b.compareTo(a));
+    for (final day in days) {
+      groups[day]!.sort((a, b) => b.tarih.compareTo(a.tarih));
+    }
+    final today = DateTime.now();
+    final todayDay = DateTime(today.year, today.month, today.day);
+    final yesterday = todayDay.subtract(const Duration(days: 1));
+
+    return [
+      for (final day in days) ...[
+        _VisitDateHeader(
+          label: _visitDateLabel(day, todayDay, yesterday),
+          count: groups[day]!.length,
+        ),
+        const SizedBox(height: 8),
+        ...groups[day]!.map(
+          (n) => TreatmentNoteTile(
+            note: n,
+            patient: _patient,
+            db: widget.db,
+            onChanged: _reload,
+            showDate: false,
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    ];
+  }
+
+  String _visitDateLabel(DateTime day, DateTime today, DateTime yesterday) {
+    if (day == today) return 'Bugün';
+    if (day == yesterday) return 'Dün';
+    return '${_turkishWeekday(day)}, ${DateFormat('dd.MM.yyyy').format(day)}';
+  }
+
+  String _turkishWeekday(DateTime day) {
+    const names = [
+      'Pazartesi',
+      'Salı',
+      'Çarşamba',
+      'Perşembe',
+      'Cuma',
+      'Cumartesi',
+      'Pazar',
+    ];
+    return names[day.weekday - 1];
+  }
+}
+
+class _VisitDateHeader extends StatelessWidget {
+  const _VisitDateHeader({
+    required this.label,
+    required this.count,
+  });
+
+  final String label;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event_outlined, size: 18, color: scheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+          Text(
+            count == 1 ? '1 işlem' : '$count işlem',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: scheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
         ],
       ),
     );

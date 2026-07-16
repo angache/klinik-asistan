@@ -204,6 +204,9 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        leading: f.isLab
+            ? Icon(Icons.science_outlined, color: accent)
+            : Icon(Icons.event_note_outlined, color: accent),
         title: Text(
           f.hastaAdSoyad ?? 'Hasta',
           style: const TextStyle(fontWeight: FontWeight.w600),
@@ -220,7 +223,9 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
               ),
             const SizedBox(height: 4),
             Text(
-              fmt.format(f.planDateOnly),
+              f.isLab
+                  ? 'Hatırlatma: ${fmt.format(f.planDateOnly)}'
+                  : fmt.format(f.planDateOnly),
               style: TextStyle(
                 color: accent,
                 fontWeight: FontWeight.w600,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Seans formunda kontrol planlama bloğu.
+/// Yeni işlem formunda sonraki seans / yapılacak planlama.
 class FollowUpPlanner extends StatelessWidget {
   const FollowUpPlanner({
     super.key,
@@ -47,16 +47,40 @@ class FollowUpPlanner extends StatelessWidget {
           children: [
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Kontrol / takip planla'),
-              subtitle: const Text('Günü gelince listede uyarır'),
+              title: const Text('Sonraki seans notu'),
+              subtitle: const Text(
+                'Bir sonraki gelişte ne yapılacak — hasta açılınca uyarır',
+              ),
               value: enabled,
               onChanged: onEnabledChanged,
             ),
             if (enabled) ...[
+              TextField(
+                controller: noteController,
+                minLines: 1,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Yapılacak işlem',
+                  hintText: 'örn. Kuron simantasyon, üst ölçü, kanal bitim…',
+                  filled: true,
+                  fillColor: scheme.surface,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Ne zaman?',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  ChoiceChip(
+                    label: const Text('Sonraki geliş'),
+                    selected: presetDays == 0,
+                    onSelected: (_) => onPresetChanged(0),
+                  ),
                   ChoiceChip(
                     label: const Text('1 hafta'),
                     selected: presetDays == 7,
@@ -82,16 +106,6 @@ class FollowUpPlanner extends StatelessWidget {
                     onPressed: onPickDate,
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: noteController,
-                decoration: InputDecoration(
-                  labelText: 'Ne yapılacak?',
-                  hintText: 'örn. Film çek, geçici kontrol…',
-                  filled: true,
-                  fillColor: scheme.surface,
-                ),
               ),
             ],
           ],

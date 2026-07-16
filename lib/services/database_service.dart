@@ -4,13 +4,40 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../config/supabase_config.dart';
+import '../data/treatment_templates.dart';
 import '../models/clinic.dart';
+import '../models/clinic_todo.dart';
+import '../models/completed_next_plan.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
 import 'session_controller.dart';
 import 'storage_media.dart';
+
+enum PatientListSort {
+  name,
+  lastVisit,
+}
+
+String _formatTimestamp(DateTime value) => value.toUtc().toIso8601String();
+
+/// Seçilen güne kayıt anının saatini ekler (bugün = tam şimdi).
+DateTime sessionDateTimeForSave(DateTime selectedDay, {DateTime? at}) {
+  final now = at ?? DateTime.now();
+  final day = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+  final today = DateTime(now.year, now.month, now.day);
+  if (day == today) return now;
+  return DateTime(
+    day.year,
+    day.month,
+    day.day,
+    now.hour,
+    now.minute,
+    now.second,
+    now.millisecond,
+  );
+}
 
 class DatabaseService {
   DatabaseService({
@@ -49,6 +76,7 @@ class DatabaseService {
     String? query,
     int offset = 0,
     int limit = defaultPatientPageSize,
+    PatientListSort sort = PatientListSort.lastVisit,
   }) async {
     final klinikId = _requireKlinikId;
     final from = offset < 0 ? 0 : offset;
@@ -56,7 +84,9 @@ class DatabaseService {
 
     var builder = _client
         .from('hastalar')
-        .select('*, seans_notlari(islem_baslik, tarih, guncel)')
+        .select(
+          '*, seans_notlari(islem_baslik, tarih, olusturma_tarihi, guncel, planlandi)',
+        )
         .eq('klinik_id', klinikId);
 
     final q = query?.trim();
@@ -67,11 +97,17 @@ class DatabaseService {
       );
     }
 
-    final rows = await builder
-        .order('ad_soyad', ascending: true)
-        .range(from, to);
+    final List rows;
+    if (sort == PatientListSort.lastVisit) {
+      rows = await builder
+          .order('son_islem_tarihi', ascending: false, nullsFirst: false)
+          .order('ad_soyad', ascending: true)
+          .range(from, to);
+    } else {
+      rows = await builder.order('ad_soyad', ascending: true).range(from, to);
+    }
 
-    final items = (rows as List)
+    final items = rows
         .map((e) => Patient.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
 
@@ -120,6 +156,53 @@ class DatabaseService {
     return Patient.fromJson(Map<String, dynamic>.from(row));
   }
 
+  Future<Patient> updatePatientNextPlan({
+    required String id,
+    String? sonrakiPlan,
+  }) async {
+    final plan = sonrakiPlan?.trim();
+    final row = await _client
+        .from('hastalar')
+        .update({
+          'sonraki_plan': (plan == null || plan.isEmpty) ? null : plan,
+        })
+        .eq('id', id)
+        .select(
+          '*, seans_notlari(islem_baslik, tarih, olusturma_tarihi, guncel, planlandi)',
+        )
+        .single();
+    return Patient.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  /// Açık planı "yapıldı" olarak arşive alır; silmez.
+  Future<Patient> completePatientNextPlan(String id) async {
+    final current = await getPatient(id);
+    final plan = current.sonrakiPlan?.trim();
+    if (plan == null || plan.isEmpty) return current;
+
+    await _client.from('hasta_plan_gecmisi').insert({
+      'hasta_id': id,
+      'klinik_id': _requireKlinikId,
+      'icerik': plan,
+      'tamamlanma_tarihi': DateTime.now().toUtc().toIso8601String(),
+    });
+
+    return updatePatientNextPlan(id: id, sonrakiPlan: null);
+  }
+
+  Future<List<CompletedNextPlan>> getCompletedNextPlans(String hastaId) async {
+    final rows = await _client
+        .from('hasta_plan_gecmisi')
+        .select()
+        .eq('hasta_id', hastaId)
+        .order('tamamlanma_tarihi', ascending: false);
+    return (rows as List)
+        .map(
+          (e) => CompletedNextPlan.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList();
+  }
+
   Future<void> deletePatient(String id) async {
     await _client.from('hastalar').delete().eq('id', id);
   }
@@ -127,7 +210,9 @@ class DatabaseService {
   Future<Patient> getPatient(String id) async {
     final row = await _client
         .from('hastalar')
-        .select('*, seans_notlari(islem_baslik, tarih, guncel)')
+        .select(
+          '*, seans_notlari(islem_baslik, tarih, olusturma_tarihi, guncel, planlandi)',
+        )
         .eq('id', id)
         .single();
     return Patient.fromJson(Map<String, dynamic>.from(row));
@@ -140,8 +225,8 @@ class DatabaseService {
         .map((e) => TreatmentNote.fromJson(Map<String, dynamic>.from(e)))
         .toList();
     notes.sort((a, b) {
-      final byDate = b.tarih.compareTo(a.tarih);
-      if (byDate != 0) return byDate;
+      final byWhen = b.tarih.compareTo(a.tarih);
+      if (byWhen != 0) return byWhen;
       return b.olusturmaTarihi.compareTo(a.olusturmaTarihi);
     });
     return notes;
@@ -175,8 +260,8 @@ class DatabaseService {
               .where((n) => n.guncel)
               .toList();
           current.sort((a, b) {
-            final byDate = b.tarih.compareTo(a.tarih);
-            if (byDate != 0) return byDate;
+            final byWhen = b.tarih.compareTo(a.tarih);
+            if (byWhen != 0) return byWhen;
             return b.olusturmaTarihi.compareTo(a.olusturmaTarihi);
           });
           return current;
@@ -231,7 +316,16 @@ class DatabaseService {
     int versiyon = 1,
     bool guncel = true,
     String? degisiklikOzeti,
+    bool planlandi = false,
+    bool labGitti = false,
+    DateTime? labBeklenenTarih,
   }) async {
+    String? labDateStr;
+    if (labBeklenenTarih != null) {
+      final d = labBeklenenTarih;
+      labDateStr =
+          '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    }
     final payload = {
       'hasta_id': hastaId,
       'klinik_id': _requireKlinikId,
@@ -246,12 +340,13 @@ class DatabaseService {
       'fotograf_url': fotografUrl,
       'versiyon': versiyon,
       'guncel': guncel,
+      'planlandi': planlandi,
+      'lab_gitti': labGitti,
+      if (labDateStr != null) 'lab_beklenen_tarih': labDateStr,
       if (kokId != null) 'kok_id': kokId,
       if (oncekiId != null) 'onceki_id': oncekiId,
       if (degisiklikOzeti != null) 'degisiklik_ozeti': degisiklikOzeti,
-      if (tarih != null)
-        'tarih':
-            '${tarih.year.toString().padLeft(4, '0')}-${tarih.month.toString().padLeft(2, '0')}-${tarih.day.toString().padLeft(2, '0')}',
+      if (tarih != null) 'tarih': _formatTimestamp(tarih),
     };
 
     final row = await _client
@@ -316,6 +411,9 @@ class DatabaseService {
       versiyon: previous.versiyon + 1,
       guncel: true,
       degisiklikOzeti: changes.join('\n'),
+      planlandi: previous.planlandi,
+      labGitti: previous.labGitti,
+      labBeklenenTarih: previous.labBeklenenTarih,
     );
   }
 
@@ -357,6 +455,10 @@ class DatabaseService {
     required String notIcerik,
     File? photoFile,
     String? fotografUrl,
+    DateTime? tarih,
+    bool planlandi = false,
+    bool labGitti = false,
+    DateTime? labBeklenenTarih,
   }) async {
     String? photoUrl = fotografUrl;
     if (photoFile != null) {
@@ -373,7 +475,25 @@ class DatabaseService {
       kanalIlaci: kanalIlaci,
       notIcerik: notIcerik,
       fotografUrl: photoUrl,
+      tarih: tarih,
+      planlandi: planlandi,
+      labGitti: labGitti,
+      labBeklenenTarih: labBeklenenTarih,
     );
+  }
+
+  /// Planlanan işlemi bugün yapılmış sayar (geçmişe düşer).
+  Future<TreatmentNote> completePlannedNote(String id) async {
+    final row = await _client
+        .from('seans_notlari')
+        .update({
+          'planlandi': false,
+          'tarih': _formatTimestamp(DateTime.now()),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+    return TreatmentNote.fromJson(Map<String, dynamic>.from(row));
   }
 
   // ── Ses kayıtları ─────────────────────────────────────────
@@ -529,6 +649,7 @@ class DatabaseService {
     required DateTime planlananTarih,
     String? aciklama,
     String? seansNotuId,
+    String tur = 'genel',
   }) async {
     final d = planlananTarih;
     final row = await _client
@@ -537,6 +658,7 @@ class DatabaseService {
           'klinik_id': _requireKlinikId,
           'hasta_id': hastaId,
           'baslik': baslik.trim(),
+          'tur': tur,
           'planlanan_tarih':
               '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
           if (aciklama != null && aciklama.trim().isNotEmpty)
@@ -544,9 +666,45 @@ class DatabaseService {
           if (seansNotuId != null) 'seans_notu_id': seansNotuId,
           if (_userId != null) 'olusturan_user_id': _userId,
         })
-        .select()
+        .select('*, hastalar(ad_soyad)')
         .single();
     return FollowUp.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  /// Lab dönüşünden 1 gün önce hatırlatma oluşturur.
+  Future<FollowUp> createLabReminder({
+    required String hastaId,
+    required String islemBaslik,
+    required DateTime beklenenDonus,
+    String? seansNotuId,
+    String? hastaAdSoyad,
+  }) async {
+    final donus = DateTime(
+      beklenenDonus.year,
+      beklenenDonus.month,
+      beklenenDonus.day,
+    );
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    var remind = donus.subtract(const Duration(days: 1));
+    if (remind.isBefore(todayOnly)) remind = todayOnly;
+
+    final fmt =
+        '${donus.day.toString().padLeft(2, '0')}.${donus.month.toString().padLeft(2, '0')}.${donus.year}';
+    final who = (hastaAdSoyad != null && hastaAdSoyad.trim().isNotEmpty)
+        ? hastaAdSoyad.trim()
+        : null;
+
+    return createFollowUp(
+      hastaId: hastaId,
+      baslik: 'Lab: $islemBaslik',
+      planlananTarih: remind,
+      aciklama: who == null
+          ? 'Beklenen lab dönüşü: $fmt'
+          : 'Beklenen lab dönüşü: $fmt · $who',
+      seansNotuId: seansNotuId,
+      tur: 'lab',
+    );
   }
 
   /// Açık takipler — gecikenler önce, sonra tarihe göre.
@@ -600,5 +758,310 @@ class DatabaseService {
 
   Future<void> deleteFollowUp(String id) async {
     await _client.from('takipler').delete().eq('id', id);
+  }
+
+  // ── Klinik işlem şablonları ───────────────────────────────
+
+  Future<List<TreatmentTemplate>> getTreatmentTemplates({
+    bool onlyActive = true,
+  }) async {
+    final klinikId = _requireKlinikId;
+    var query = _client.from('klinik_islemleri').select().eq('klinik_id', klinikId);
+    if (onlyActive) {
+      query = query.eq('aktif', true);
+    }
+    final rows = await query.order('sira', ascending: true).order('baslik');
+    return (rows as List)
+        .map((e) => TreatmentTemplate.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  /// Liste boşsa / eksikse varsayılanları basar; aktif işlemleri döner.
+  Future<List<TreatmentTemplate>> ensureTreatmentTemplates() async {
+    final klinikId = _requireKlinikId;
+    try {
+      await _client.rpc('seed_klinik_islemleri', params: {
+        'p_klinik_id': klinikId,
+      });
+    } catch (_) {
+      // Migration henüz yoksa istemci tarafı doldurur.
+    }
+
+    if (canManageRecords) {
+      await _insertMissingDefaultsFromApp();
+      // Ölçü: diş zorunlu olmamalı (eskiden yanlış işaretlenmiş kayıtlar)
+      try {
+        await _client
+            .from('klinik_islemleri')
+            .update({'dis_zorunlu': false})
+            .eq('klinik_id', klinikId)
+            .eq('baslik', 'Ölçü');
+      } catch (_) {}
+    }
+
+    try {
+      final list = await getTreatmentTemplates(onlyActive: true);
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+    return List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
+  }
+
+  Future<int> seedMissingTreatmentDefaults() async {
+    var added = 0;
+    try {
+      final n = await _client.rpc('seed_klinik_islemleri', params: {
+        'p_klinik_id': _requireKlinikId,
+      });
+      if (n is int) {
+        added += n;
+      } else if (n is num) {
+        added += n.toInt();
+      }
+    } catch (_) {}
+    added += await _insertMissingDefaultsFromApp();
+    return added;
+  }
+
+  /// Uygulama çekirdeğindeki yeni şablonları (örn. Teşhis ve Planlama) DB'ye ekler.
+  Future<int> _insertMissingDefaultsFromApp() async {
+    if (!canManageRecords) return 0;
+    List<TreatmentTemplate> existing;
+    try {
+      existing = await getTreatmentTemplates(onlyActive: false);
+    } catch (_) {
+      return 0;
+    }
+    final known = {
+      for (final t in existing) t.baslik.trim().toLowerCase(),
+    };
+    var added = 0;
+    final maxSira = existing.isEmpty
+        ? 0
+        : existing.map((e) => e.sira).reduce((a, b) => a > b ? a : b);
+    var nextSira = maxSira;
+    final klinikId = _requireKlinikId;
+
+    final toInsert = <Map<String, dynamic>>[];
+    for (final d in kDefaultTreatmentTemplates) {
+      final key = d.baslik.trim().toLowerCase();
+      if (known.contains(key)) continue;
+      nextSira += 1;
+      known.add(key);
+      toInsert.add({
+        'klinik_id': klinikId,
+        'kategori': d.kategori,
+        'baslik': d.baslik,
+        'is_kanal': d.isKanal,
+        'dis_zorunlu': d.requiresTooth,
+        'lab_takip': d.labTakip,
+        'aktif': true,
+        'sira': d.sira > 0 ? d.sira : nextSira,
+      });
+    }
+    if (toInsert.isEmpty) return 0;
+    try {
+      await _client.from('klinik_islemleri').insert(toInsert);
+      added = toInsert.length;
+    } catch (_) {
+      // Tek tek dene (unique çakışması vs.)
+      for (final row in toInsert) {
+        try {
+          await _client.from('klinik_islemleri').insert(row);
+          added++;
+        } catch (_) {}
+      }
+    }
+    return added;
+  }
+
+  Future<TreatmentTemplate> createTreatmentTemplate({
+    required String kategori,
+    required String baslik,
+    bool isKanal = false,
+    bool requiresTooth = true,
+    bool labTakip = false,
+  }) async {
+    final klinikId = _requireKlinikId;
+    final existing = await getTreatmentTemplates(onlyActive: false);
+    final maxSira = existing.isEmpty
+        ? 0
+        : existing.map((e) => e.sira).reduce((a, b) => a > b ? a : b);
+
+    final row = await _client
+        .from('klinik_islemleri')
+        .insert({
+          'klinik_id': klinikId,
+          'kategori': kategori.trim(),
+          'baslik': baslik.trim(),
+          'is_kanal': isKanal,
+          'dis_zorunlu': requiresTooth,
+          'lab_takip': labTakip,
+          'aktif': true,
+          'sira': maxSira + 1,
+        })
+        .select()
+        .single();
+    return TreatmentTemplate.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<TreatmentTemplate> updateTreatmentTemplate({
+    required String id,
+    required String kategori,
+    required String baslik,
+    required bool isKanal,
+    required bool requiresTooth,
+    required bool labTakip,
+    required bool aktif,
+    int? sira,
+  }) async {
+    final payload = <String, dynamic>{
+      'kategori': kategori.trim(),
+      'baslik': baslik.trim(),
+      'is_kanal': isKanal,
+      'dis_zorunlu': requiresTooth,
+      'lab_takip': labTakip,
+      'aktif': aktif,
+      if (sira != null) 'sira': sira,
+    };
+    final row = await _client
+        .from('klinik_islemleri')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+    return TreatmentTemplate.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<void> deleteTreatmentTemplate(String id) async {
+    await _client.from('klinik_islemleri').delete().eq('id', id);
+  }
+
+  // ── Klinik yapılacaklar (genel todo) ─────────────────────
+
+  String _formatDateOnly(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<List<ClinicTodo>> getOpenClinicTodos({int limit = 200}) async {
+    final rows = await _client
+        .from('klinik_todolar')
+        .select()
+        .eq('klinik_id', _requireKlinikId)
+        .eq('tamamlandi', false)
+        .order('planlanan_tarih', ascending: true, nullsFirst: false)
+        .order('olusturma_tarihi', ascending: false)
+        .limit(limit);
+
+    return (rows as List)
+        .map((e) => ClinicTodo.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<int> countAttentionClinicTodos() async {
+    final today = DateTime.now();
+    final todayStr = _formatDateOnly(
+      DateTime(today.year, today.month, today.day),
+    );
+    final rows = await _client
+        .from('klinik_todolar')
+        .select('id')
+        .eq('klinik_id', _requireKlinikId)
+        .eq('tamamlandi', false)
+        .lte('planlanan_tarih', todayStr);
+    return (rows as List).length;
+  }
+
+  Future<String> uploadClinicTodoVoice({required File file}) async {
+    final ext = file.path.split('.').last.toLowerCase();
+    final safeExt = (ext == 'm4a' ||
+            ext == 'aac' ||
+            ext == 'mp3' ||
+            ext == 'wav' ||
+            ext == 'ogg')
+        ? ext
+        : 'wav';
+    final path =
+        '${SupabaseConfig.voicePathPrefix}/todolar/$_requireKlinikId/${_uuid.v4()}.$safeExt';
+
+    final contentType = switch (safeExt) {
+      'mp3' => 'audio/mpeg',
+      'wav' => 'audio/wav',
+      'ogg' => 'audio/ogg',
+      _ => 'audio/mp4',
+    };
+
+    await _client.storage.from(SupabaseConfig.storageBucket).upload(
+          path,
+          file,
+          fileOptions: FileOptions(
+            contentType: contentType,
+            upsert: false,
+          ),
+        );
+
+    return _client.storage
+        .from(SupabaseConfig.storageBucket)
+        .getPublicUrl(path);
+  }
+
+  Future<ClinicTodo> createClinicTodo({
+    String? icerik,
+    String? sesUrl,
+    int? sureSaniye,
+    DateTime? planlananTarih,
+  }) async {
+    final text = icerik?.trim();
+    final voice = sesUrl?.trim();
+    if ((text == null || text.isEmpty) && (voice == null || voice.isEmpty)) {
+      throw ArgumentError('Yazı veya ses gerekli');
+    }
+
+    final row = await _client
+        .from('klinik_todolar')
+        .insert({
+          'klinik_id': _requireKlinikId,
+          if (text != null && text.isNotEmpty) 'icerik': text,
+          if (voice != null && voice.isNotEmpty) 'ses_url': voice,
+          if (sureSaniye != null) 'sure_saniye': sureSaniye,
+          if (planlananTarih != null)
+            'planlanan_tarih': _formatDateOnly(planlananTarih),
+          if (_userId != null) 'olusturan_user_id': _userId,
+        })
+        .select()
+        .single();
+    return ClinicTodo.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<ClinicTodo> createClinicTodoVoice({
+    required File file,
+    int? sureSaniye,
+    DateTime? planlananTarih,
+  }) async {
+    final url = await uploadClinicTodoVoice(file: file);
+    return createClinicTodo(
+      sesUrl: url,
+      sureSaniye: sureSaniye,
+      planlananTarih: planlananTarih,
+    );
+  }
+
+  Future<void> completeClinicTodo(String id) async {
+    await _client.from('klinik_todolar').update({
+      'tamamlandi': true,
+      'tamamlanma_tarihi': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', id);
+  }
+
+  Future<void> deleteClinicTodo(ClinicTodo todo) async {
+    await _client.from('klinik_todolar').delete().eq('id', todo.id);
+    if (todo.hasVoice) {
+      final path = StorageMedia.pathFromUrl(todo.sesUrl!);
+      if (path != null && path.isNotEmpty) {
+        try {
+          await _client.storage
+              .from(SupabaseConfig.storageBucket)
+              .remove([path]);
+        } catch (_) {}
+      }
+    }
   }
 }

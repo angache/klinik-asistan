@@ -47,6 +47,9 @@ class TreatmentNote {
   final int versiyon;
   final bool guncel;
   final String? degisiklikOzeti;
+  final bool planlandi;
+  final bool labGitti;
+  final DateTime? labBeklenenTarih;
 
   const TreatmentNote({
     required this.id,
@@ -66,6 +69,9 @@ class TreatmentNote {
     this.versiyon = 1,
     this.guncel = true,
     this.degisiklikOzeti,
+    this.planlandi = false,
+    this.labGitti = false,
+    this.labBeklenenTarih,
   });
 
   /// Zincirin kök id'si (ilk sürüm).
@@ -74,6 +80,11 @@ class TreatmentNote {
   bool get isEdited => versiyon > 1;
 
   factory TreatmentNote.fromJson(Map<String, dynamic> json) {
+    DateTime? labDate;
+    final rawLab = json['lab_beklenen_tarih'];
+    if (rawLab is String && rawLab.isNotEmpty) {
+      labDate = DateTime.tryParse(rawLab);
+    }
     return TreatmentNote(
       id: json['id'] as String,
       hastaId: json['hasta_id'] as String,
@@ -85,13 +96,17 @@ class TreatmentNote {
       kanalIlaci: json['kanal_ilaci'] as String?,
       notIcerik: json['not_icerik'] as String? ?? '',
       fotografUrl: json['fotograf_url'] as String?,
-      tarih: DateTime.parse(json['tarih'] as String),
-      olusturmaTarihi: DateTime.parse(json['olusturma_tarihi'] as String),
+      tarih: DateTime.parse(json['tarih'] as String).toLocal(),
+      olusturmaTarihi:
+          DateTime.parse(json['olusturma_tarihi'] as String).toLocal(),
       kokId: json['kok_id'] as String?,
       oncekiId: json['onceki_id'] as String?,
       versiyon: (json['versiyon'] as num?)?.toInt() ?? 1,
       guncel: json['guncel'] as bool? ?? true,
       degisiklikOzeti: json['degisiklik_ozeti'] as String?,
+      planlandi: json['planlandi'] as bool? ?? false,
+      labGitti: json['lab_gitti'] as bool? ?? false,
+      labBeklenenTarih: labDate,
     );
   }
 
@@ -106,13 +121,19 @@ class TreatmentNote {
       'kanal_ilaci': kanalIlaci,
       'not_icerik': notIcerik,
       'fotograf_url': fotografUrl,
-      'tarih':
-          '${tarih.year.toString().padLeft(4, '0')}-${tarih.month.toString().padLeft(2, '0')}-${tarih.day.toString().padLeft(2, '0')}',
+      'tarih': tarih.toUtc().toIso8601String(),
       'kok_id': kokId,
       'onceki_id': oncekiId,
       'versiyon': versiyon,
       'guncel': guncel,
       'degisiklik_ozeti': degisiklikOzeti,
+      'planlandi': planlandi,
+      'lab_gitti': labGitti,
+      if (labBeklenenTarih != null)
+        'lab_beklenen_tarih':
+            '${labBeklenenTarih!.year.toString().padLeft(4, '0')}-'
+            '${labBeklenenTarih!.month.toString().padLeft(2, '0')}-'
+            '${labBeklenenTarih!.day.toString().padLeft(2, '0')}',
     };
   }
 
@@ -148,11 +169,17 @@ List<String> diffTreatmentNotes(TreatmentNote onceki, TreatmentNote yeni) {
               : 'Fotoğraf değiştirildi',
     );
   }
-  if (onceki.tarih != yeni.tarih) {
-    changes.add(
-      'Tarih: ${onceki.tarih.day}.${onceki.tarih.month}.${onceki.tarih.year} → '
-      '${yeni.tarih.day}.${yeni.tarih.month}.${yeni.tarih.year}',
-    );
+  final oncekiLocal = onceki.tarih.toLocal();
+  final yeniLocal = yeni.tarih.toLocal();
+  if (oncekiLocal.year != yeniLocal.year ||
+      oncekiLocal.month != yeniLocal.month ||
+      oncekiLocal.day != yeniLocal.day ||
+      oncekiLocal.hour != yeniLocal.hour ||
+      oncekiLocal.minute != yeniLocal.minute) {
+    String fmt(DateTime d) =>
+        '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year} '
+        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    changes.add('Tarih: ${fmt(oncekiLocal)} → ${fmt(yeniLocal)}');
   }
 
   return changes;

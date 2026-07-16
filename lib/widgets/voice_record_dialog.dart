@@ -153,62 +153,90 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
 
     return AlertDialog(
       title: const Text('Hızlı sesli not'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+      content: Stack(
+        alignment: Alignment.center,
         children: [
-          Text(
-            widget.patient.adSoyad,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Ses yalnızca doktor/asistanın seans özeti içindir. '
-            'Hasta konuşması kaydedilmez.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _timeLabel,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _recording
-                ? 'Kayıt sürüyor…'
-                : _saving
-                    ? 'Yükleniyor…'
-                    : 'Başlat’a basıp konuşun, bitince Kaydet',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 20),
-          if (!_saving)
-            FilledButton.tonal(
-              onPressed: _recording ? null : _start,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(88, 88),
-                shape: const CircleBorder(),
-                backgroundColor: _recording
-                    ? scheme.errorContainer
-                    : AppTheme.voiceAccent.withValues(alpha: 0.2),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.patient.adSoyad,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
               ),
-              child: Icon(
-                _recording ? Icons.mic : Icons.mic_none,
-                size: 36,
-                color: _recording ? scheme.error : AppTheme.voiceAccentDark,
+              const SizedBox(height: 8),
+              Text(
+                'Ses yalnızca doktor/asistanın işlem özeti içindir. '
+                'Hasta konuşması kaydedilmez.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _timeLabel,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _recording
+                    ? 'Kayıt sürüyor…'
+                    : _saving
+                        ? 'Ses buluta yükleniyor…'
+                        : 'Başlat’a basıp konuşun, bitince Kaydet',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.tonal(
+                onPressed: (_recording || _saving) ? null : _start,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(88, 88),
+                  shape: const CircleBorder(),
+                  backgroundColor: _recording
+                      ? scheme.errorContainer
+                      : AppTheme.voiceAccent.withValues(alpha: 0.2),
+                ),
+                child: Icon(
+                  _recording ? Icons.mic : Icons.mic_none,
+                  size: 36,
+                  color: _recording ? scheme.error : AppTheme.voiceAccentDark,
+                ),
+              ),
+            ],
+          ),
+          if (_saving)
+            Positioned.fill(
+              child: ColoredBox(
+                color: scheme.surface.withValues(alpha: 0.85),
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: CircularProgressIndicator(strokeWidth: 3),
+                      ),
+                      SizedBox(height: 14),
+                      Text(
+                        'Ses buluta yükleniyor…',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      SizedBox(height: 4),
+                      Text('Lütfen bekleyin…'),
+                    ],
+                  ),
+                ),
               ),
             ),
-          if (_saving) const CircularProgressIndicator(),
         ],
       ),
       actions: [
