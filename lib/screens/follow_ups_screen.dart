@@ -225,7 +225,10 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
             Text(
               f.isLab
                   ? 'Hatırlatma: ${fmt.format(f.planDateOnly)}'
-                  : fmt.format(f.planDateOnly),
+                  : f.hatirlatmaGunOnce > 0
+                      ? 'Kontrol: ${fmt.format(f.planDateOnly)} · '
+                          'Uyarı: ${fmt.format(f.reminderDateOnly)}'
+                      : fmt.format(f.planDateOnly),
               style: TextStyle(
                 color: accent,
                 fontWeight: FontWeight.w600,

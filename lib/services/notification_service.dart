@@ -48,17 +48,22 @@ class NotificationService {
 
     final when = tz.TZDateTime(
       tz.local,
-      f.planDateOnly.year,
-      f.planDateOnly.month,
-      f.planDateOnly.day,
+      f.reminderDateOnly.year,
+      f.reminderDateOnly.month,
+      f.reminderDateOnly.day,
       9,
     );
+    final date = '${f.planDateOnly.day.toString().padLeft(2, '0')}.'
+        '${f.planDateOnly.month.toString().padLeft(2, '0')}.'
+        '${f.planDateOnly.year}';
+    final body =
+        f.hatirlatmaGunOnce > 0 ? '${f.baslik} · Kontrol: $date' : f.baslik;
     if (when.isBefore(tz.TZDateTime.now(tz.local))) {
       // Gecikmiş / bugün: hemen bir bilgi bildirimi
       await _plugin.show(
         id: _notifId(f.id),
         title: 'Takip: ${f.hastaAdSoyad ?? 'Hasta'}',
-        body: f.baslik,
+        body: body,
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'takipler',
@@ -76,7 +81,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       id: _notifId(f.id),
       title: 'Takip: ${f.hastaAdSoyad ?? 'Hasta'}',
-      body: f.baslik,
+      body: body,
       scheduledDate: when,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(

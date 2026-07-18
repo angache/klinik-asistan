@@ -292,39 +292,34 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     final planned = _notes.where((n) => n.planlandi).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: !widget.embedded,
-        title: Text(patient.adSoyad),
-        actions: [
-          IconButton(
-            tooltip: 'Takip ekle',
-            onPressed: _openAddFollowUp,
-            icon: const Icon(Icons.event_note_outlined),
-          ),
-          IconButton(
-            tooltip: 'Sesli not',
-            onPressed: _openVoiceRecord,
-            icon: const Icon(Icons.mic_outlined),
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'edit') _editPatient();
-              if (value == 'delete') _deletePatient();
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-              if (widget.db.canManageRecords)
-                const PopupMenuItem(value: 'delete', child: Text('Sil')),
-            ],
-          ),
-          if (widget.embedded)
-            IconButton(
-              tooltip: 'Kapat',
-              onPressed: widget.onClose,
-              icon: const Icon(Icons.close),
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              title: Text(patient.adSoyad),
+              actions: [
+                IconButton(
+                  tooltip: 'Takip ekle',
+                  onPressed: _openAddFollowUp,
+                  icon: const Icon(Icons.event_note_outlined),
+                ),
+                IconButton(
+                  tooltip: 'Sesli not',
+                  onPressed: _openVoiceRecord,
+                  icon: const Icon(Icons.mic_outlined),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') _editPatient();
+                    if (value == 'delete') _deletePatient();
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                    if (widget.db.canManageRecords)
+                      const PopupMenuItem(value: 'delete', child: Text('Sil')),
+                  ],
+                ),
+              ],
             ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewSession,
         icon: const Icon(Icons.add),
@@ -334,9 +329,9 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Material(
-            color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+            color: scheme.surfaceContainerLow,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
               child: Row(
                 children: [
                   CircleAvatar(
@@ -378,10 +373,46 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                       ],
                     ),
                   ),
+                  if (widget.embedded) ...[
+                    IconButton(
+                      tooltip: 'Takip ekle',
+                      onPressed: _openAddFollowUp,
+                      icon: const Icon(Icons.event_note_outlined),
+                    ),
+                    IconButton(
+                      tooltip: 'Sesli not',
+                      onPressed: _openVoiceRecord,
+                      icon: const Icon(Icons.mic_outlined),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'edit') _editPatient();
+                        if (value == 'delete') _deletePatient();
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Text('Düzenle'),
+                        ),
+                        if (widget.db.canManageRecords)
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Sil'),
+                          ),
+                      ],
+                    ),
+                    IconButton(
+                      tooltip: 'Kapat',
+                      onPressed: widget.onClose,
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
+          if (widget.embedded)
+            Divider(height: 1, color: scheme.outlineVariant),
           if (planned.isNotEmpty)
             Material(
               color: scheme.errorContainer.withValues(alpha: 0.75),

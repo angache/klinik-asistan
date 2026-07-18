@@ -348,7 +348,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                     ] else if (_hasVoice) ...[
                       Row(
                         children: [
-                          const Icon(Icons.mic, color: AppTheme.voiceAccentDark),
+                          Icon(Icons.mic, color: AppTheme.voiceAccentDark),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text('Ses kaydedildi · $_voiceDurationLabel'),

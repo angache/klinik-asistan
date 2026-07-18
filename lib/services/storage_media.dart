@@ -5,16 +5,25 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
 /// Supabase Storage URL / path yardımcıları.
-/// Public URL erişimi kapalı olsa bile anon key + SELECT politikası ile çalışır.
+/// Bucket private; görüntüleme imzalı URL veya Storage download ile yapılır.
+/// DB'de hem eski public URL hem ham object path tutulabilir.
 class StorageMedia {
   StorageMedia._();
 
   static SupabaseClient get _client => Supabase.instance.client;
   static String get _bucket => SupabaseConfig.storageBucket;
 
-  /// Kaydedilmiş public/sign URL'den object path çıkarır.
+  /// Kaydedilmiş public/sign URL veya ham object path'ten path çıkarır.
   static String? pathFromUrl(String url) {
-    final uri = Uri.tryParse(url);
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return null;
+
+    // DB'de doğrudan object path tutuluyorsa
+    if (!trimmed.contains('://') && !trimmed.startsWith('/')) {
+      return trimmed;
+    }
+
+    final uri = Uri.tryParse(trimmed);
     if (uri == null) return null;
 
     final segments = uri.pathSegments;

@@ -171,8 +171,8 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (todo.hasVoice)
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8, top: 2),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8, top: 2),
                     child: Icon(
                       Icons.mic,
                       size: 18,

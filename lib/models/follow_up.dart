@@ -11,6 +11,7 @@ class FollowUp {
   final DateTime olusturmaTarihi;
   final String? hastaAdSoyad;
   final String tur;
+  final int hatirlatmaGunOnce;
 
   const FollowUp({
     required this.id,
@@ -25,6 +26,7 @@ class FollowUp {
     required this.olusturmaTarihi,
     this.hastaAdSoyad,
     this.tur = 'genel',
+    this.hatirlatmaGunOnce = 0,
   });
 
   factory FollowUp.fromJson(Map<String, dynamic> json) {
@@ -49,10 +51,14 @@ class FollowUp {
       olusturmaTarihi: DateTime.parse(json['olusturma_tarihi'] as String),
       hastaAdSoyad: hastaAd,
       tur: json['tur'] as String? ?? 'genel',
+      hatirlatmaGunOnce: json['hatirlatma_gun_once'] as int? ?? 0,
     );
   }
 
   bool get isLab => tur == 'lab';
+
+  DateTime get reminderDateOnly =>
+      planDateOnly.subtract(Duration(days: hatirlatmaGunOnce));
 
   DateTime get planDateOnly => DateTime(
         planlananTarih.year,
@@ -64,14 +70,14 @@ class FollowUp {
     if (tamamlandi) return false;
     final today = DateTime.now();
     final t = DateTime(today.year, today.month, today.day);
-    return planDateOnly.isBefore(t);
+    return reminderDateOnly.isBefore(t);
   }
 
   bool get isDueToday {
     if (tamamlandi) return false;
     final today = DateTime.now();
     final t = DateTime(today.year, today.month, today.day);
-    return planDateOnly == t;
+    return reminderDateOnly == t;
   }
 
   bool get needsAttention => isOverdue || isDueToday;

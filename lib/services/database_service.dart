@@ -198,7 +198,8 @@ class DatabaseService {
         .order('tamamlanma_tarihi', ascending: false);
     return (rows as List)
         .map(
-          (e) => CompletedNextPlan.fromJson(Map<String, dynamic>.from(e as Map)),
+          (e) =>
+              CompletedNextPlan.fromJson(Map<String, dynamic>.from(e as Map)),
         )
         .toList();
   }
@@ -349,11 +350,8 @@ class DatabaseService {
       if (tarih != null) 'tarih': _formatTimestamp(tarih),
     };
 
-    final row = await _client
-        .from('seans_notlari')
-        .insert(payload)
-        .select()
-        .single();
+    final row =
+        await _client.from('seans_notlari').insert(payload).select().single();
 
     return TreatmentNote.fromJson(Map<String, dynamic>.from(row));
   }
@@ -392,8 +390,7 @@ class DatabaseService {
 
     await _client
         .from('seans_notlari')
-        .update({'guncel': false})
-        .eq('id', previous.id);
+        .update({'guncel': false}).eq('id', previous.id);
 
     return createNote(
       hastaId: previous.hastaId,
@@ -428,7 +425,8 @@ class DatabaseService {
         (ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'webp')
             ? ext
             : 'jpg';
-    final path = '$hastaId/${_uuid.v4()}.$safeExt';
+    // {klinik_id}/foto/{hasta_id}/{uuid}.ext — storage RLS path'e bağlı
+    final path = '$_requireKlinikId/foto/$hastaId/${_uuid.v4()}.$safeExt';
 
     await _client.storage.from(SupabaseConfig.storageBucket).upload(
           path,
@@ -439,9 +437,7 @@ class DatabaseService {
           ),
         );
 
-    return _client.storage
-        .from(SupabaseConfig.storageBucket)
-        .getPublicUrl(path);
+    return path;
   }
 
   Future<TreatmentNote> saveNoteWithOptionalPhoto({
@@ -525,8 +521,9 @@ class DatabaseService {
             ext == 'ogg')
         ? ext
         : 'm4a';
+    // {klinik_id}/ses/{hasta_id}/{uuid}.ext
     final path =
-        '${SupabaseConfig.voicePathPrefix}/$hastaId/${_uuid.v4()}.$safeExt';
+        '$_requireKlinikId/${SupabaseConfig.voicePathPrefix}/$hastaId/${_uuid.v4()}.$safeExt';
 
     final contentType = switch (safeExt) {
       'mp3' => 'audio/mpeg',
@@ -544,9 +541,7 @@ class DatabaseService {
           ),
         );
 
-    return _client.storage
-        .from(SupabaseConfig.storageBucket)
-        .getPublicUrl(path);
+    return path;
   }
 
   Future<VoiceMemo> createVoiceMemo({
@@ -597,9 +592,8 @@ class DatabaseService {
         .eq('hasta_id', note.hastaId)
         .or('id.eq.$root,kok_id.eq.$root');
 
-    final list = (rows as List)
-        .map((e) => Map<String, dynamic>.from(e as Map))
-        .toList();
+    final list =
+        (rows as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
     final ids = list.map((e) => e['id'] as String).toList();
     if (ids.isEmpty) return;
 
@@ -650,6 +644,7 @@ class DatabaseService {
     String? aciklama,
     String? seansNotuId,
     String tur = 'genel',
+    int hatirlatmaGunOnce = 0,
   }) async {
     final d = planlananTarih;
     final row = await _client
@@ -659,6 +654,7 @@ class DatabaseService {
           'hasta_id': hastaId,
           'baslik': baslik.trim(),
           'tur': tur,
+          'hatirlatma_gun_once': hatirlatmaGunOnce,
           'planlanan_tarih':
               '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
           if (aciklama != null && aciklama.trim().isNotEmpty)
@@ -704,6 +700,7 @@ class DatabaseService {
           : 'Beklenen lab dönüşü: $fmt · $who',
       seansNotuId: seansNotuId,
       tur: 'lab',
+      hatirlatmaGunOnce: 0,
     );
   }
 
@@ -735,18 +732,22 @@ class DatabaseService {
   }
 
   Future<int> countAttentionFollowUps() async {
-    final today = DateTime.now();
-    final todayStr =
-        '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-
     final rows = await _client
         .from('takipler')
-        .select('id')
+        .select('planlanan_tarih, hatirlatma_gun_once')
         .eq('klinik_id', _requireKlinikId)
-        .eq('tamamlandi', false)
-        .lte('planlanan_tarih', todayStr);
+        .eq('tamamlandi', false);
 
-    return (rows as List).length;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return (rows as List).where((raw) {
+      final row = Map<String, dynamic>.from(raw as Map);
+      final date = DateTime.parse(row['planlanan_tarih'] as String);
+      final days = row['hatirlatma_gun_once'] as int? ?? 0;
+      final reminder = DateTime(date.year, date.month, date.day)
+          .subtract(Duration(days: days));
+      return !reminder.isAfter(today);
+    }).length;
   }
 
   Future<void> completeFollowUp(String id) async {
@@ -766,13 +767,15 @@ class DatabaseService {
     bool onlyActive = true,
   }) async {
     final klinikId = _requireKlinikId;
-    var query = _client.from('klinik_islemleri').select().eq('klinik_id', klinikId);
+    var query =
+        _client.from('klinik_islemleri').select().eq('klinik_id', klinikId);
     if (onlyActive) {
       query = query.eq('aktif', true);
     }
     final rows = await query.order('sira', ascending: true).order('baslik');
     return (rows as List)
-        .map((e) => TreatmentTemplate.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map((e) =>
+            TreatmentTemplate.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
 
@@ -979,8 +982,8 @@ class DatabaseService {
             ext == 'ogg')
         ? ext
         : 'wav';
-    final path =
-        '${SupabaseConfig.voicePathPrefix}/todolar/$_requireKlinikId/${_uuid.v4()}.$safeExt';
+    // {klinik_id}/todolar/{uuid}.ext
+    final path = '$_requireKlinikId/todolar/${_uuid.v4()}.$safeExt';
 
     final contentType = switch (safeExt) {
       'mp3' => 'audio/mpeg',
@@ -998,9 +1001,7 @@ class DatabaseService {
           ),
         );
 
-    return _client.storage
-        .from(SupabaseConfig.storageBucket)
-        .getPublicUrl(path);
+    return path;
   }
 
   Future<ClinicTodo> createClinicTodo({

@@ -9,6 +9,7 @@ import '../models/patient.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
 import '../services/session_controller.dart';
+import '../theme/app_theme.dart';
 import '../widgets/patient_card.dart';
 import 'auth_gate.dart';
 import 'clinic_todos_screen.dart';
@@ -478,7 +479,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Icon(
                   Icons.expand_more,
                   size: 20,
-                  color: scheme.onPrimary.withValues(alpha: 0.9),
+                  color: (Theme.of(context).appBarTheme.foregroundColor ??
+                          scheme.onPrimary)
+                      .withValues(alpha: 0.9),
                 ),
               ],
             ),
@@ -486,8 +489,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: _themeTooltip(context),
-            onPressed: () => KlinikAsistanApp.of(context)?.cycleThemeMode(),
+            tooltip: 'Görünüm',
+            onPressed: () => _showAppearanceSheet(context),
             icon: Icon(_themeIcon(context)),
           ),
           IconButton(
@@ -552,7 +555,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (_followUpAttention > 0)
                 MaterialBanner(
                   content: Text(
-                    '$_followUpAttention takip bugün veya gecikmiş',
+                    '$_followUpAttention takip için uyarı zamanı geldi',
                   ),
                   leading:
                       Icon(Icons.notification_important, color: scheme.error),
@@ -707,13 +710,104 @@ class _DashboardScreenState extends State<DashboardScreen> {
     };
   }
 
-  String _themeTooltip(BuildContext context) {
-    final mode = KlinikAsistanApp.of(context)?.themeMode ?? ThemeMode.system;
-    return switch (mode) {
-      ThemeMode.light => 'Açık tema (WhatsApp)',
-      ThemeMode.dark => 'Koyu tema (WhatsApp)',
-      ThemeMode.system => 'Sistem teması',
-    };
+  Future<void> _showAppearanceSheet(BuildContext context) async {
+    final app = KlinikAsistanApp.of(context);
+    if (app == null) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Görünüm',
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Tema',
+                  style: Theme.of(ctx).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                SegmentedButton<ThemeMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      label: Text('Açık'),
+                      icon: Icon(Icons.light_mode_outlined, size: 18),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      label: Text('Koyu'),
+                      icon: Icon(Icons.dark_mode_outlined, size: 18),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      label: Text('Sistem'),
+                      icon: Icon(Icons.brightness_auto_outlined, size: 18),
+                    ),
+                  ],
+                  selected: {app.themeMode},
+                  onSelectionChanged: (s) {
+                    if (s.isEmpty) return;
+                    app.setThemeMode(s.first);
+                    Navigator.pop(ctx);
+                  },
+                  showSelectedIcon: false,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Renk paleti',
+                  style: Theme.of(ctx).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                ...AppColorPalette.values.map((p) {
+                  final selected = app.palette == p;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      selected: selected,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: selected
+                              ? Theme.of(ctx).colorScheme.primary
+                              : Theme.of(ctx).colorScheme.outlineVariant,
+                        ),
+                      ),
+                      leading: CircleAvatar(
+                        backgroundColor: p.previewColor,
+                        radius: 14,
+                      ),
+                      title: Text(p.label),
+                      subtitle: Text(p.description),
+                      trailing: selected
+                          ? Icon(
+                              Icons.check_circle,
+                              color: Theme.of(ctx).colorScheme.primary,
+                            )
+                          : null,
+                      onTap: () {
+                        app.setPalette(p);
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildBody(ColorScheme scheme, {required bool wide}) {
@@ -811,9 +905,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             patient: patient,
             db: widget.db,
             selected: wide && _selectedPatient?.id == patient.id,
-            onOpen: wide
-                ? () => setState(() => _selectedPatient = patient)
-                : null,
+            onOpen:
+                wide ? () => setState(() => _selectedPatient = patient) : null,
           );
         },
       ),
