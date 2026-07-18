@@ -9,9 +9,11 @@ import '../data/treatment_templates.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
+import '../services/notification_service.dart';
 import 'cloud_upload_overlay.dart';
 import 'kanal_params_section.dart';
 import 'photo_preview.dart';
+import 'session_follow_up_sheet.dart';
 import 'tooth_selector.dart';
 
 Future<bool?> showEditSessionDialog({
@@ -33,8 +35,9 @@ Map<String, String> parseKanalBoyu(String? raw) {
   if (raw == null || raw.trim().isEmpty) return out;
   for (final part in raw.split(',')) {
     final p = part.trim();
-    final m = RegExp(r'^([A-Za-z0-9]+)\s*:\s*([\d.]+)\s*mm$', caseSensitive: false)
-        .firstMatch(p);
+    final m =
+        RegExp(r'^([A-Za-z0-9]+)\s*:\s*([\d.]+)\s*mm$', caseSensitive: false)
+            .firstMatch(p);
     if (m != null) {
       out[m.group(1)!] = m.group(2)!;
     }
@@ -73,6 +76,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
   bool _saving = false;
   String _uploadMessage = 'Kaydediliyor…';
   late DateTime _sessionDate;
+  SessionFollowUpDraft? _followUp;
   String? _validationError;
   List<TreatmentTemplate> _templates =
       List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
@@ -252,6 +256,18 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
     });
   }
 
+  Future<void> _openFollowUpSheet() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final draft = await showSessionFollowUpSheet(
+      context: context,
+      sessionDate: today,
+      initial: _followUp,
+    );
+    if (!mounted || draft == null) return;
+    setState(() => _followUp = draft);
+  }
+
   Future<void> _save() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -265,8 +281,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       _kapsam = TreatmentScope.tekDis;
     }
 
-    final needTeeth =
-        _requiresTooth || kapsam == TreatmentScope.tekDis;
+    final needTeeth = _requiresTooth || kapsam == TreatmentScope.tekDis;
     if (needTeeth && _selectedTeeth.isEmpty) {
       setState(() => _validationError = 'En az bir diş seçin');
       return;
@@ -316,7 +331,31 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       );
 
       if (!mounted) return;
-      if (result.id == widget.note.id) {
+
+      final followUp = _followUp;
+      if (followUp != null) {
+        setState(() => _uploadMessage = 'Kontrol hatırlatması oluşturuluyor…');
+        final dis = _selectedTeeth.isEmpty
+            ? null
+            : formatToothSelection(_selectedTeeth);
+        final aciklama = [
+          followUp.note,
+          if (dis != null) 'Diş: $dis',
+        ].join('\n');
+        final created = await widget.db.createFollowUp(
+          hastaId: widget.patient.id,
+          baslik: 'Kontrol: $title',
+          planlananTarih: followUp.controlDate,
+          aciklama: aciklama,
+          seansNotuId: result.id,
+          tur: 'genel',
+          hatirlatmaGunOnce: followUp.reminderDaysBefore,
+        );
+        await NotificationService.instance.scheduleFollowUp(created);
+      }
+
+      if (!mounted) return;
+      if (result.id == widget.note.id && followUp == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Değişiklik yok')),
         );
@@ -337,13 +376,11 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final tooth = _selectedTeeth.length == 1 ? _selectedTeeth.first : null;
-    final canalCodes =
-        visibleCanalsForTooth(tooth, extras: _ekstraKanallar);
+    final canalCodes = visibleCanalsForTooth(tooth, extras: _ekstraKanallar);
     final scopes = _availableScopes;
     final showToothSelector =
         _requiresTooth || _kapsam == TreatmentScope.tekDis;
-    final effectiveKapsam =
-        _requiresTooth ? TreatmentScope.tekDis : _kapsam;
+    final effectiveKapsam = _requiresTooth ? TreatmentScope.tekDis : _kapsam;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -352,268 +389,346 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
         child: Stack(
           children: [
             Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'İşlemi düzenle',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              'v${widget.note.versiyon} → yeni sürüm kaydedilir; eski korunur',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed:
+                            _saving ? null : () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'İşlemi düzenle',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                          'İşlem tarihi',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                         ),
+                        const SizedBox(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            Icons.event_outlined,
+                            color: scheme.primary,
+                          ),
+                          title: Text(
+                            DateFormat('dd.MM.yyyy HH:mm').format(_sessionDate),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          trailing: TextButton(
+                            onPressed: _saving ? null : _pickSessionDate,
+                            child: const Text('Değiştir'),
+                          ),
+                          onTap: _saving ? null : _pickSessionDate,
+                        ),
+                        const SizedBox(height: 14),
                         Text(
-                          'v${widget.note.versiyon} → yeni sürüm kaydedilir; eski korunur',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
+                          'Kapsam',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                         ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _saving ? null : () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'İşlem tarihi',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
+                        if (_requiresTooth) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Bu işlem için diş seçimi zorunlu',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
                           ),
-                    ),
-                    const SizedBox(height: 8),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        Icons.event_outlined,
-                        color: scheme.primary,
-                      ),
-                      title: Text(
-                        DateFormat('dd.MM.yyyy HH:mm').format(_sessionDate),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      trailing: TextButton(
-                        onPressed: _saving ? null : _pickSessionDate,
-                        child: const Text('Değiştir'),
-                      ),
-                      onTap: _saving ? null : _pickSessionDate,
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Kapsam',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
+                        ],
+                        const SizedBox(height: 8),
+                        SegmentedButton<TreatmentScope>(
+                          segments: scopes
+                              .map(
+                                (s) => ButtonSegment(
+                                  value: s,
+                                  label: Text(s.label,
+                                      textAlign: TextAlign.center),
+                                ),
+                              )
+                              .toList(),
+                          selected: {effectiveKapsam},
+                          onSelectionChanged: (set) {
+                            setState(() {
+                              _kapsam = set.first;
+                              if (_kapsam != TreatmentScope.tekDis) {
+                                _selectedTeeth = {};
+                              }
+                            });
+                          },
+                          style: const ButtonStyle(
+                            visualDensity: VisualDensity.compact,
+                            textStyle: WidgetStatePropertyAll(
+                              TextStyle(fontSize: 12),
+                            ),
                           ),
-                    ),
-                    if (_requiresTooth) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Bu işlem için diş seçimi zorunlu',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
+                        ),
+                        if (showToothSelector) ...[
+                          const SizedBox(height: 14),
+                          ToothSelector(
+                            selected: _selectedTeeth,
+                            onChanged: (t) =>
+                                setState(() => _selectedTeeth = t),
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+                        TextField(
+                          controller: _titleController,
+                          decoration: const InputDecoration(
+                            labelText: 'İşlem Başlığı',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _noteController,
+                          minLines: 2,
+                          maxLines: 5,
+                          decoration: const InputDecoration(
+                            labelText: 'Not (isteğe bağlı)',
+                            alignLabelWithHint: true,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Ek seçenekler',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: FilterChip(
+                            avatar: Icon(
+                              _followUp == null
+                                  ? Icons.notifications_none
+                                  : Icons.notifications_active,
+                              size: 18,
                             ),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    SegmentedButton<TreatmentScope>(
-                      segments: scopes
-                          .map(
-                            (s) => ButtonSegment(
-                              value: s,
-                              label: Text(s.label, textAlign: TextAlign.center),
+                            label: const Text('Takip ekle'),
+                            selected: _followUp != null,
+                            showCheckmark: false,
+                            onSelected: _saving
+                                ? null
+                                : (selected) {
+                                    if (selected) {
+                                      _openFollowUpSheet();
+                                    } else {
+                                      setState(() => _followUp = null);
+                                    }
+                                  },
+                          ),
+                        ),
+                        if (_followUp != null) ...[
+                          const SizedBox(height: 8),
+                          Card(
+                            margin: EdgeInsets.zero,
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.event_available,
+                                color: scheme.primary,
+                              ),
+                              title: Text(_followUp!.summary),
+                              subtitle: Text(_followUp!.note),
+                              trailing: Wrap(
+                                spacing: 0,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Düzenle',
+                                    onPressed:
+                                        _saving ? null : _openFollowUpSheet,
+                                    icon: const Icon(Icons.edit_outlined),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Kaldır',
+                                    onPressed: _saving
+                                        ? null
+                                        : () =>
+                                            setState(() => _followUp = null),
+                                    icon: const Icon(Icons.close),
+                                  ),
+                                ],
+                              ),
                             ),
+                          ),
+                        ],
+                        if (_showKanal) ...[
+                          const SizedBox(height: 14),
+                          KanalParamsSection(
+                            canalCodes: canalCodes,
+                            typicalCodes: canalsForTooth(tooth),
+                            toothLabel: tooth,
+                            kanalControllers: _kanalControllers,
+                            selectedEge: _egeSistemi,
+                            selectedIlac: _kanalIlaci,
+                            onEgeChanged: (v) =>
+                                setState(() => _egeSistemi = v),
+                            onIlacChanged: (v) =>
+                                setState(() => _kanalIlaci = v),
+                            onAddCanal: _addExtraCanal,
+                            onRemoveExtraCanal: (kod) {
+                              setState(() {
+                                _ekstraKanallar.remove(kod);
+                                _kanalControllers[kod]?.clear();
+                              });
+                            },
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        Text(
+                          'Fotoğraf',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (_newPhoto != null)
+                          LocalPhotoPreview(
+                            file: _newPhoto!,
+                            onRemove: () => setState(() => _newPhoto = null),
                           )
-                          .toList(),
-                      selected: {effectiveKapsam},
-                      onSelectionChanged: (set) {
-                        setState(() {
-                          _kapsam = set.first;
-                          if (_kapsam != TreatmentScope.tekDis) {
-                            _selectedTeeth = {};
-                          }
-                        });
-                      },
-                      style: const ButtonStyle(
-                        visualDensity: VisualDensity.compact,
-                        textStyle: WidgetStatePropertyAll(
-                          TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ),
-                    if (showToothSelector) ...[
-                      const SizedBox(height: 14),
-                      ToothSelector(
-                        selected: _selectedTeeth,
-                        onChanged: (t) => setState(() => _selectedTeeth = t),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'İşlem Başlığı',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _noteController,
-                      minLines: 2,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: 'Not (isteğe bağlı)',
-                        alignLabelWithHint: true,
-                      ),
-                    ),
-                    if (_showKanal) ...[
-                      const SizedBox(height: 14),
-                      KanalParamsSection(
-                        canalCodes: canalCodes,
-                        typicalCodes: canalsForTooth(tooth),
-                        toothLabel: tooth,
-                        kanalControllers: _kanalControllers,
-                        selectedEge: _egeSistemi,
-                        selectedIlac: _kanalIlaci,
-                        onEgeChanged: (v) => setState(() => _egeSistemi = v),
-                        onIlacChanged: (v) => setState(() => _kanalIlaci = v),
-                        onAddCanal: _addExtraCanal,
-                        onRemoveExtraCanal: (kod) {
-                          setState(() {
-                            _ekstraKanallar.remove(kod);
-                            _kanalControllers[kod]?.clear();
-                          });
-                        },
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Text(
-                      'Fotoğraf',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
+                        else if (_existingPhotoUrl != null && !_removePhoto)
+                          Column(
+                            children: [
+                              NetworkPhotoThumbnail(
+                                url: _existingPhotoUrl!,
+                                onTap: () {},
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() {
+                                  _removePhoto = true;
+                                  _existingPhotoUrl = null;
+                                }),
+                                child: const Text('Fotoğrafı kaldır'),
+                              ),
+                            ],
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _saving
+                                      ? null
+                                      : () => _pickPhoto(ImageSource.camera),
+                                  icon: const Icon(Icons.photo_camera),
+                                  label: const Text('Çek'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _saving
+                                      ? null
+                                      : () => _pickPhoto(ImageSource.gallery),
+                                  icon:
+                                      const Icon(Icons.photo_library_outlined),
+                                  label: const Text('Galeri'),
+                                ),
+                              ),
+                            ],
                           ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (_newPhoto != null)
-                      LocalPhotoPreview(
-                        file: _newPhoto!,
-                        onRemove: () => setState(() => _newPhoto = null),
-                      )
-                    else if (_existingPhotoUrl != null && !_removePhoto)
-                      Column(
-                        children: [
-                          NetworkPhotoThumbnail(
-                            url: _existingPhotoUrl!,
-                            onTap: () {},
-                          ),
-                          TextButton(
-                            onPressed: () => setState(() {
-                              _removePhoto = true;
-                              _existingPhotoUrl = null;
-                            }),
-                            child: const Text('Fotoğrafı kaldır'),
-                          ),
-                        ],
-                      )
-                    else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _saving
-                                  ? null
-                                  : () => _pickPhoto(ImageSource.camera),
-                              icon: const Icon(Icons.photo_camera),
-                              label: const Text('Çek'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _saving
-                                  ? null
-                                  : () => _pickPhoto(ImageSource.gallery),
-                              icon: const Icon(Icons.photo_library_outlined),
-                              label: const Text('Galeri'),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            if (_validationError != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: Material(
-                  color: scheme.errorContainer,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 20,
-                          color: scheme.onErrorContainer,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _validationError!,
-                            style: TextStyle(
-                              color: scheme.onErrorContainer,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-              child: FilledButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                label: Text(
-                  _saving ? _uploadMessage : 'Yeni sürüm olarak kaydet',
+                const Divider(height: 1),
+                if (_validationError != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Material(
+                      color: scheme.errorContainer,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 20,
+                              color: scheme.onErrorContainer,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _validationError!,
+                                style: TextStyle(
+                                  color: scheme.onErrorContainer,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save),
+                    label: Text(
+                      _saving ? _uploadMessage : 'Yeni sürüm olarak kaydet',
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
             ),
             CloudUploadOverlay(
               visible: _saving,
