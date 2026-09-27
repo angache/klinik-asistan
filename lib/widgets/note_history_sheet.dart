@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
-import 'full_screen_image.dart';
 import 'photo_preview.dart';
 
 Future<void> showNoteHistorySheet({
@@ -95,7 +94,8 @@ class _NoteHistorySheetState extends State<_NoteHistorySheet> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   itemCount: versions.length,
                   itemBuilder: (context, index) {
-                    final v = versions[versions.length - 1 - index]; // yeni üstte
+                    final v =
+                        versions[versions.length - 1 - index]; // yeni üstte
                     final prev = index < versions.length - 1
                         ? versions[versions.length - 2 - index]
                         : null;
@@ -120,8 +120,12 @@ class _VersionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dt = DateFormat('dd.MM.yyyy HH:mm').format(note.olusturmaTarihi.toLocal());
-    final changes = note.degisiklikOzeti?.split('\n').where((e) => e.trim().isNotEmpty).toList() ??
+    final dt =
+        DateFormat('dd.MM.yyyy HH:mm').format(note.olusturmaTarihi.toLocal());
+    final changes = note.degisiklikOzeti
+            ?.split('\n')
+            .where((e) => e.trim().isNotEmpty)
+            .toList() ??
         (previous != null ? diffTreatmentNotes(previous!, note) : <String>[]);
 
     return Container(
@@ -219,7 +223,8 @@ class _VersionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('• ', style: TextStyle(color: scheme.primary)),
-                    Expanded(child: Text(c, style: const TextStyle(fontSize: 13))),
+                    Expanded(
+                        child: Text(c, style: const TextStyle(fontSize: 13))),
                   ],
                 ),
               ),
@@ -237,10 +242,7 @@ class _VersionCard extends StatelessWidget {
           ],
           if (note.hasPhoto) ...[
             const SizedBox(height: 10),
-            NetworkPhotoThumbnail(
-              url: note.fotografUrl!,
-              onTap: () => FullScreenImage.open(context, note.fotografUrl!),
-            ),
+            NetworkPhotoStrip(urls: note.fotografUrls),
           ],
         ],
       ),

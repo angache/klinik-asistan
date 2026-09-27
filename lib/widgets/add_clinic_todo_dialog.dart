@@ -3,12 +3,15 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../models/clinic_todo.dart';
+import '../models/clinic.dart';
+import '../models/patient.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 
@@ -36,6 +39,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
   final _icerik = TextEditingController();
   final _recorder = AudioRecorder();
   final _player = AudioPlayer();
+  final _picker = ImagePicker();
   int? _presetDays = 1;
   DateTime? _customDate;
   bool _saving = false;
@@ -45,6 +49,15 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
   Timer? _timer;
   String? _voicePath;
   int? _voiceSeconds;
+  List<ClinicMember> _members = const [];
+  List<Patient> _patients = const [];
+  final List<File> _images = [];
+  String? _assignedMemberId;
+  String? _patientId;
+  TodoPriority _priority = TodoPriority.normal;
+  TodoRecurrence _recurrence = TodoRecurrence.none;
+  TimeOfDay? _time;
+  int _reminderMinutes = 0;
 
   @override
   void initState() {
@@ -58,6 +71,21 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
         setState(() => _playing = false);
       }
     });
+    _loadOptions();
+  }
+
+  Future<void> _loadOptions() async {
+    try {
+      final results = await Future.wait([
+        widget.db.getClinicMembers(),
+        widget.db.getPatientsPage(limit: 200),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _members = results[0] as List<ClinicMember>;
+        _patients = (results[1] as ({List<Patient> items, bool hasMore})).items;
+      });
+    } catch (_) {}
   }
 
   @override
@@ -77,6 +105,13 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
     }
     final c = _customDate!;
     return DateTime(c.year, c.month, c.day);
+  }
+
+  DateTime? get _effectiveDateTime {
+    final date = _effectiveDate;
+    final time = _time;
+    if (date == null || time == null) return null;
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
   bool get _hasVoice => _voicePath != null;
@@ -138,6 +173,57 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
       _customDate = picked;
       _presetDays = null;
     });
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _time ?? const TimeOfDay(hour: 9, minute: 0),
+      helpText: 'Görev saati',
+    );
+    if (picked != null && mounted) setState(() => _time = picked);
+  }
+
+  Future<void> _pickImages(ImageSource source) async {
+    try {
+      if (source == ImageSource.camera) {
+        final cam = await Permission.camera.request();
+        if (!cam.isGranted) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kamera izni gerekli')),
+          );
+          return;
+        }
+        final image = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 82,
+          maxWidth: 1800,
+        );
+        if (image != null && mounted) {
+          setState(() => _images.add(File(image.path)));
+        }
+      } else {
+        final images = await _picker.pickMultiImage(
+          imageQuality: 82,
+          maxWidth: 1800,
+        );
+        if (images.isNotEmpty && mounted) {
+          setState(() => _images.addAll(images.map((e) => File(e.path))));
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            source == ImageSource.camera
+                ? 'Kamera açılamadı: $e'
+                : 'Galeri açılamadı: $e',
+          ),
+        ),
+      );
+    }
   }
 
   Future<bool> _ensureMic() async {
@@ -265,11 +351,25 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
           sesUrl: url,
           sureSaniye: _voiceSeconds,
           planlananTarih: _effectiveDate,
+          planlananZaman: _effectiveDateTime,
+          oncelik: _priority,
+          tekrar: _recurrence,
+          hatirlatmaDakikaOnce: _reminderMinutes,
+          sorumluUyeId: _assignedMemberId,
+          hastaId: _patientId,
+          gorseller: _images,
         );
       } else {
         todo = await widget.db.createClinicTodo(
           icerik: text,
           planlananTarih: _effectiveDate,
+          planlananZaman: _effectiveDateTime,
+          oncelik: _priority,
+          tekrar: _recurrence,
+          hatirlatmaDakikaOnce: _reminderMinutes,
+          sorumluUyeId: _assignedMemberId,
+          hastaId: _patientId,
+          gorseller: _images,
         );
       }
 
@@ -329,10 +429,11 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                     if (_recording) ...[
                       Text(
                         _timeLabel,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontFeatures: const [FontFeature.tabularFigures()],
-                            ),
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -351,7 +452,8 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                           Icon(Icons.mic, color: AppTheme.voiceAccentDark),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text('Ses kaydedildi · $_voiceDurationLabel'),
+                            child:
+                                Text('Ses kaydedildi · $_voiceDurationLabel'),
                           ),
                         ],
                       ),
@@ -360,7 +462,8 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                         children: [
                           FilledButton.tonalIcon(
                             onPressed: _saving ? null : _togglePreview,
-                            icon: Icon(_playing ? Icons.stop : Icons.play_arrow),
+                            icon:
+                                Icon(_playing ? Icons.stop : Icons.play_arrow),
                             label: Text(_playing ? 'Durdur' : 'Dinle'),
                           ),
                           const SizedBox(width: 8),
@@ -463,6 +566,198 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                       ),
                 ),
               ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<TodoPriority>(
+                      initialValue: _priority,
+                      decoration: const InputDecoration(labelText: 'Öncelik'),
+                      items: TodoPriority.values
+                          .map(
+                            (e) => DropdownMenuItem(
+                              value: e,
+                              child: Text(e.label),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: busy
+                          ? null
+                          : (v) => setState(
+                                () => _priority = v ?? TodoPriority.normal,
+                              ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          busy || _effectiveDate == null ? null : _pickTime,
+                      icon: const Icon(Icons.schedule),
+                      label: Text(
+                        _time == null ? 'Saat ekle' : _time!.format(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String?>(
+                initialValue: _assignedMemberId,
+                decoration: const InputDecoration(
+                  labelText: 'Sorumlu',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Tüm klinik'),
+                  ),
+                  ..._members.map(
+                    (m) => DropdownMenuItem<String?>(
+                      value: m.id,
+                      child: Text(m.adSoyad),
+                    ),
+                  ),
+                ],
+                onChanged:
+                    busy ? null : (v) => setState(() => _assignedMemberId = v),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String?>(
+                initialValue: _patientId,
+                decoration: const InputDecoration(
+                  labelText: 'Hasta bağlantısı (isteğe bağlı)',
+                  prefixIcon: Icon(Icons.badge_outlined),
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Hasta seçilmedi'),
+                  ),
+                  ..._patients.map(
+                    (p) => DropdownMenuItem<String?>(
+                      value: p.id,
+                      child: Text(
+                        p.adSoyad,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: busy ? null : (v) => setState(() => _patientId = v),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<TodoRecurrence>(
+                      initialValue: _recurrence,
+                      decoration: const InputDecoration(labelText: 'Tekrar'),
+                      items: TodoRecurrence.values
+                          .map(
+                            (e) => DropdownMenuItem(
+                              value: e,
+                              child: Text(e.label),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: busy
+                          ? null
+                          : (v) => setState(
+                                () => _recurrence = v ?? TodoRecurrence.none,
+                              ),
+                    ),
+                  ),
+                  if (_time != null) ...[
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        initialValue: _reminderMinutes,
+                        decoration:
+                            const InputDecoration(labelText: 'Hatırlatma'),
+                        items: const [
+                          DropdownMenuItem(value: 0, child: Text('Zamanında')),
+                          DropdownMenuItem(
+                            value: 60,
+                            child: Text('1 saat önce'),
+                          ),
+                          DropdownMenuItem(
+                            value: 1440,
+                            child: Text('1 gün önce'),
+                          ),
+                        ],
+                        onChanged: busy
+                            ? null
+                            : (v) => setState(
+                                  () => _reminderMinutes = v ?? 0,
+                                ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Görseller',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 8),
+              if (_images.isNotEmpty)
+                SizedBox(
+                  height: 82,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _images.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, index) => Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(
+                            _images[index],
+                            width: 82,
+                            height: 82,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          right: 2,
+                          top: 2,
+                          child: InkWell(
+                            onTap: busy
+                                ? null
+                                : () => setState(
+                                      () => _images.removeAt(index),
+                                    ),
+                            child: const CircleAvatar(
+                              radius: 11,
+                              child: Icon(Icons.close, size: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed:
+                        busy ? null : () => _pickImages(ImageSource.camera),
+                    icon: const Icon(Icons.camera_alt_outlined),
+                    label: const Text('Kamera'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed:
+                        busy ? null : () => _pickImages(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Galeri'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
@@ -77,7 +76,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   final Map<String, _KanalDraft> _kanalByTooth = {};
   String? _activeKanalTooth;
 
-  File? _photo;
+  final List<File> _photos = [];
   bool _saving = false;
   String _uploadMessage = 'Kaydediliyor…';
   late DateTime _sessionDate;
@@ -93,7 +92,6 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   int _kontrolReminderDays = 1;
   String? _validationError;
 
-  final _picker = ImagePicker();
   final _scrollController = ScrollController();
 
   @override
@@ -437,40 +435,6 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
     });
   }
 
-  Future<void> _takePhoto() async {
-    try {
-      final xfile = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-        maxWidth: 1920,
-      );
-      if (xfile == null) return;
-      setState(() => _photo = File(xfile.path));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kamera açılamadı: $e')),
-      );
-    }
-  }
-
-  Future<void> _pickFromGallery() async {
-    try {
-      final xfile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1920,
-      );
-      if (xfile == null) return;
-      setState(() => _photo = File(xfile.path));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Galeri açılamadı: $e')),
-      );
-    }
-  }
-
   Future<void> _pickLabReturnDate() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -559,20 +523,26 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
     setState(() {
       _saving = true;
-      _uploadMessage = _photo != null
-          ? 'Fotoğraf buluta yükleniyor…'
+      _uploadMessage = _photos.isNotEmpty
+          ? 'Fotoğraflar buluta yükleniyor…'
           : 'İşlem kaydediliyor…';
     });
 
     try {
-      String? sharedPhotoUrl;
+      final sharedPhotoUrls = <String>[];
       TreatmentNote? createdNote;
-      if (_photo != null) {
-        sharedPhotoUrl = await widget.db.uploadSessionPhoto(
+      for (var i = 0; i < _photos.length; i++) {
+        if (_photos.length > 1) {
+          setState(() => _uploadMessage =
+              'Fotoğraf yükleniyor (${i + 1}/${_photos.length})…');
+        }
+        sharedPhotoUrls.add(await widget.db.uploadSessionPhoto(
           hastaId: widget.patient.id,
-          file: _photo!,
-        );
+          file: _photos[i],
+        ));
         if (!mounted) return;
+      }
+      if (_photos.isNotEmpty) {
         setState(() => _uploadMessage = 'İşlem kaydediliyor…');
       }
 
@@ -595,7 +565,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
             egeSistemi: draft.egeSistemi,
             kanalIlaci: draft.kanalIlaci,
             notIcerik: note,
-            fotografUrl: sharedPhotoUrl,
+            fotografUrls: sharedPhotoUrls,
             tarih: _sessionDateTimeForSave,
             planlandi: _planForNext,
             labGitti: labActive,
@@ -614,7 +584,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
           disNo: disNo,
           islemBaslik: title,
           notIcerik: note,
-          fotografUrl: sharedPhotoUrl,
+          fotografUrls: sharedPhotoUrls,
           tarih: _sessionDateTimeForSave,
           planlandi: _planForNext,
           labGitti: labActive,
@@ -1206,32 +1176,16 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                   ),
                         ),
                         const SizedBox(height: 8),
-                        if (_photo != null)
-                          LocalPhotoPreview(
-                            file: _photo!,
-                            onRemove: () => setState(() => _photo = null),
-                          )
-                        else
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _saving ? null : _takePhoto,
-                                  icon: const Icon(Icons.photo_camera),
-                                  label: const Text('Fotoğraf Çek'),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _saving ? null : _pickFromGallery,
-                                  icon:
-                                      const Icon(Icons.photo_library_outlined),
-                                  label: const Text('Galeriden'),
-                                ),
-                              ),
-                            ],
-                          ),
+                        SessionPhotosEditor(
+                          existingUrls: const [],
+                          newFiles: _photos,
+                          enabled: !_saving,
+                          onAddFiles: (files) =>
+                              setState(() => _photos.addAll(files)),
+                          onRemoveExisting: (_) {},
+                          onRemoveNew: (file) =>
+                              setState(() => _photos.remove(file)),
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Planlama',

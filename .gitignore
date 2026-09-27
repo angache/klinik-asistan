@@ -41,3 +41,5 @@ app.*.map.json
 android/local.properties
 *.keystore
 .env
+supabase/.env*
+supabase/.temp/

@@ -10,6 +10,10 @@ set(BINARY_NAME "klinik_asistan")
 # versions of CMake.
 cmake_policy(VERSION 3.14...3.25)
 
+# CMake 4.x removed compatibility with cmake_minimum_required < 3.5.
+# Firebase C++ SDK (firebase_core Windows) still declares VERSION 3.1.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(IS_MULTICONFIG)

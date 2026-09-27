@@ -1,0 +1,29 @@
+-- Push kurulumu için notlar (SQL değil, kontrol listesi).
+-- Asıl tablo: migration_device_tokens.sql
+
+-- 1) SQL Editor: migration_device_tokens.sql çalıştırın.
+--
+-- 2) Firebase Console → Project settings → Service accounts
+--    → Generate new private key → JSON indirin.
+--
+-- 3) Supabase CLI ile secret:
+--    supabase secrets set FIREBASE_SERVICE_ACCOUNT_JSON="<json-içeriği-tek-satır>"
+--    supabase secrets set CRON_SECRET="<rastgele-güçlü-string>"
+--
+-- 4) Edge Function deploy:
+--    supabase functions deploy notify-join-request
+--    supabase functions deploy daily-reminders
+--
+-- 5) Database Webhook (Dashboard → Database → Webhooks):
+--    Table: klinik_katilim_istekleri
+--    Events: INSERT
+--    URL: https://<project-ref>.supabase.co/functions/v1/notify-join-request
+--    HTTP Headers: Authorization: Bearer <service_role_or_anon_with_verify_jwt_off>
+--
+-- 6) Cron (Dashboard → Edge Functions → Schedules veya pg_cron):
+--    Her gün 08:00 Europe/Istanbul:
+--    POST /functions/v1/daily-reminders
+--    Authorization: Bearer <CRON_SECRET>
+--
+-- Not: Windows masaüstü FCM almaz; Android/iOS/web push alır.
+select 1;

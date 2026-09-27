@@ -5,7 +5,6 @@ import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
 import 'edit_session_dialog.dart';
-import 'full_screen_image.dart';
 import 'note_history_sheet.dart';
 import 'photo_preview.dart';
 
@@ -202,10 +201,7 @@ class TreatmentNoteTile extends StatelessWidget {
           ],
           if (note.hasPhoto) ...[
             const SizedBox(height: 10),
-            NetworkPhotoThumbnail(
-              url: note.fotografUrl!,
-              onTap: () => FullScreenImage.open(context, note.fotografUrl!),
-            ),
+            NetworkPhotoStrip(urls: note.fotografUrls),
           ],
           const SizedBox(height: 8),
           Row(

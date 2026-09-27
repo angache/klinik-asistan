@@ -43,7 +43,12 @@ class NotificationService {
 
   int _notifId(String followUpId) => followUpId.hashCode & 0x7fffffff;
 
-  Future<void> scheduleFollowUp(FollowUp f) async {
+  /// [notifyIfPast]: true ise uyarı saati geçmiş takiplerde anında bildir.
+  /// Sync sırasında false olmalı — yoksa her dashboard açılışında tekrar basılır.
+  Future<void> scheduleFollowUp(
+    FollowUp f, {
+    bool notifyIfPast = true,
+  }) async {
     if (!_ready || f.tamamlandi) return;
 
     final when = tz.TZDateTime(
@@ -59,7 +64,8 @@ class NotificationService {
     final body =
         f.hatirlatmaGunOnce > 0 ? '${f.baslik} · Kontrol: $date' : f.baslik;
     if (when.isBefore(tz.TZDateTime.now(tz.local))) {
-      // Gecikmiş / bugün: hemen bir bilgi bildirimi
+      if (!notifyIfPast) return;
+      // Yeni oluştururken: gecikmiş / bugün için tek seferlik bilgi
       await _plugin.show(
         id: _notifId(f.id),
         title: 'Takip: ${f.hastaAdSoyad ?? 'Hasta'}',
@@ -105,7 +111,30 @@ class NotificationService {
   Future<void> syncOpenFollowUps(List<FollowUp> items) async {
     if (!_ready) return;
     for (final f in items) {
-      await scheduleFollowUp(f);
+      await scheduleFollowUp(f, notifyIfPast: false);
     }
+  }
+
+  /// Ön planda gelen FCM mesajını yerel bildirim olarak göster.
+  Future<void> showImmediate({
+    required String title,
+    required String body,
+  }) async {
+    if (!_ready) return;
+    await _plugin.show(
+      id: DateTime.now().millisecondsSinceEpoch & 0x7fffffff,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'klinik_push',
+          'Klinik bildirimleri',
+          channelDescription: 'Katılım, takip ve yapılacak hatırlatmaları',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
   }
 }

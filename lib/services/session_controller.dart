@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/clinic.dart';
+import 'push_service.dart';
 
 /// Oturum + çoklu klinik üyeliği.
 class SessionController extends ChangeNotifier {
@@ -19,11 +20,13 @@ class SessionController extends ChangeNotifier {
         notifyListeners();
       } else {
         refreshMembership();
+        PushService.instance.syncToken();
       }
     });
     _user = _client.auth.currentUser;
     if (_user != null) {
       refreshMembership();
+      PushService.instance.syncToken();
     } else {
       _loading = false;
     }
@@ -430,6 +433,7 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    await PushService.instance.clearToken();
     await _client.auth.signOut();
     await _clearSavedKlinikId();
     _user = null;

@@ -16,6 +16,7 @@ class ClinicTodosScreen extends StatefulWidget {
 
 class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
   late Future<List<ClinicTodo>> _future;
+  String _filter = 'all';
 
   @override
   void initState() {
@@ -24,8 +25,11 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = widget.db.getOpenClinicTodos());
-    await _future;
+    final next = widget.db.getClinicTodos(completed: _filter == 'completed');
+    setState(() {
+      _future = next;
+    });
+    await next;
   }
 
   Future<void> _add() async {
@@ -80,13 +84,23 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
             );
           }
 
-          final items = snap.data ?? [];
+          final allItems = snap.data ?? [];
+          final currentMemberId = widget.db.session.member?.id;
+          final items = switch (_filter) {
+            'mine' =>
+              allItems.where((e) => e.sorumluUyeId == currentMemberId).toList(),
+            'urgent' =>
+              allItems.where((e) => e.oncelik == TodoPriority.urgent).toList(),
+            'today' => allItems.where((e) => e.needsAttention).toList(),
+            _ => allItems,
+          };
           if (items.isEmpty) {
             return RefreshIndicator(
               onRefresh: _reload,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
+                  _filters(),
                   SizedBox(
                     height: MediaQuery.sizeOf(context).height * 0.45,
                     child: Center(
@@ -114,19 +128,41 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
             );
           }
 
+          if (_filter == 'completed') {
+            return RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                children: [
+                  _filters(),
+                  const SizedBox(height: 12),
+                  ...items.map(
+                    (t) => ClinicTodoTile(
+                      todo: t,
+                      db: widget.db,
+                      onChanged: _reload,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
           final overdue = items.where((e) => e.isOverdue).toList();
           final today = items.where((e) => e.isDueToday).toList();
           final upcoming = items
-              .where((e) => !e.isOverdue && !e.isDueToday && e.planDateOnly != null)
+              .where((e) =>
+                  !e.isOverdue && !e.isDueToday && e.planDateOnly != null)
               .toList();
-          final undated =
-              items.where((e) => e.planDateOnly == null).toList();
+          final undated = items.where((e) => e.planDateOnly == null).toList();
 
           return RefreshIndicator(
             onRefresh: _reload,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
               children: [
+                _filters(),
+                const SizedBox(height: 12),
                 Text(
                   'Klinik genel notlar — randevu, dönüş, hatırlatma…',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -194,6 +230,40 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
               fontWeight: FontWeight.w700,
               color: color,
             ),
+      ),
+    );
+  }
+
+  Widget _filters() {
+    const options = [
+      ('all', 'Tümü'),
+      ('mine', 'Bana atanan'),
+      ('today', 'Bugün/geciken'),
+      ('urgent', 'Acil'),
+      ('completed', 'Tamamlanan'),
+    ];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          for (final option in options)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(option.$2),
+                selected: _filter == option.$1,
+                onSelected: (_) {
+                  setState(() {
+                    _filter = option.$1;
+                    _future = widget.db.getClinicTodos(
+                      completed: _filter == 'completed',
+                    );
+                  });
+                },
+              ),
+            ),
+        ],
       ),
     );
   }

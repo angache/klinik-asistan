@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "400952145454",
+    "firebase_url": "https://hasta-tkp.firebaseio.com",
+    "project_id": "hasta-tkp",
+    "storage_bucket": "hasta-tkp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:400952145454:android:c394b2e29a2089c17d11bf",
+        "android_client_info": {
+          "package_name": "com.klinik.klinik_asistan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNYz6arR_na3LCETl2Jv9IcOzbxC66lJ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

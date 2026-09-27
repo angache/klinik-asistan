@@ -6,6 +6,7 @@ import 'config/supabase_config.dart';
 import 'screens/auth_gate.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
+import 'services/push_service.dart';
 import 'services/session_controller.dart';
 import 'theme/app_theme.dart';
 
@@ -17,6 +18,7 @@ Future<void> main() async {
     publishableKey: SupabaseConfig.anonKey,
   );
   await NotificationService.instance.init();
+  await PushService.instance.init();
 
   final prefs = await SharedPreferences.getInstance();
   final savedMode = prefs.getString(_prefThemeMode);

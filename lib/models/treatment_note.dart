@@ -39,7 +39,7 @@ class TreatmentNote {
   final String? egeSistemi;
   final String? kanalIlaci;
   final String notIcerik;
-  final String? fotografUrl;
+  final List<String> fotografUrls;
   final DateTime tarih;
   final DateTime olusturmaTarihi;
   final String? kokId;
@@ -61,7 +61,7 @@ class TreatmentNote {
     this.egeSistemi,
     this.kanalIlaci,
     required this.notIcerik,
-    this.fotografUrl,
+    this.fotografUrls = const [],
     required this.tarih,
     required this.olusturmaTarihi,
     this.kokId,
@@ -85,6 +85,14 @@ class TreatmentNote {
     if (rawLab is String && rawLab.isNotEmpty) {
       labDate = DateTime.tryParse(rawLab);
     }
+    final photos = <String>[
+      for (final u in (json['fotograf_urls'] as List?) ?? const [])
+        if (u is String && u.isNotEmpty) u,
+    ];
+    final legacyPhoto = json['fotograf_url'] as String?;
+    if (photos.isEmpty && legacyPhoto != null && legacyPhoto.isNotEmpty) {
+      photos.add(legacyPhoto);
+    }
     return TreatmentNote(
       id: json['id'] as String,
       hastaId: json['hasta_id'] as String,
@@ -95,7 +103,7 @@ class TreatmentNote {
       egeSistemi: json['ege_sistemi'] as String?,
       kanalIlaci: json['kanal_ilaci'] as String?,
       notIcerik: json['not_icerik'] as String? ?? '',
-      fotografUrl: json['fotograf_url'] as String?,
+      fotografUrls: photos,
       tarih: DateTime.parse(json['tarih'] as String).toLocal(),
       olusturmaTarihi:
           DateTime.parse(json['olusturma_tarihi'] as String).toLocal(),
@@ -121,6 +129,7 @@ class TreatmentNote {
       'kanal_ilaci': kanalIlaci,
       'not_icerik': notIcerik,
       'fotograf_url': fotografUrl,
+      'fotograf_urls': fotografUrls,
       'tarih': tarih.toUtc().toIso8601String(),
       'kok_id': kokId,
       'onceki_id': oncekiId,
@@ -132,12 +141,14 @@ class TreatmentNote {
       if (labBeklenenTarih != null)
         'lab_beklenen_tarih':
             '${labBeklenenTarih!.year.toString().padLeft(4, '0')}-'
-            '${labBeklenenTarih!.month.toString().padLeft(2, '0')}-'
-            '${labBeklenenTarih!.day.toString().padLeft(2, '0')}',
+                '${labBeklenenTarih!.month.toString().padLeft(2, '0')}-'
+                '${labBeklenenTarih!.day.toString().padLeft(2, '0')}',
     };
   }
 
-  bool get hasPhoto => fotografUrl != null && fotografUrl!.isNotEmpty;
+  String? get fotografUrl => fotografUrls.isEmpty ? null : fotografUrls.first;
+
+  bool get hasPhoto => fotografUrls.isNotEmpty;
 }
 
 /// İki sürüm arasındaki alan farklarını insan okunur satırlara çevirir.
@@ -160,15 +171,12 @@ List<String> diffTreatmentNotes(TreatmentNote onceki, TreatmentNote yeni) {
   add('Kanal boyu', onceki.kanalBoyu, yeni.kanalBoyu);
   add('Eğe', onceki.egeSistemi, yeni.egeSistemi);
   add('İlaç', onceki.kanalIlaci, yeni.kanalIlaci);
-  if (n(onceki.fotografUrl) != n(yeni.fotografUrl)) {
-    changes.add(
-      onceki.hasPhoto && !yeni.hasPhoto
-          ? 'Fotoğraf kaldırıldı'
-          : !onceki.hasPhoto && yeni.hasPhoto
-              ? 'Fotoğraf eklendi'
-              : 'Fotoğraf değiştirildi',
-    );
-  }
+  final oncekiFotolar = onceki.fotografUrls.toSet();
+  final yeniFotolar = yeni.fotografUrls.toSet();
+  final eklenen = yeniFotolar.difference(oncekiFotolar).length;
+  final kaldirilan = oncekiFotolar.difference(yeniFotolar).length;
+  if (eklenen > 0) changes.add('$eklenen fotoğraf eklendi');
+  if (kaldirilan > 0) changes.add('$kaldirilan fotoğraf kaldırıldı');
   final oncekiLocal = onceki.tarih.toLocal();
   final yeniLocal = yeni.tarih.toLocal();
   if (oncekiLocal.year != yeniLocal.year ||

@@ -310,7 +310,7 @@ class DatabaseService {
     String? egeSistemi,
     String? kanalIlaci,
     required String notIcerik,
-    String? fotografUrl,
+    List<String> fotografUrls = const [],
     DateTime? tarih,
     String? kokId,
     String? oncekiId,
@@ -338,7 +338,8 @@ class DatabaseService {
       'ege_sistemi': egeSistemi,
       'kanal_ilaci': kanalIlaci,
       'not_icerik': notIcerik,
-      'fotograf_url': fotografUrl,
+      'fotograf_url': fotografUrls.isEmpty ? null : fotografUrls.first,
+      'fotograf_urls': fotografUrls,
       'versiyon': versiyon,
       'guncel': guncel,
       'planlandi': planlandi,
@@ -350,8 +351,17 @@ class DatabaseService {
       if (tarih != null) 'tarih': _formatTimestamp(tarih),
     };
 
-    final row =
-        await _client.from('seans_notlari').insert(payload).select().single();
+    Map<String, dynamic> row;
+    try {
+      row =
+          await _client.from('seans_notlari').insert(payload).select().single();
+    } on PostgrestException catch (e) {
+      // migration_session_photos.sql henüz çalıştırılmadıysa tek fotoğrafla kaydet.
+      if (!e.message.contains('fotograf_urls')) rethrow;
+      payload.remove('fotograf_urls');
+      row =
+          await _client.from('seans_notlari').insert(payload).select().single();
+    }
 
     return TreatmentNote.fromJson(Map<String, dynamic>.from(row));
   }
@@ -366,7 +376,7 @@ class DatabaseService {
     String? egeSistemi,
     String? kanalIlaci,
     required String notIcerik,
-    String? fotografUrl,
+    List<String> fotografUrls = const [],
     DateTime? tarih,
   }) async {
     final draft = TreatmentNote(
@@ -379,7 +389,7 @@ class DatabaseService {
       egeSistemi: egeSistemi,
       kanalIlaci: kanalIlaci,
       notIcerik: notIcerik,
-      fotografUrl: fotografUrl,
+      fotografUrls: fotografUrls,
       tarih: tarih ?? previous.tarih,
       olusturmaTarihi: DateTime.now(),
     );
@@ -401,7 +411,7 @@ class DatabaseService {
       egeSistemi: egeSistemi,
       kanalIlaci: kanalIlaci,
       notIcerik: notIcerik,
-      fotografUrl: fotografUrl,
+      fotografUrls: fotografUrls,
       tarih: tarih ?? previous.tarih,
       kokId: previous.rootId,
       oncekiId: previous.id,
@@ -449,17 +459,18 @@ class DatabaseService {
     String? egeSistemi,
     String? kanalIlaci,
     required String notIcerik,
-    File? photoFile,
-    String? fotografUrl,
+    List<File> photoFiles = const [],
+    List<String> fotografUrls = const [],
     DateTime? tarih,
     bool planlandi = false,
     bool labGitti = false,
     DateTime? labBeklenenTarih,
   }) async {
-    String? photoUrl = fotografUrl;
-    if (photoFile != null) {
-      photoUrl = await uploadSessionPhoto(hastaId: hastaId, file: photoFile);
-    }
+    final photoUrls = [
+      ...fotografUrls,
+      for (final file in photoFiles)
+        await uploadSessionPhoto(hastaId: hastaId, file: file),
+    ];
 
     return createNote(
       hastaId: hastaId,
@@ -470,7 +481,7 @@ class DatabaseService {
       egeSistemi: egeSistemi,
       kanalIlaci: kanalIlaci,
       notIcerik: notIcerik,
-      fotografUrl: photoUrl,
+      fotografUrls: photoUrls,
       tarih: tarih,
       planlandi: planlandi,
       labGitti: labGitti,
@@ -588,22 +599,27 @@ class DatabaseService {
     final root = note.rootId;
     final rows = await _client
         .from('seans_notlari')
-        .select('id, fotograf_url')
+        .select()
         .eq('hasta_id', note.hastaId)
         .or('id.eq.$root,kok_id.eq.$root');
 
-    final list =
-        (rows as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    final ids = list.map((e) => e['id'] as String).toList();
+    final versions = (rows as List)
+        .map((e) => TreatmentNote.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    final ids = versions.map((v) => v.id).toList();
     if (ids.isEmpty) return;
 
-    for (final row in list) {
-      final url = row['fotograf_url'] as String?;
-      if (url == null || url.isEmpty) continue;
-      final path = StorageMedia.pathFromUrl(url);
-      if (path == null) continue;
+    // Sürümler aynı fotoğrafı paylaşabilir; her dosyayı bir kez sil.
+    final paths = <String>{
+      for (final v in versions)
+        for (final url in v.fotografUrls)
+          if (StorageMedia.pathFromUrl(url) case final path?) path,
+    };
+    if (paths.isNotEmpty) {
       try {
-        await _client.storage.from(SupabaseConfig.storageBucket).remove([path]);
+        await _client.storage
+            .from(SupabaseConfig.storageBucket)
+            .remove(paths.toList());
       } catch (_) {}
     }
 
@@ -945,16 +961,39 @@ class DatabaseService {
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   Future<List<ClinicTodo>> getOpenClinicTodos({int limit = 200}) async {
-    final rows = await _client
-        .from('klinik_todolar')
-        .select()
-        .eq('klinik_id', _requireKlinikId)
-        .eq('tamamlandi', false)
-        .order('planlanan_tarih', ascending: true, nullsFirst: false)
-        .order('olusturma_tarihi', ascending: false)
-        .limit(limit);
+    return getClinicTodos(limit: limit);
+  }
 
-    return (rows as List)
+  Future<List<ClinicTodo>> getClinicTodos({
+    int limit = 200,
+    bool completed = false,
+  }) async {
+    Future<List<dynamic>> query(String select) {
+      return _client
+          .from('klinik_todolar')
+          .select(select)
+          .eq('klinik_id', _requireKlinikId)
+          .eq('tamamlandi', completed)
+          .order('planlanan_tarih', ascending: true, nullsFirst: false)
+          .order('olusturma_tarihi', ascending: false)
+          .limit(limit);
+    }
+
+    List<dynamic> rows;
+    try {
+      rows = await query(
+        '*, '
+        'sorumlu:klinik_uyeleri!sorumlu_uye_id(ad_soyad), '
+        'hasta:hastalar!hasta_id(ad_soyad), '
+        'klinik_todo_gorselleri(id), '
+        'klinik_todo_yorumlari(id)',
+      );
+    } catch (_) {
+      // Migration henüz uygulanmadıysa veya ilişki adı farklıysa sade sorguya düş.
+      rows = await query('*');
+    }
+
+    return rows
         .map((e) => ClinicTodo.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
@@ -1009,6 +1048,13 @@ class DatabaseService {
     String? sesUrl,
     int? sureSaniye,
     DateTime? planlananTarih,
+    DateTime? planlananZaman,
+    TodoPriority oncelik = TodoPriority.normal,
+    TodoRecurrence tekrar = TodoRecurrence.none,
+    int hatirlatmaDakikaOnce = 0,
+    String? sorumluUyeId,
+    String? hastaId,
+    List<File> gorseller = const [],
   }) async {
     final text = icerik?.trim();
     final voice = sesUrl?.trim();
@@ -1025,11 +1071,24 @@ class DatabaseService {
           if (sureSaniye != null) 'sure_saniye': sureSaniye,
           if (planlananTarih != null)
             'planlanan_tarih': _formatDateOnly(planlananTarih),
+          if (planlananZaman != null)
+            'planlanan_zaman': planlananZaman.toUtc().toIso8601String(),
+          'oncelik': oncelik.value,
+          'tekrar': tekrar.value,
+          'hatirlatma_dakika_once': hatirlatmaDakikaOnce,
+          if (sorumluUyeId != null) 'sorumlu_uye_id': sorumluUyeId,
+          if (hastaId != null) 'hasta_id': hastaId,
           if (_userId != null) 'olusturan_user_id': _userId,
+          'olusturan_ad_soyad': _session.member?.adSoyad,
         })
         .select()
         .single();
-    return ClinicTodo.fromJson(Map<String, dynamic>.from(row));
+    final todo = ClinicTodo.fromJson(Map<String, dynamic>.from(row));
+    for (final file in gorseller) {
+      await addClinicTodoImage(todoId: todo.id, file: file);
+    }
+    await _addTodoEvent(todo.id, 'olusturuldu');
+    return getClinicTodo(todo.id);
   }
 
   Future<ClinicTodo> createClinicTodoVoice({
@@ -1045,15 +1104,180 @@ class DatabaseService {
     );
   }
 
-  Future<void> completeClinicTodo(String id) async {
+  Future<ClinicTodo> getClinicTodo(String id) async {
+    final row = await _client
+        .from('klinik_todolar')
+        .select(
+          '*, '
+          'sorumlu:klinik_uyeleri!sorumlu_uye_id(ad_soyad), '
+          'hasta:hastalar!hasta_id(ad_soyad), '
+          'klinik_todo_gorselleri(id), '
+          'klinik_todo_yorumlari(id)',
+        )
+        .eq('id', id)
+        .single();
+    return ClinicTodo.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<List<TodoImage>> getClinicTodoImages(String todoId) async {
+    final rows = await _client
+        .from('klinik_todo_gorselleri')
+        .select()
+        .eq('todo_id', todoId)
+        .order('olusturma_tarihi');
+    return (rows as List)
+        .map((e) => TodoImage.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<TodoImage> addClinicTodoImage({
+    required String todoId,
+    required File file,
+  }) async {
+    final ext = file.path.split('.').last.toLowerCase();
+    final safeExt =
+        const {'jpg', 'jpeg', 'png', 'webp'}.contains(ext) ? ext : 'jpg';
+    final path =
+        '$_requireKlinikId/todolar/$todoId/gorsel/${_uuid.v4()}.$safeExt';
+    final contentType = safeExt == 'png'
+        ? 'image/png'
+        : safeExt == 'webp'
+            ? 'image/webp'
+            : 'image/jpeg';
+    await _client.storage.from(SupabaseConfig.storageBucket).upload(
+          path,
+          file,
+          fileOptions: FileOptions(contentType: contentType, upsert: false),
+        );
+    try {
+      final row = await _client
+          .from('klinik_todo_gorselleri')
+          .insert({
+            'todo_id': todoId,
+            'klinik_id': _requireKlinikId,
+            'storage_path': path,
+            if (_userId != null) 'olusturan_user_id': _userId,
+          })
+          .select()
+          .single();
+      await _addTodoEvent(todoId, 'gorsel_eklendi');
+      return TodoImage.fromJson(Map<String, dynamic>.from(row));
+    } catch (_) {
+      await _client.storage.from(SupabaseConfig.storageBucket).remove([path]);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteClinicTodoImage(TodoImage image) async {
+    await _client.from('klinik_todo_gorselleri').delete().eq('id', image.id);
+    await _client.storage
+        .from(SupabaseConfig.storageBucket)
+        .remove([image.path]);
+    await _addTodoEvent(image.todoId, 'gorsel_silindi');
+  }
+
+  Future<List<TodoComment>> getClinicTodoComments(String todoId) async {
+    final rows = await _client
+        .from('klinik_todo_yorumlari')
+        .select()
+        .eq('todo_id', todoId)
+        .order('olusturma_tarihi');
+    return (rows as List)
+        .map((e) => TodoComment.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<TodoComment> addClinicTodoComment({
+    required String todoId,
+    required String text,
+  }) async {
+    final value = text.trim();
+    if (value.isEmpty) throw ArgumentError('Yorum boş olamaz');
+    final row = await _client
+        .from('klinik_todo_yorumlari')
+        .insert({
+          'todo_id': todoId,
+          'klinik_id': _requireKlinikId,
+          'icerik': value,
+          if (_userId != null) 'yazan_user_id': _userId,
+          'yazan_ad_soyad': _session.member?.adSoyad,
+        })
+        .select()
+        .single();
+    await _addTodoEvent(todoId, 'yorum_eklendi');
+    return TodoComment.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<List<TodoEvent>> getClinicTodoHistory(String todoId) async {
+    final rows = await _client
+        .from('klinik_todo_gecmisi')
+        .select()
+        .eq('todo_id', todoId)
+        .order('olusturma_tarihi', ascending: false);
+    return (rows as List)
+        .map((e) => TodoEvent.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<void> _addTodoEvent(
+    String todoId,
+    String type, {
+    String? description,
+  }) async {
+    await _client.from('klinik_todo_gecmisi').insert({
+      'todo_id': todoId,
+      'klinik_id': _requireKlinikId,
+      'olay_turu': type,
+      if (description != null) 'aciklama': description,
+      if (_userId != null) 'yapan_user_id': _userId,
+      'yapan_ad_soyad': _session.member?.adSoyad,
+    });
+  }
+
+  Future<void> completeClinicTodo(ClinicTodo todo) async {
     await _client.from('klinik_todolar').update({
       'tamamlandi': true,
       'tamamlanma_tarihi': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id);
+    }).eq('id', todo.id);
+    await _addTodoEvent(todo.id, 'tamamlandi');
+
+    if (todo.tekrar != TodoRecurrence.none) {
+      final base = todo.planlananZaman ?? todo.planlananTarih ?? DateTime.now();
+      final next = switch (todo.tekrar) {
+        TodoRecurrence.daily => base.add(const Duration(days: 1)),
+        TodoRecurrence.weekly => base.add(const Duration(days: 7)),
+        TodoRecurrence.monthly => DateTime(
+            base.month == 12 ? base.year + 1 : base.year,
+            base.month == 12 ? 1 : base.month + 1,
+            base.day,
+            base.hour,
+            base.minute,
+          ),
+        TodoRecurrence.none => base,
+      };
+      await createClinicTodo(
+        icerik: todo.icerik ?? 'Tekrarlanan görev',
+        planlananTarih: next,
+        planlananZaman: todo.planlananZaman == null ? null : next,
+        oncelik: todo.oncelik,
+        tekrar: todo.tekrar,
+        hatirlatmaDakikaOnce: todo.hatirlatmaDakikaOnce,
+        sorumluUyeId: todo.sorumluUyeId,
+        hastaId: todo.hastaId,
+      );
+    }
   }
 
   Future<void> deleteClinicTodo(ClinicTodo todo) async {
+    final images = await getClinicTodoImages(todo.id);
     await _client.from('klinik_todolar').delete().eq('id', todo.id);
+    for (final image in images) {
+      try {
+        await _client.storage
+            .from(SupabaseConfig.storageBucket)
+            .remove([image.path]);
+      } catch (_) {}
+    }
     if (todo.hasVoice) {
       final path = StorageMedia.pathFromUrl(todo.sesUrl!);
       if (path != null && path.isNotEmpty) {
