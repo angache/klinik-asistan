@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,6 +15,8 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Intl.defaultLocale = 'tr_TR';
+  await initializeDateFormatting('tr_TR');
 
   await Supabase.initialize(
     url: SupabaseConfig.url,
@@ -128,6 +133,9 @@ class KlinikAsistanAppState extends State<KlinikAsistanApp> {
       theme: AppTheme.light(_palette),
       darkTheme: AppTheme.dark(_palette),
       themeMode: _themeMode,
+      locale: const Locale('tr', 'TR'),
+      supportedLocales: const [Locale('tr', 'TR')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: AuthGate(session: widget.session, db: widget.db),
     );
   }

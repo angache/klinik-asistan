@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../services/photo_share.dart';
 import '../services/storage_media.dart';
 
 class FullScreenImage extends StatefulWidget {
@@ -9,10 +10,12 @@ class FullScreenImage extends StatefulWidget {
     super.key,
     required this.imageUrls,
     this.initialIndex = 0,
+    this.shareText,
   });
 
   final List<String> imageUrls;
   final int initialIndex;
+  final String? shareText;
 
   static Future<void> open(BuildContext context, String imageUrl) {
     return openGallery(context, [imageUrl]);
@@ -22,12 +25,14 @@ class FullScreenImage extends StatefulWidget {
     BuildContext context,
     List<String> imageUrls, {
     int initialIndex = 0,
+    String? shareText,
   }) {
     return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FullScreenImage(
           imageUrls: imageUrls,
           initialIndex: initialIndex,
+          shareText: shareText,
         ),
         fullscreenDialog: true,
       ),
@@ -55,6 +60,38 @@ class _FullScreenImageState extends State<FullScreenImage> {
     super.dispose();
   }
 
+  Future<void> _share(BuildContext buttonContext) async {
+    final urls = widget.imageUrls;
+    var selected = [urls[_index]];
+    if (urls.length > 1) {
+      final all = await showModalBottomSheet<bool>(
+        context: context,
+        showDragHandle: true,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.image_outlined),
+                title: const Text('Bu fotoğrafı paylaş'),
+                onTap: () => Navigator.pop(ctx, false),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: Text('Tüm fotoğrafları paylaş (${urls.length})'),
+                onTap: () => Navigator.pop(ctx, true),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (all == null) return;
+      if (all) selected = urls;
+    }
+    if (!buttonContext.mounted) return;
+    await PhotoShare.share(buttonContext, selected, text: widget.shareText);
+  }
+
   @override
   Widget build(BuildContext context) {
     final count = widget.imageUrls.length;
@@ -68,6 +105,15 @@ class _FullScreenImageState extends State<FullScreenImage> {
               ? 'İşlem Fotoğrafı ${_index + 1}/$count'
               : 'İşlem Fotoğrafı',
         ),
+        actions: [
+          Builder(
+            builder: (btnContext) => IconButton(
+              tooltip: 'Paylaş (WhatsApp, e-posta…)',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: () => _share(btnContext),
+            ),
+          ),
+        ],
       ),
       body: PageView.builder(
         controller: _controller,

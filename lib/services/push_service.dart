@@ -80,9 +80,8 @@ class PushService {
     final title = message.notification?.title ??
         message.data['title'] as String? ??
         'Klinik Asistan';
-    final body = message.notification?.body ??
-        message.data['body'] as String? ??
-        '';
+    final body =
+        message.notification?.body ?? message.data['body'] as String? ?? '';
     NotificationService.instance.showImmediate(
       title: title,
       body: body,
@@ -96,6 +95,17 @@ class PushService {
     if (user == null) return;
 
     try {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        // iOS'ta APNs token gelmeden getToken() hata verir.
+        String? apns;
+        for (var i = 0; i < 10 && apns == null; i++) {
+          apns = await FirebaseMessaging.instance.getAPNSToken();
+          if (apns == null) {
+            await Future<void>.delayed(const Duration(seconds: 1));
+          }
+        }
+        if (apns == null) return;
+      }
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null || token.isEmpty) return;
       _token = token;

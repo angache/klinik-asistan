@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
+import '../services/photo_share.dart';
 import 'edit_session_dialog.dart';
 import 'note_history_sheet.dart';
 import 'photo_preview.dart';
@@ -23,6 +24,12 @@ class TreatmentNoteTile extends StatelessWidget {
   final DatabaseService db;
   final Future<void> Function()? onChanged;
   final bool showDate;
+
+  String get _shareCaption => [
+        note.islemBaslik,
+        note.kapsam.badgeLabel(disNo: note.disNo),
+        DateFormat('dd.MM.yyyy').format(note.tarih.toLocal()),
+      ].join(' · ');
 
   Future<void> _edit(BuildContext context) async {
     final ok = await showEditSessionDialog(
@@ -201,10 +208,13 @@ class TreatmentNoteTile extends StatelessWidget {
           ],
           if (note.hasPhoto) ...[
             const SizedBox(height: 10),
-            NetworkPhotoStrip(urls: note.fotografUrls),
+            NetworkPhotoStrip(
+              urls: note.fotografUrls,
+              shareText: _shareCaption,
+            ),
           ],
           const SizedBox(height: 8),
-          Row(
+          Wrap(
             children: [
               TextButton.icon(
                 onPressed: () => _edit(context),
@@ -220,6 +230,18 @@ class TreatmentNoteTile extends StatelessWidget {
                 icon: const Icon(Icons.history, size: 18),
                 label: const Text('Geçmiş'),
               ),
+              if (note.hasPhoto)
+                Builder(
+                  builder: (btnContext) => TextButton.icon(
+                    onPressed: () => PhotoShare.share(
+                      btnContext,
+                      note.fotografUrls,
+                      text: _shareCaption,
+                    ),
+                    icon: const Icon(Icons.share_outlined, size: 18),
+                    label: const Text('Paylaş'),
+                  ),
+                ),
               if (db.canManageRecords)
                 TextButton.icon(
                   onPressed: () => _delete(context),

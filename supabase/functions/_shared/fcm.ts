@@ -138,6 +138,9 @@ export async function sendFcmToTokens(opts: {
               priority: 'HIGH',
               notification: { channel_id: 'klinik_push' },
             },
+            apns: {
+              payload: { aps: { sound: 'default' } },
+            },
           },
         }),
       },

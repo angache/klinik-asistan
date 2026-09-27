@@ -11,9 +11,10 @@ const int kMaxSessionPhotos = 10;
 
 /// Seans kartlarında fotoğrafları yan yana gösterir; dokununca galeri açılır.
 class NetworkPhotoStrip extends StatelessWidget {
-  const NetworkPhotoStrip({super.key, required this.urls});
+  const NetworkPhotoStrip({super.key, required this.urls, this.shareText});
 
   final List<String> urls;
+  final String? shareText;
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +25,12 @@ class NetworkPhotoStrip extends StatelessWidget {
         for (var i = 0; i < urls.length; i++)
           NetworkPhotoThumbnail(
             url: urls[i],
-            onTap: () =>
-                FullScreenImage.openGallery(context, urls, initialIndex: i),
+            onTap: () => FullScreenImage.openGallery(
+              context,
+              urls,
+              initialIndex: i,
+              shareText: shareText,
+            ),
           ),
       ],
     );
