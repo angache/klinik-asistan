@@ -97,6 +97,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
           isKanal: result.isKanal,
           requiresTooth: result.requiresTooth,
           labTakip: result.labTakip,
+          kontrolAy: result.kontrolAy,
         );
       } else {
         await widget.db.updateTreatmentTemplate(
@@ -107,6 +108,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
           requiresTooth: result.requiresTooth,
           labTakip: result.labTakip,
           aktif: result.aktif,
+          kontrolAy: result.kontrolAy,
         );
       }
       await _load();
@@ -132,6 +134,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
         requiresTooth: t.requiresTooth,
         labTakip: t.labTakip,
         aktif: !t.aktif,
+        kontrolAy: t.kontrolAy,
         sira: t.sira,
       );
       await _load();
@@ -222,8 +225,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Liste yüklenemedi.\n'
-                          'migration_klinik_islemleri.sql çalıştırıldı mı?\n\n$_error',
+                          'Liste yüklenemedi.\n\n$_error',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: scheme.error),
                         ),
@@ -287,6 +289,8 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                                   if (t.isKanal) 'Kanal',
                                   if (t.requiresTooth) 'Diş zorunlu' else 'Çene/ağız OK',
                                   if (t.labTakip) 'Lab takibi',
+                                  if (t.kontrolAy != null)
+                                    'Kontrol: ${t.kontrolAy} ay',
                                   if (!t.aktif) 'Pasif',
                                 ].join(' · '),
                               ),
@@ -350,6 +354,7 @@ class _TemplateEditResult {
     required this.requiresTooth,
     required this.labTakip,
     required this.aktif,
+    required this.kontrolAy,
   });
 
   final String kategori;
@@ -358,6 +363,7 @@ class _TemplateEditResult {
   final bool requiresTooth;
   final bool labTakip;
   final bool aktif;
+  final int? kontrolAy;
 }
 
 class _TemplateEditDialog extends StatefulWidget {
@@ -376,7 +382,10 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
   late bool _requiresTooth;
   late bool _labTakip;
   late bool _aktif;
+  int? _kontrolAy;
   final _formKey = GlobalKey<FormState>();
+
+  static const _kontrolOptions = [3, 6, 12];
 
   @override
   void initState() {
@@ -391,6 +400,7 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
     _requiresTooth = e?.requiresTooth ?? true;
     _labTakip = e?.labTakip ?? (_kategori == 'Protez');
     _aktif = e?.aktif ?? true;
+    _kontrolAy = e?.kontrolAy;
   }
 
   @override
@@ -458,6 +468,25 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
                 value: _labTakip,
                 onChanged: (v) => setState(() => _labTakip = v),
               ),
+              const SizedBox(height: 4),
+              DropdownButtonFormField<int?>(
+                initialValue: _kontrolAy,
+                decoration: const InputDecoration(
+                  labelText: 'Periyodik kontrol',
+                  helperText: 'Bu işlemden sonra hasta kontrol çağrıları '
+                      'listesine düşer',
+                  helperMaxLines: 2,
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(child: Text('Yok')),
+                  for (final m in {
+                    ..._kontrolOptions,
+                    if (_kontrolAy != null) _kontrolAy!,
+                  })
+                    DropdownMenuItem<int?>(value: m, child: Text('$m ay sonra')),
+                ],
+                onChanged: (v) => setState(() => _kontrolAy = v),
+              ),
               if (editing)
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -486,6 +515,7 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
                 requiresTooth: _isKanal ? true : _requiresTooth,
                 labTakip: _labTakip,
                 aktif: _aktif,
+                kontrolAy: _kontrolAy,
               ),
             );
           },

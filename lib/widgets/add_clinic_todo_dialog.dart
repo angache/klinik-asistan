@@ -14,6 +14,7 @@ import '../models/clinic.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
+import 'photo_preview.dart' show kPhotoMaxSide, kPhotoQuality;
 
 Future<ClinicTodo?> showAddClinicTodoDialog({
   required BuildContext context,
@@ -197,16 +198,18 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
         }
         final image = await _picker.pickImage(
           source: ImageSource.camera,
-          imageQuality: 82,
-          maxWidth: 1800,
+          imageQuality: kPhotoQuality,
+          maxWidth: kPhotoMaxSide,
+          maxHeight: kPhotoMaxSide,
         );
         if (image != null && mounted) {
           setState(() => _images.add(File(image.path)));
         }
       } else {
         final images = await _picker.pickMultiImage(
-          imageQuality: 82,
-          maxWidth: 1800,
+          imageQuality: kPhotoQuality,
+          maxWidth: kPhotoMaxSide,
+          maxHeight: kPhotoMaxSide,
         );
         if (images.isNotEmpty && mounted) {
           setState(() => _images.addAll(images.map((e) => File(e.path))));

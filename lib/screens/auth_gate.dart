@@ -7,6 +7,7 @@ import 'dashboard_screen.dart';
 import 'join_requests_screen.dart';
 import 'login_screen.dart';
 import 'manage_clinics_screen.dart';
+import 'settings_screen.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({
@@ -33,6 +34,10 @@ class AuthGate extends StatelessWidget {
           return LoginScreen(session: session);
         }
 
+        if (!session.hasClinic && session.membershipLoadFailed) {
+          return _ConnectionErrorScreen(session: session);
+        }
+
         if (!session.hasClinic) {
           if (session.hasPendingJoinRequests) {
             return PendingJoinScreen(
@@ -51,6 +56,15 @@ class AuthGate extends StatelessWidget {
             appBar: AppBar(
               title: const Text('Klinik gerekli'),
               actions: [
+                IconButton(
+                  tooltip: 'Ayarlar ve hesap',
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SettingsScreen(session: session),
+                    ),
+                  ),
+                ),
                 TextButton(
                   onPressed: () => session.signOut(),
                   child: const Text('Çıkış'),
@@ -70,6 +84,56 @@ class AuthGate extends StatelessWidget {
           session: session,
         );
       },
+    );
+  }
+}
+
+class _ConnectionErrorScreen extends StatelessWidget {
+  const _ConnectionErrorScreen({required this.session});
+
+  final SessionController session;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Klinik Asistan'),
+        actions: [
+          TextButton(
+            onPressed: () => session.signOut(),
+            child: const Text('Çıkış'),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cloud_off, size: 56, color: scheme.error),
+              const SizedBox(height: 16),
+              Text(
+                'Sunucuya bağlanılamadı',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'İnternet bağlantınızı kontrol edip tekrar deneyin.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () => session.refreshMembership(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

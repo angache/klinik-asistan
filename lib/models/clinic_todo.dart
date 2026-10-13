@@ -37,6 +37,34 @@ enum TodoRecurrence {
   }
 }
 
+/// Tekrarlanan görevin bir sonraki tarihi. Aylıkta gün, hedef ayın son
+/// gününe sıkıştırılır (31 Ocak → 28/29 Şubat, 3 Mart değil).
+DateTime nextRecurrenceDate(DateTime base, TodoRecurrence tekrar) {
+  switch (tekrar) {
+    case TodoRecurrence.none:
+      return base;
+    case TodoRecurrence.daily:
+    case TodoRecurrence.weekly:
+      final days = tekrar == TodoRecurrence.daily ? 1 : 7;
+      return DateTime(
+        base.year,
+        base.month,
+        base.day + days,
+        base.hour,
+        base.minute,
+      );
+    case TodoRecurrence.monthly:
+      final lastDay = DateTime(base.year, base.month + 2, 0).day;
+      return DateTime(
+        base.year,
+        base.month + 1,
+        base.day > lastDay ? lastDay : base.day,
+        base.hour,
+        base.minute,
+      );
+  }
+}
+
 class TodoImage {
   const TodoImage({
     required this.id,

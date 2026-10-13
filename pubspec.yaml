@@ -27,11 +27,33 @@ dependencies:
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.5
   share_plus: ^13.3.0
+  url_launcher: ^6.3.2
+  pdf: ^3.13.1
+  firebase_crashlytics: 4.3.10
+  image: ^4.10.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+  assets:
+    # PDF dışa aktarma (Türkçe karakterler; SIL Open Font License)
+    - assets/fonts/NotoSans-Regular.ttf
+    - assets/fonts/NotoSans-Bold.ttf
+
+# Uygulama ikonu: 1024x1024 PNG'leri assets/icon/ altına koyup
+#   dart run flutter_launcher_icons
+# çalıştırın. iOS ikonu saydam olmamalı; Android adaptive ön plan ikonu
+# saydam olmalı (araç kenarlara kendisi %16 boşluk ekler).
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  adaptive_icon_background: "#2B5C7A"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 21

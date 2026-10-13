@@ -1,29 +1,34 @@
--- Push kurulumu için notlar (SQL değil, kontrol listesi).
--- Asıl tablo: migration_device_tokens.sql
+-- Push ve Edge Function kurulumu için notlar (SQL değil, kontrol listesi).
+-- Asıl tablo: 022_device_tokens.sql
 
--- 1) SQL Editor: migration_device_tokens.sql çalıştırın.
+-- 1) SQL Editor: 022_device_tokens.sql ve 025_denetim_duzeltmeleri.sql.
 --
 -- 2) Firebase Console → Project settings → Service accounts
 --    → Generate new private key → JSON indirin.
 --
--- 3) Supabase CLI ile secret:
+-- 3) Supabase CLI ile secret'lar (CRON_SECRET ZORUNLU; yoksa fonksiyonlar
+--    500 döner — verify_jwt kapalı fonksiyon aksi halde herkese açık kalır):
 --    supabase secrets set FIREBASE_SERVICE_ACCOUNT_JSON="<json-içeriği-tek-satır>"
 --    supabase secrets set CRON_SECRET="<rastgele-güçlü-string>"
 --
 -- 4) Edge Function deploy:
---    supabase functions deploy notify-join-request
---    supabase functions deploy daily-reminders
+--    supabase functions deploy notify-join-request --no-verify-jwt
+--    supabase functions deploy daily-reminders --no-verify-jwt
+--    supabase functions deploy delete-account          (verify_jwt AÇIK kalmalı)
 --
 -- 5) Database Webhook (Dashboard → Database → Webhooks):
 --    Table: klinik_katilim_istekleri
 --    Events: INSERT
 --    URL: https://<project-ref>.supabase.co/functions/v1/notify-join-request
---    HTTP Headers: Authorization: Bearer <service_role_or_anon_with_verify_jwt_off>
+--    HTTP Headers: Authorization: Bearer <CRON_SECRET>
 --
 -- 6) Cron (Dashboard → Edge Functions → Schedules veya pg_cron):
 --    Her gün 08:00 Europe/Istanbul:
 --    POST /functions/v1/daily-reminders
 --    Authorization: Bearer <CRON_SECRET>
+--
+-- 7) Şifre sıfırlama kodu: Dashboard → Authentication → Email Templates →
+--    Reset Password şablonuna {{ .Token }} ekleyin (uygulama kodu ister).
 --
 -- Not: Windows masaüstü FCM almaz; Android/iOS/web push alır.
 select 1;

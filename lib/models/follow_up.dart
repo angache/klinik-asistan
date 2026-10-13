@@ -66,19 +66,22 @@ class FollowUp {
         planlananTarih.day,
       );
 
-  bool get isOverdue {
-    if (tamamlandi) return false;
-    final today = DateTime.now();
-    final t = DateTime(today.year, today.month, today.day);
-    return reminderDateOnly.isBefore(t);
+  static DateTime get _today {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
   }
 
-  bool get isDueToday {
-    if (tamamlandi) return false;
-    final today = DateTime.now();
-    final t = DateTime(today.year, today.month, today.day);
-    return reminderDateOnly == t;
-  }
+  /// Planlanan tarih geçti.
+  bool get isOverdue => !tamamlandi && planDateOnly.isBefore(_today);
 
-  bool get needsAttention => isOverdue || isDueToday;
+  /// Planlanan tarih bugün.
+  bool get isDueToday => !tamamlandi && planDateOnly == _today;
+
+  /// Tarihi gelmedi ama önceden uyarı günü geldi.
+  bool get isReminderDue =>
+      !tamamlandi &&
+      planDateOnly.isAfter(_today) &&
+      !reminderDateOnly.isAfter(_today);
+
+  bool get needsAttention => isOverdue || isDueToday || isReminderDue;
 }

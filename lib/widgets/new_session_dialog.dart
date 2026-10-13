@@ -528,98 +528,90 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
           : 'İşlem kaydediliyor…';
     });
 
+    // Notlar kaydedilene kadar hata = hiçbir şey kaydedilmedi; yüklenen
+    // fotoğraflar temizlenir ve kullanıcı güvenle tekrar deneyebilir.
+    final uploadedUrls = <String>[];
+    final TreatmentNote savedNote;
     try {
-      final sharedPhotoUrls = <String>[];
-      TreatmentNote? createdNote;
       for (var i = 0; i < _photos.length; i++) {
         if (_photos.length > 1) {
           setState(() => _uploadMessage =
               'Fotoğraf yükleniyor (${i + 1}/${_photos.length})…');
         }
-        sharedPhotoUrls.add(await widget.db.uploadSessionPhoto(
+        uploadedUrls.add(await widget.db.uploadSessionPhoto(
           hastaId: widget.patient.id,
           file: _photos[i],
         ));
-        if (!mounted) return;
       }
-      if (_photos.isNotEmpty) {
-        setState(() => _uploadMessage = 'İşlem kaydediliyor…');
-      }
+      setState(() => _uploadMessage = 'İşlem kaydediliyor…');
 
+      final List<TreatmentNoteInput> inputs;
       if (_showKanal && kapsam == TreatmentScope.tekDis) {
         // Her diş ayrı seans notu (kanal boyları dişe özel)
-        for (final tooth in _orderedTeeth) {
-          final draft = _kanalByTooth[tooth] ?? _KanalDraft();
-          final boyu = draft.buildBoyuText(
-            onlyCodes: visibleCanalsForTooth(
-              tooth,
-              extras: draft.ekstraKanallar,
+        inputs = [
+          for (final tooth in _orderedTeeth)
+            _kanalInput(
+              tooth: tooth,
+              title: title,
+              note: note,
+              photoUrls: uploadedUrls,
+              labActive: labActive,
             ),
-          );
-          final savedNote = await widget.db.saveNoteWithOptionalPhoto(
+        ];
+      } else {
+        inputs = [
+          TreatmentNoteInput(
             hastaId: widget.patient.id,
-            kapsam: TreatmentScope.tekDis,
-            disNo: tooth,
+            kapsam: kapsam,
+            disNo: kapsam == TreatmentScope.tekDis
+                ? formatToothSelection(_selectedTeeth)
+                : null,
             islemBaslik: title,
-            kanalBoyu: boyu.isEmpty ? null : boyu,
-            egeSistemi: draft.egeSistemi,
-            kanalIlaci: draft.kanalIlaci,
             notIcerik: note,
-            fotografUrls: sharedPhotoUrls,
+            fotografUrls: uploadedUrls,
             tarih: _sessionDateTimeForSave,
             planlandi: _planForNext,
             labGitti: labActive,
             labBeklenenTarih: labActive ? _labReturnDate : null,
-          );
-          createdNote ??= savedNote;
-        }
-      } else {
-        final disNo = kapsam == TreatmentScope.tekDis
-            ? formatToothSelection(_selectedTeeth)
-            : null;
-
-        createdNote = await widget.db.saveNoteWithOptionalPhoto(
-          hastaId: widget.patient.id,
-          kapsam: kapsam,
-          disNo: disNo,
-          islemBaslik: title,
-          notIcerik: note,
-          fotografUrls: sharedPhotoUrls,
-          tarih: _sessionDateTimeForSave,
-          planlandi: _planForNext,
-          labGitti: labActive,
-          labBeklenenTarih: labActive ? _labReturnDate : null,
-        );
+          ),
+        ];
       }
+      savedNote = (await widget.db.createNotes(inputs)).first;
+    } catch (e) {
+      await widget.db.removeStorageObjects(uploadedUrls);
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _showFormError('Kayıt başarısız: $e');
+      return;
+    }
 
-      final noteForFollowUp = createdNote;
-      if (noteForFollowUp == null) {
-        throw StateError('İşlem oluşturulamadı');
-      }
-
-      if (labActive && _labReturnDate != null) {
-        if (!mounted) return;
-        setState(() => _uploadMessage = 'Lab hatırlatması oluşturuluyor…');
+    // Not kaydedildi; hatırlatma hatası notu geri almaz, sadece bildirilir.
+    final reminderErrors = <String>[];
+    if (labActive && _labReturnDate != null) {
+      setState(() => _uploadMessage = 'Lab hatırlatması oluşturuluyor…');
+      try {
         final labFollowUp = await widget.db.createLabReminder(
           hastaId: widget.patient.id,
           islemBaslik: title,
           beklenenDonus: _labReturnDate!,
-          seansNotuId: noteForFollowUp.id,
+          seansNotuId: savedNote.id,
           hastaAdSoyad: widget.patient.adSoyad,
         );
         await NotificationService.instance.scheduleFollowUp(labFollowUp);
+      } catch (_) {
+        reminderErrors.add('lab');
       }
+    }
 
-      final kontrolDate = kontrolActive ? _kontrolEffectiveDate : null;
-      if (kontrolDate != null) {
-        if (!mounted) return;
-        setState(() => _uploadMessage = 'Kontrol hatırlatması oluşturuluyor…');
+    final kontrolDate = kontrolActive ? _kontrolEffectiveDate : null;
+    if (kontrolDate != null) {
+      setState(() => _uploadMessage = 'Kontrol hatırlatması oluşturuluyor…');
+      try {
         final dis = _selectedTeeth.isEmpty
             ? null
             : formatToothSelection(_selectedTeeth);
-        final kontrolNotu = _kontrolNoteController.text.trim();
         final aciklama = [
-          kontrolNotu,
+          _kontrolNoteController.text.trim(),
           if (dis != null) 'Diş: $dis',
         ].join('\n');
         final kontrolFollowUp = await widget.db.createFollowUp(
@@ -627,20 +619,57 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
           baslik: 'Kontrol: $title',
           planlananTarih: kontrolDate,
           aciklama: aciklama,
-          seansNotuId: noteForFollowUp.id,
+          seansNotuId: savedNote.id,
           tur: 'genel',
           hatirlatmaGunOnce: _kontrolReminderDays,
         );
         await NotificationService.instance.scheduleFollowUp(kontrolFollowUp);
+      } catch (_) {
+        reminderErrors.add('kontrol');
       }
-
-      if (!mounted) return;
-      Navigator.of(context).pop(noteForFollowUp);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      _showFormError('Kayıt başarısız: $e');
     }
+
+    if (!mounted) return;
+    if (reminderErrors.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 6),
+          content: Text(
+            'İşlem kaydedildi ancak ${reminderErrors.join(' ve ')} '
+            'hatırlatması oluşturulamadı. Takipler ekranından ekleyin.',
+          ),
+        ),
+      );
+    }
+    Navigator.of(context).pop(savedNote);
+  }
+
+  TreatmentNoteInput _kanalInput({
+    required String tooth,
+    required String title,
+    required String note,
+    required List<String> photoUrls,
+    required bool labActive,
+  }) {
+    final draft = _kanalByTooth[tooth] ?? _KanalDraft();
+    final boyu = draft.buildBoyuText(
+      onlyCodes: visibleCanalsForTooth(tooth, extras: draft.ekstraKanallar),
+    );
+    return TreatmentNoteInput(
+      hastaId: widget.patient.id,
+      kapsam: TreatmentScope.tekDis,
+      disNo: tooth,
+      islemBaslik: title,
+      kanalBoyu: boyu.isEmpty ? null : boyu,
+      egeSistemi: draft.egeSistemi,
+      kanalIlaci: draft.kanalIlaci,
+      notIcerik: note,
+      fotografUrls: photoUrls,
+      tarih: _sessionDateTimeForSave,
+      planlandi: _planForNext,
+      labGitti: labActive,
+      labBeklenenTarih: labActive ? _labReturnDate : null,
+    );
   }
 
   @override
@@ -668,630 +697,578 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
         ? null
         : _kanalByTooth.putIfAbsent(_activeKanalTooth!, _KanalDraft.new);
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Yeni İşlem',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            Text(
-                              widget.patient.adSoyad,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed:
-                            _saving ? null : () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    return PopScope(
+      canPop: !_saving,
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                    child: Row(
                       children: [
-                        if (_validationError != null) ...[
-                          Material(
-                            color: scheme.errorContainer,
-                            borderRadius: BorderRadius.circular(10),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: scheme.onErrorContainer,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      _validationError!,
-                                      style: TextStyle(
-                                        color: scheme.onErrorContainer,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Yeni İşlem',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                widget.patient.adSoyad,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: scheme.onSurfaceVariant,
                                     ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Kapat',
-                                    visualDensity: VisualDensity.compact,
-                                    onPressed: _clearFormError,
-                                    icon: Icon(
-                                      Icons.close,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed:
+                              _saving ? null : () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_validationError != null) ...[
+                            Material(
+                              color: scheme.errorContainer,
+                              borderRadius: BorderRadius.circular(10),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
                                       color: scheme.onErrorContainer,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                        ],
-                        Text(
-                          'İşlem tarihi',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(
-                            Icons.event_outlined,
-                            color: scheme.primary,
-                          ),
-                          title: Text(
-                            DateFormat('dd.MM.yyyy').format(_sessionDate),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            _isPastSession
-                                ? 'Geçmiş kayıt (defterden aktarım)'
-                                : 'Bugün',
-                          ),
-                          trailing: TextButton(
-                            onPressed: _saving ? null : _pickSessionDate,
-                            child: const Text('Değiştir'),
-                          ),
-                          onTap: _saving ? null : _pickSessionDate,
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          'İşlem',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'En az bir işlem seçin veya başlık yazın',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...categories.map((cat) {
-                          final items = _templates
-                              .where((t) => t.kategori == cat)
-                              .toList();
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  cat,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelLarge
-                                      ?.copyWith(color: scheme.primary),
-                                ),
-                                const SizedBox(height: 6),
-                                if (_templatesLoading)
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 8),
-                                    child: LinearProgressIndicator(),
-                                  )
-                                else
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: items.map((t) {
-                                      final selected = _selectedTemplate == t ||
-                                          (_selectedTemplate == null &&
-                                              _titleController.text ==
-                                                  t.baslik);
-                                      return FilterChip(
-                                        label: Text(t.baslik),
-                                        selected: selected,
-                                        onSelected: (_) => _applyTemplate(t),
-                                        showCheckmark: false,
-                                      );
-                                    }).toList(),
-                                  ),
-                              ],
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _titleController,
-                          onChanged: _onTitleChanged,
-                          decoration: const InputDecoration(
-                            labelText: 'İşlem Başlığı',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _noteController,
-                          minLines: 2,
-                          maxLines: 5,
-                          decoration: const InputDecoration(
-                            labelText: 'Not (isteğe bağlı)',
-                            hintText: 'Gerekirse buraya yazın…',
-                            alignLabelWithHint: true,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Card(
-                          margin: EdgeInsets.zero,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                CheckboxListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: const Text('Takip ekle'),
-                                  subtitle: const Text(
-                                    'İşlem sonrası kontrol tarihi ve hatırlatma',
-                                  ),
-                                  value: _kontrolEnabled,
-                                  onChanged: _saving
-                                      ? null
-                                      : (value) => setState(() {
-                                            _kontrolEnabled = value ?? false;
-                                            if (_kontrolEnabled) {
-                                              _planForNext = false;
-                                            }
-                                          }),
-                                ),
-                                if (_kontrolEnabled) ...[
-                                  TextField(
-                                    controller: _kontrolNoteController,
-                                    textCapitalization:
-                                        TextCapitalization.sentences,
-                                    minLines: 1,
-                                    maxLines: 3,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Takip notu',
-                                      hintText:
-                                          'örn. Perküsyon ve radyografik kontrol',
-                                      alignLabelWithHint: true,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Kontrol tarihi',
-                                    style:
-                                        Theme.of(context).textTheme.labelLarge,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      for (final option in const [
-                                        (7, '1 hafta'),
-                                        (30, '1 ay'),
-                                        (90, '3 ay'),
-                                        (180, '6 ay'),
-                                      ])
-                                        ChoiceChip(
-                                          label: Text(option.$2),
-                                          selected:
-                                              _kontrolPresetDays == option.$1,
-                                          onSelected: _saving
-                                              ? null
-                                              : (_) => setState(() {
-                                                    _kontrolPresetDays =
-                                                        option.$1;
-                                                    _kontrolCustomDate = null;
-                                                  }),
-                                        ),
-                                      ActionChip(
-                                        avatar: const Icon(
-                                          Icons.calendar_month,
-                                          size: 16,
-                                        ),
-                                        label: Text(
-                                          _kontrolCustomDate != null &&
-                                                  _kontrolPresetDays == null
-                                              ? DateFormat('dd.MM.yyyy')
-                                                  .format(_kontrolCustomDate!)
-                                              : 'Tarih seç',
-                                        ),
-                                        onPressed:
-                                            _saving ? null : _pickKontrolDate,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  DropdownButtonFormField<int>(
-                                    initialValue: _kontrolReminderDays,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Ne zaman uyarılsın?',
-                                    ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 0,
-                                        child: Text('Kontrol günü'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 1,
-                                        child: Text('1 gün önce'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 3,
-                                        child: Text('3 gün önce'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 7,
-                                        child: Text('1 hafta önce'),
-                                      ),
-                                    ],
-                                    onChanged: _saving
-                                        ? null
-                                        : (value) => setState(() {
-                                              _kontrolReminderDays = value ?? 1;
-                                            }),
-                                  ),
-                                  if (_kontrolEffectiveDate != null) ...[
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Kontrol: ${DateFormat('dd.MM.yyyy').format(_kontrolEffectiveDate!)} · '
-                                      'Uyarı: ${DateFormat('dd.MM.yyyy').format(_kontrolEffectiveDate!.subtract(Duration(days: _kontrolReminderDays)))}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: scheme.onSurfaceVariant,
-                                          ),
-                                    ),
-                                  ],
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          'Kapsam',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _requiresTooth
-                              ? 'Bu işlem için diş seçimi zorunlu'
-                              : _kapsam == null
-                                  ? 'Kapsam seçimi zorunlu'
-                                  : 'İşleme uygun kapsam',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        SegmentedButton<TreatmentScope>(
-                          emptySelectionAllowed: !_requiresTooth,
-                          segments: scopes
-                              .map(
-                                (s) => ButtonSegment(
-                                  value: s,
-                                  label: Text(s.label,
-                                      textAlign: TextAlign.center),
-                                ),
-                              )
-                              .toList(),
-                          selected: {
-                            if (_kapsam != null && scopes.contains(_kapsam))
-                              _kapsam!,
-                          },
-                          onSelectionChanged: (set) {
-                            setState(() {
-                              if (_requiresTooth) {
-                                _kapsam = TreatmentScope.tekDis;
-                                return;
-                              }
-                              _kapsam = set.isEmpty ? null : set.first;
-                              if (_kapsam != TreatmentScope.tekDis) {
-                                _selectedTeeth = {};
-                                if (_showKanal) {
-                                  _syncKanalDraftsWithSelection({});
-                                }
-                              }
-                            });
-                          },
-                          style: const ButtonStyle(
-                            visualDensity: VisualDensity.compact,
-                            textStyle: WidgetStatePropertyAll(
-                              TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ),
-                        if (showToothSelector) ...[
-                          const SizedBox(height: 14),
-                          ToothSelector(
-                            selected: _selectedTeeth,
-                            onChanged: _onTeethChanged,
-                          ),
-                        ],
-                        if (_showKanal) ...[
-                          const SizedBox(height: 14),
-                          if (_kapsam != TreatmentScope.tekDis ||
-                              _selectedTeeth.isEmpty)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: scheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                'Kanal parametreleri için önce diş seçin. '
-                                'Birden fazla dişte her diş ayrı kaydedilir.',
-                                style:
-                                    TextStyle(color: scheme.onSurfaceVariant),
-                              ),
-                            )
-                          else ...[
-                            if (_selectedTeeth.length > 1) ...[
-                              Text(
-                                'Her diş için kanal bilgisi',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Dişe dokunun, parametreleri girin. Kayıtta her diş ayrı not olur.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _orderedTeeth.map((tooth) {
-                                  final draft = _kanalByTooth[tooth];
-                                  final isActive = tooth == _activeKanalTooth;
-                                  final filled = draft?.hasAnyBoy == true ||
-                                      draft?.egeSistemi != null ||
-                                      draft?.kanalIlaci != null;
-                                  return FilterChip(
-                                    label: Text(tooth),
-                                    selected: isActive,
-                                    showCheckmark: filled && !isActive,
-                                    avatar: filled
-                                        ? Icon(
-                                            Icons.check_circle,
-                                            size: 18,
-                                            color: isActive
-                                                ? scheme.onSecondaryContainer
-                                                : scheme.primary,
-                                          )
-                                        : null,
-                                    onSelected: (_) => _loadKanalTooth(tooth),
-                                  );
-                                }).toList(),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Diş $_activeKanalTooth',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge
-                                    ?.copyWith(
-                                      color: scheme.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                            if (activeDraft != null)
-                              KanalParamsSection(
-                                canalCodes: visibleCanalsForTooth(
-                                  _activeKanalTooth,
-                                  extras: activeDraft.ekstraKanallar,
-                                ),
-                                typicalCodes: canalsForTooth(_activeKanalTooth),
-                                toothLabel: _activeKanalTooth,
-                                kanalControllers: _kanalControllers,
-                                selectedEge: activeDraft.egeSistemi,
-                                selectedIlac: activeDraft.kanalIlaci,
-                                onEgeChanged: (v) {
-                                  setState(() => activeDraft.egeSistemi = v);
-                                },
-                                onIlacChanged: (v) {
-                                  setState(() => activeDraft.kanalIlaci = v);
-                                },
-                                onAddCanal: _addExtraCanal,
-                                onRemoveExtraCanal: _removeExtraCanal,
-                              ),
-                          ],
-                        ],
-                        const SizedBox(height: 16),
-                        Text(
-                          'Fotoğraf',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        SessionPhotosEditor(
-                          existingUrls: const [],
-                          newFiles: _photos,
-                          enabled: !_saving,
-                          onAddFiles: (files) =>
-                              setState(() => _photos.addAll(files)),
-                          onRemoveExisting: (_) {},
-                          onRemoveNew: (file) =>
-                              setState(() => _photos.remove(file)),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Planlama',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        Card(
-                          margin: EdgeInsets.zero,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                      value: _planForNext,
-                                      onChanged: (_saving || _labSent)
-                                          ? null
-                                          : (v) => setState(() {
-                                                _planForNext = v ?? false;
-                                                if (_planForNext) {
-                                                  _labSent = false;
-                                                  _labReturnDate = null;
-                                                  _kontrolEnabled = false;
-                                                }
-                                              }),
-                                    ),
+                                    const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
-                                        'Sonraki seansa planla',
-                                        style: _labSent
-                                            ? TextStyle(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.38),
-                                              )
-                                            : null,
+                                        _validationError!,
+                                        style: TextStyle(
+                                          color: scheme.onErrorContainer,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
                                     IconButton(
-                                      tooltip: _labSent
-                                          ? 'Lab’a gittiyse işlem yapılmış sayılır'
-                                          : 'Bilgi',
-                                      onPressed: () {
-                                        showDialog<void>(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: const Text(
-                                                'Sonraki seansa planla'),
-                                            content: Text(
-                                              _labSent
-                                                  ? 'Lab’a gitti işaretliyken bu seçenek kullanılamaz; '
-                                                      'işlem bu seans yapılmış kabul edilir.'
-                                                  : 'Bu işlem bugün yapılmadı kabul edilir. '
-                                                      'Hasta bir sonraki gelişinde üstte uyarılır; '
-                                                      '“Yapıldı” dendiğinde o günün işlem geçmişine eklenir.',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(ctx),
-                                                child: const Text('Tamam'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.info_outline),
+                                      tooltip: 'Kapat',
+                                      visualDensity: VisualDensity.compact,
+                                      onPressed: _clearFormError,
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: scheme.onErrorContainer,
+                                      ),
                                     ),
                                   ],
                                 ),
-                                if (_labEligible) ...[
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+                          Text(
+                            'İşlem tarihi',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.event_outlined,
+                              color: scheme.primary,
+                            ),
+                            title: Text(
+                              DateFormat('dd.MM.yyyy').format(_sessionDate),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              _isPastSession
+                                  ? 'Geçmiş kayıt (defterden aktarım)'
+                                  : 'Bugün',
+                            ),
+                            trailing: TextButton(
+                              onPressed: _saving ? null : _pickSessionDate,
+                              child: const Text('Değiştir'),
+                            ),
+                            onTap: _saving ? null : _pickSessionDate,
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'İşlem',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'En az bir işlem seçin veya başlık yazın',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                          ),
+                          const SizedBox(height: 8),
+                          ...categories.map((cat) {
+                            final items = _templates
+                                .where((t) => t.kategori == cat)
+                                .toList();
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    cat,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(color: scheme.primary),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (_templatesLoading)
+                                    const Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 8),
+                                      child: LinearProgressIndicator(),
+                                    )
+                                  else
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: items.map((t) {
+                                        final selected =
+                                            _selectedTemplate == t ||
+                                                (_selectedTemplate == null &&
+                                                    _titleController.text ==
+                                                        t.baslik);
+                                        return FilterChip(
+                                          label: Text(t.baslik),
+                                          selected: selected,
+                                          onSelected: (_) => _applyTemplate(t),
+                                          showCheckmark: false,
+                                        );
+                                      }).toList(),
+                                    ),
+                                ],
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _titleController,
+                            onChanged: _onTitleChanged,
+                            decoration: const InputDecoration(
+                              labelText: 'İşlem Başlığı',
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _noteController,
+                            minLines: 2,
+                            maxLines: 5,
+                            decoration: const InputDecoration(
+                              labelText: 'Not (isteğe bağlı)',
+                              hintText: 'Gerekirse buraya yazın…',
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Card(
+                            margin: EdgeInsets.zero,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  CheckboxListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text('Takip ekle'),
+                                    subtitle: const Text(
+                                      'İşlem sonrası kontrol tarihi ve hatırlatma',
+                                    ),
+                                    value: _kontrolEnabled,
+                                    onChanged: _saving
+                                        ? null
+                                        : (value) => setState(() {
+                                              _kontrolEnabled = value ?? false;
+                                              if (_kontrolEnabled) {
+                                                _planForNext = false;
+                                              }
+                                            }),
+                                  ),
+                                  if (_kontrolEnabled) ...[
+                                    TextField(
+                                      controller: _kontrolNoteController,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
+                                      minLines: 1,
+                                      maxLines: 3,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Takip notu',
+                                        hintText:
+                                            'örn. Perküsyon ve radyografik kontrol',
+                                        alignLabelWithHint: true,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Kontrol tarihi',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        for (final option in const [
+                                          (7, '1 hafta'),
+                                          (30, '1 ay'),
+                                          (90, '3 ay'),
+                                          (180, '6 ay'),
+                                        ])
+                                          ChoiceChip(
+                                            label: Text(option.$2),
+                                            selected:
+                                                _kontrolPresetDays == option.$1,
+                                            onSelected: _saving
+                                                ? null
+                                                : (_) => setState(() {
+                                                      _kontrolPresetDays =
+                                                          option.$1;
+                                                      _kontrolCustomDate = null;
+                                                    }),
+                                          ),
+                                        ActionChip(
+                                          avatar: const Icon(
+                                            Icons.calendar_month,
+                                            size: 16,
+                                          ),
+                                          label: Text(
+                                            _kontrolCustomDate != null &&
+                                                    _kontrolPresetDays == null
+                                                ? DateFormat('dd.MM.yyyy')
+                                                    .format(_kontrolCustomDate!)
+                                                : 'Tarih seç',
+                                          ),
+                                          onPressed:
+                                              _saving ? null : _pickKontrolDate,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    DropdownButtonFormField<int>(
+                                      initialValue: _kontrolReminderDays,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Ne zaman uyarılsın?',
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem(
+                                          value: 0,
+                                          child: Text('Kontrol günü'),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 1,
+                                          child: Text('1 gün önce'),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 3,
+                                          child: Text('3 gün önce'),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: 7,
+                                          child: Text('1 hafta önce'),
+                                        ),
+                                      ],
+                                      onChanged: _saving
+                                          ? null
+                                          : (value) => setState(() {
+                                                _kontrolReminderDays =
+                                                    value ?? 1;
+                                              }),
+                                    ),
+                                    if (_kontrolEffectiveDate != null) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Kontrol: ${DateFormat('dd.MM.yyyy').format(_kontrolEffectiveDate!)} · '
+                                        'Uyarı: ${DateFormat('dd.MM.yyyy').format(_kontrolEffectiveDate!.subtract(Duration(days: _kontrolReminderDays)))}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: scheme.onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Kapsam',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _requiresTooth
+                                ? 'Bu işlem için diş seçimi zorunlu'
+                                : _kapsam == null
+                                    ? 'Kapsam seçimi zorunlu'
+                                    : 'İşleme uygun kapsam',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                          ),
+                          const SizedBox(height: 8),
+                          SegmentedButton<TreatmentScope>(
+                            emptySelectionAllowed: !_requiresTooth,
+                            segments: scopes
+                                .map(
+                                  (s) => ButtonSegment(
+                                    value: s,
+                                    label: Text(s.label,
+                                        textAlign: TextAlign.center),
+                                  ),
+                                )
+                                .toList(),
+                            selected: {
+                              if (_kapsam != null && scopes.contains(_kapsam))
+                                _kapsam!,
+                            },
+                            onSelectionChanged: (set) {
+                              setState(() {
+                                if (_requiresTooth) {
+                                  _kapsam = TreatmentScope.tekDis;
+                                  return;
+                                }
+                                _kapsam = set.isEmpty ? null : set.first;
+                                if (_kapsam != TreatmentScope.tekDis) {
+                                  _selectedTeeth = {};
+                                  if (_showKanal) {
+                                    _syncKanalDraftsWithSelection({});
+                                  }
+                                }
+                              });
+                            },
+                            style: const ButtonStyle(
+                              visualDensity: VisualDensity.compact,
+                              textStyle: WidgetStatePropertyAll(
+                                TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ),
+                          if (showToothSelector) ...[
+                            const SizedBox(height: 14),
+                            ToothSelector(
+                              selected: _selectedTeeth,
+                              onChanged: _onTeethChanged,
+                            ),
+                          ],
+                          if (_showKanal) ...[
+                            const SizedBox(height: 14),
+                            if (_kapsam != TreatmentScope.tekDis ||
+                                _selectedTeeth.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: scheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Kanal parametreleri için önce diş seçin. '
+                                  'Birden fazla dişte her diş ayrı kaydedilir.',
+                                  style:
+                                      TextStyle(color: scheme.onSurfaceVariant),
+                                ),
+                              )
+                            else ...[
+                              if (_selectedTeeth.length > 1) ...[
+                                Text(
+                                  'Her diş için kanal bilgisi',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Dişe dokunun, parametreleri girin. Kayıtta her diş ayrı not olur.',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                          color: scheme.onSurfaceVariant),
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _orderedTeeth.map((tooth) {
+                                    final draft = _kanalByTooth[tooth];
+                                    final isActive = tooth == _activeKanalTooth;
+                                    final filled = draft?.hasAnyBoy == true ||
+                                        draft?.egeSistemi != null ||
+                                        draft?.kanalIlaci != null;
+                                    return FilterChip(
+                                      label: Text(tooth),
+                                      selected: isActive,
+                                      showCheckmark: filled && !isActive,
+                                      avatar: filled
+                                          ? Icon(
+                                              Icons.check_circle,
+                                              size: 18,
+                                              color: isActive
+                                                  ? scheme.onSecondaryContainer
+                                                  : scheme.primary,
+                                            )
+                                          : null,
+                                      onSelected: (_) => _loadKanalTooth(tooth),
+                                    );
+                                  }).toList(),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Diş $_activeKanalTooth',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(
+                                        color: scheme.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              if (activeDraft != null)
+                                KanalParamsSection(
+                                  canalCodes: visibleCanalsForTooth(
+                                    _activeKanalTooth,
+                                    extras: activeDraft.ekstraKanallar,
+                                  ),
+                                  typicalCodes:
+                                      canalsForTooth(_activeKanalTooth),
+                                  toothLabel: _activeKanalTooth,
+                                  kanalControllers: _kanalControllers,
+                                  selectedEge: activeDraft.egeSistemi,
+                                  selectedIlac: activeDraft.kanalIlaci,
+                                  onEgeChanged: (v) {
+                                    setState(() => activeDraft.egeSistemi = v);
+                                  },
+                                  onIlacChanged: (v) {
+                                    setState(() => activeDraft.kanalIlaci = v);
+                                  },
+                                  onAddCanal: _addExtraCanal,
+                                  onRemoveExtraCanal: _removeExtraCanal,
+                                ),
+                            ],
+                          ],
+                          const SizedBox(height: 16),
+                          Text(
+                            'Fotoğraf',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                          ),
+                          const SizedBox(height: 8),
+                          SessionPhotosEditor(
+                            existingUrls: const [],
+                            newFiles: _photos,
+                            enabled: !_saving,
+                            onAddFiles: (files) =>
+                                setState(() => _photos.addAll(files)),
+                            onRemoveExisting: (_) {},
+                            onRemoveNew: (file) =>
+                                setState(() => _photos.remove(file)),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Planlama',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Card(
+                            margin: EdgeInsets.zero,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                              child: Column(
+                                children: [
                                   Row(
                                     children: [
                                       Checkbox(
-                                        value: _labSent,
-                                        onChanged: (_saving || _planForNext)
+                                        value: _planForNext,
+                                        onChanged: (_saving || _labSent)
                                             ? null
                                             : (v) => setState(() {
-                                                  _labSent = v ?? false;
-                                                  if (_labSent) {
-                                                    _planForNext = false;
-                                                    if (_labReturnDate ==
-                                                        null) {
-                                                      final now =
-                                                          DateTime.now();
-                                                      _labReturnDate = DateTime(
-                                                        now.year,
-                                                        now.month,
-                                                        now.day,
-                                                      ).add(const Duration(
-                                                          days: 7));
-                                                    }
-                                                  } else {
+                                                  _planForNext = v ?? false;
+                                                  if (_planForNext) {
+                                                    _labSent = false;
                                                     _labReturnDate = null;
+                                                    _kontrolEnabled = false;
                                                   }
                                                 }),
                                       ),
                                       Expanded(
                                         child: Text(
-                                          'Lab’a gitti',
-                                          style: _planForNext
+                                          'Sonraki seansa planla',
+                                          style: _labSent
                                               ? TextStyle(
                                                   color: Theme.of(context)
                                                       .colorScheme
@@ -1302,18 +1279,22 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                         ),
                                       ),
                                       IconButton(
-                                        tooltip: 'Bilgi',
+                                        tooltip: _labSent
+                                            ? 'Lab’a gittiyse işlem yapılmış sayılır'
+                                            : 'Bilgi',
                                         onPressed: () {
                                           showDialog<void>(
                                             context: context,
                                             builder: (ctx) => AlertDialog(
-                                              title: const Text('Lab’a gitti'),
-                                              content: const Text(
-                                                'İş laboratuvara gönderildiğinde işaretleyin. '
-                                                'Beklenen dönüş tarihinden 1 gün önce takip '
-                                                'listesi ve bildirim hatırlatır. '
-                                                'Bu seçimde işlem yapılmış sayılır; '
-                                                '“Sonraki seansa planla” kapanır.',
+                                              title: const Text(
+                                                  'Sonraki seansa planla'),
+                                              content: Text(
+                                                _labSent
+                                                    ? 'Lab’a gitti işaretliyken bu seçenek kullanılamaz; '
+                                                        'işlem bu seans yapılmış kabul edilir.'
+                                                    : 'Bu işlem bugün yapılmadı kabul edilir. '
+                                                        'Hasta bir sonraki gelişinde üstte uyarılır; '
+                                                        '“Yapıldı” dendiğinde o günün işlem geçmişine eklenir.',
                                               ),
                                               actions: [
                                                 TextButton(
@@ -1329,95 +1310,170 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                       ),
                                     ],
                                   ),
-                                  if (_labSent)
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          12, 0, 12, 8),
-                                      child: InkWell(
-                                        onTap:
-                                            _saving ? null : _pickLabReturnDate,
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: InputDecorator(
-                                          decoration: const InputDecoration(
-                                            labelText: 'Beklenen lab dönüşü',
-                                            border: OutlineInputBorder(),
-                                            isDense: true,
-                                            suffixIcon: Icon(
-                                                Icons.calendar_today,
-                                                size: 18),
-                                          ),
+                                  if (_labEligible) ...[
+                                    Row(
+                                      children: [
+                                        Checkbox(
+                                          value: _labSent,
+                                          onChanged: (_saving || _planForNext)
+                                              ? null
+                                              : (v) => setState(() {
+                                                    _labSent = v ?? false;
+                                                    if (_labSent) {
+                                                      _planForNext = false;
+                                                      if (_labReturnDate ==
+                                                          null) {
+                                                        final now =
+                                                            DateTime.now();
+                                                        _labReturnDate =
+                                                            DateTime(
+                                                          now.year,
+                                                          now.month,
+                                                          now.day,
+                                                        ).add(const Duration(
+                                                                days: 7));
+                                                      }
+                                                    } else {
+                                                      _labReturnDate = null;
+                                                    }
+                                                  }),
+                                        ),
+                                        Expanded(
                                           child: Text(
-                                            _labReturnDate == null
-                                                ? 'Tarih seçin'
-                                                : DateFormat('dd.MM.yyyy')
-                                                    .format(_labReturnDate!),
+                                            'Lab’a gitti',
+                                            style: _planForNext
+                                                ? TextStyle(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withValues(
+                                                            alpha: 0.38),
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Bilgi',
+                                          onPressed: () {
+                                            showDialog<void>(
+                                              context: context,
+                                              builder: (ctx) => AlertDialog(
+                                                title:
+                                                    const Text('Lab’a gitti'),
+                                                content: const Text(
+                                                  'İş laboratuvara gönderildiğinde işaretleyin. '
+                                                  'Beklenen dönüş tarihinden 1 gün önce takip '
+                                                  'listesi ve bildirim hatırlatır. '
+                                                  'Bu seçimde işlem yapılmış sayılır; '
+                                                  '“Sonraki seansa planla” kapanır.',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(ctx),
+                                                    child: const Text('Tamam'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.info_outline),
+                                        ),
+                                      ],
+                                    ),
+                                    if (_labSent)
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            12, 0, 12, 8),
+                                        child: InkWell(
+                                          onTap: _saving
+                                              ? null
+                                              : _pickLabReturnDate,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          child: InputDecorator(
+                                            decoration: const InputDecoration(
+                                              labelText: 'Beklenen lab dönüşü',
+                                              border: OutlineInputBorder(),
+                                              isDense: true,
+                                              suffixIcon: Icon(
+                                                  Icons.calendar_today,
+                                                  size: 18),
+                                            ),
+                                            child: Text(
+                                              _labReturnDate == null
+                                                  ? 'Tarih seçin'
+                                                  : DateFormat('dd.MM.yyyy')
+                                                      .format(_labReturnDate!),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(height: 1),
-                if (_validationError != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: Material(
-                      color: scheme.errorContainer,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 20,
-                              color: scheme.onErrorContainer,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _validationError!,
-                                style: TextStyle(
-                                  color: scheme.onErrorContainer,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: FilledButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(
-                            _planForNext ? Icons.event_available : Icons.save),
-                    label: Text(saveLabel),
+                  const Divider(height: 1),
+                  if (_validationError != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                      child: Material(
+                        color: scheme.errorContainer,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 20,
+                                color: scheme.onErrorContainer,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _validationError!,
+                                  style: TextStyle(
+                                    color: scheme.onErrorContainer,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: FilledButton.icon(
+                      onPressed: _saving ? null : _save,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(_planForNext
+                              ? Icons.event_available
+                              : Icons.save),
+                      label: Text(saveLabel),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            CloudUploadOverlay(
-              visible: _saving,
-              message: _uploadMessage,
-            ),
-          ],
+                ],
+              ),
+              CloudUploadOverlay(
+                visible: _saving,
+                message: _uploadMessage,
+              ),
+            ],
+          ),
         ),
       ),
     );

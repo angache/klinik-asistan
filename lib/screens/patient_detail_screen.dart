@@ -7,6 +7,7 @@ import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
+import '../services/patient_pdf_export.dart';
 import '../widgets/add_follow_up_dialog.dart';
 import '../widgets/new_session_dialog.dart';
 import '../widgets/treatment_note_tile.dart';
@@ -98,9 +99,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            saved.planlandi
-                ? 'Sonraki seansa planlandı'
-                : 'İşlem kaydedildi',
+            saved.planlandi ? 'Sonraki seansa planlandı' : 'İşlem kaydedildi',
           ),
         ),
       );
@@ -204,6 +203,38 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     }
   }
 
+  Future<void> _exportPdf() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tedavi geçmişini paylaş'),
+        content: const Text(
+          'PDF, hastanın sağlık verilerini içerir. Yalnızca hastanın kendisine '
+          'veya onun onayıyla yetkili kişilere gönderin.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('PDF oluştur'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final session = widget.db.session;
+    await PatientPdfExport.share(
+      context,
+      patient: _patient,
+      notes: _notes,
+      clinicName: session.clinic?.ad ?? 'Klinik',
+      preparedBy: session.displayName,
+    );
+  }
+
   Future<void> _openAddFollowUp() async {
     final created = await showAddFollowUpDialog(
       context: context,
@@ -229,10 +260,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Tamamlanamadı: $e\n'
-            'migration_planlanan_islem.sql çalıştırıldı mı?',
-          ),
+          content: Text('Tamamlanamadı: $e'),
         ),
       );
     }
@@ -310,10 +338,15 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'edit') _editPatient();
+                    if (value == 'pdf') _exportPdf();
                     if (value == 'delete') _deletePatient();
                   },
                   itemBuilder: (_) => [
                     const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                    const PopupMenuItem(
+                      value: 'pdf',
+                      child: Text('PDF olarak paylaş'),
+                    ),
                     if (widget.db.canManageRecords)
                       const PopupMenuItem(value: 'delete', child: Text('Sil')),
                   ],
@@ -387,12 +420,17 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                     PopupMenuButton<String>(
                       onSelected: (value) {
                         if (value == 'edit') _editPatient();
+                        if (value == 'pdf') _exportPdf();
                         if (value == 'delete') _deletePatient();
                       },
                       itemBuilder: (_) => [
                         const PopupMenuItem(
                           value: 'edit',
                           child: Text('Düzenle'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'pdf',
+                          child: Text('PDF olarak paylaş'),
                         ),
                         if (widget.db.canManageRecords)
                           const PopupMenuItem(
@@ -411,8 +449,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               ),
             ),
           ),
-          if (widget.embedded)
-            Divider(height: 1, color: scheme.outlineVariant),
+          if (widget.embedded) Divider(height: 1, color: scheme.outlineVariant),
           if (planned.isNotEmpty)
             Material(
               color: scheme.errorContainer.withValues(alpha: 0.75),

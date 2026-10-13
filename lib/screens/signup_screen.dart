@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/clinic.dart';
 import '../services/session_controller.dart';
+import '../widgets/legal_consent_field.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -168,7 +169,9 @@ class _CreateClinicFormState extends State<_CreateClinicForm> {
               return null;
             },
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          LegalConsentField(),
+          const SizedBox(height: 12),
           FilledButton(
             onPressed: _busy ? null : _submit,
             child: _busy
@@ -326,7 +329,9 @@ class _JoinClinicFormState extends State<_JoinClinicForm> {
               return null;
             },
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          LegalConsentField(),
+          const SizedBox(height: 12),
           FilledButton(
             onPressed: _busy ? null : _submit,
             child: _busy

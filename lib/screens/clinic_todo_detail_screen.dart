@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/clinic_todo.dart';
 import '../services/database_service.dart';
 import '../services/storage_media.dart';
+import '../widgets/photo_preview.dart' show kPhotoMaxSide, kPhotoQuality;
 
 class ClinicTodoDetailScreen extends StatefulWidget {
   const ClinicTodoDetailScreen({
@@ -129,15 +130,17 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
         }
         final image = await _picker.pickImage(
           source: ImageSource.camera,
-          imageQuality: 82,
-          maxWidth: 1800,
+          imageQuality: kPhotoQuality,
+          maxWidth: kPhotoMaxSide,
+          maxHeight: kPhotoMaxSide,
         );
         if (image != null) files.add(image);
       } else {
         files.addAll(
           await _picker.pickMultiImage(
-            imageQuality: 82,
-            maxWidth: 1800,
+            imageQuality: kPhotoQuality,
+            maxWidth: kPhotoMaxSide,
+            maxHeight: kPhotoMaxSide,
           ),
         );
       }

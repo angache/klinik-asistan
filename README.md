@@ -27,15 +27,40 @@ flutter create . --project-name klinik_asistan --org com.klinik --platforms=andr
 
 Aktif proje: **dentasist** (`hdgyzlrgcrrkoupgvfzd`). Bilgiler `lib/config/supabase_config.dart` içinde.
 
-1. SQL Editor’de migration'ları şu sırayla çalıştırın: `schema.sql`, `migration_storage_auth.sql`, `migration_member_admin.sql`, `migration_join_requests.sql`, `migration_followups.sql`.
-2. Storage bucket'ı artık özeldir; erişim kimlik doğrulamalı Storage politikalarıyla sağlanır.
+1. Şema `supabase/sql/` altında numaralı dosyalardır. **Yeni projede** SQL Editor'de `001`'den başlayıp sırayla hepsini çalıştırın. **Mevcut projede** yalnızca henüz çalıştırılmamış olanları çalıştırın. Dosyalar tekrar çalıştırılabilir (`if not exists` / `create or replace`) yazılmıştır.
+   - `push_kurulum_notlari.sql` SQL değil; push, Edge Function, webhook ve cron kurulum kontrol listesidir.
+   - Klasör bilerek `supabase/migrations/` değildir: Supabase CLI o klasörü `db push` ile otomatik uygulamaya çalışır.
+2. Storage bucket'ı özeldir; erişim kimlik doğrulamalı Storage politikalarıyla sağlanır. Dosya silme / üzerine yazma yalnızca yükleyene veya admin/doktora açıktır.
 3. Key değişirse config dosyasını güncelleyin.
+
+### Edge Functions
+
+| Fonksiyon | Deploy | Tetikleyen |
+|---|---|---|
+| `daily-reminders` | `--no-verify-jwt` | Cron, her gün 08:00 (`Authorization: Bearer <CRON_SECRET>`) |
+| `notify-join-request` | `--no-verify-jwt` | DB webhook, `klinik_katilim_istekleri` INSERT (`Authorization: Bearer <CRON_SECRET>`) |
+| `delete-account` | JWT doğrulaması açık | Uygulama → Ayarlar → Hesabımı sil |
+
+`CRON_SECRET` tanımlı değilse cron/webhook fonksiyonları çalışmaz (bilerek kapalı başarısız olur).
+
+### Yayın hazırlığı
+
+- **Android imzalama:** `android/key.properties.example` dosyasını `android/key.properties` olarak kopyalayıp doldurun. Dosya yoksa release derleme debug anahtarıyla imzalanır ve mağazaya yüklenemez.
+- **Uygulama ikonu:** Kaynaklar `assets/icon/` altında (1024×1024). Değiştirirseniz `dart run flutter_launcher_icons` çalıştırın.
+- **Hukuki bağlantılar:** Metin taslakları `docs/hukuki/` altında; yayınlamadan önce yer tutucuları doldurup avukata kontrol ettirin. Derlemede `--dart-define=PRIVACY_POLICY_URL=... --dart-define=KVKK_NOTICE_URL=... --dart-define=TERMS_URL=... --dart-define=SUPPORT_EMAIL=...` verin (bkz. `lib/config/legal_config.dart`). Boş olanlar uygulamada gösterilmez.
+- **Şifre sıfırlama:** Supabase → Authentication → Email Templates → Reset Password şablonuna `{{ .Token }}` ekleyin.
 
 ## Özellikler
 
 - Supabase Auth ile oturum açma ve kullanıcıya özel veri erişimi
 - Birden çok klinik, klinik değiştirme, katılım istekleri ve üye yönetimi
-- Seans notuna bağlı takip/kontrol planlama ve yerel bildirimler
+- Seans notuna bağlı takip/kontrol planlama, push (08:00) ve yerel bildirimler
+- Seans başına 10 fotoğraf, WhatsApp / e-posta ile paylaşım
+- Hasta tedavi geçmişini PDF olarak paylaşma
+- Raporlar: dönem özeti ve önceki dönemle kıyas, en çok yapılan işlemler, günlük yoğunluk, takip durumu, geri çağrılacak hastalar (`026_raporlar.sql`)
+- Kontrol çağrıları: işlem şablonundaki periyodik kontrol süresi dolan hastalar, arama sonucu kaydı (randevu / ulaşılamadı / istemiyor), 12 aydan eski hastalar ayrı sekmede, ana ekranda rozet (`027_kontrol_cagrilari.sql`)
+- Şifremi unuttum (e-posta kodu), uygulama içi hesap silme
+- Crashlytics (Android / iOS, yalnızca release)
 
 ### 3. Çalıştırma
 
@@ -58,6 +83,10 @@ adb install -r build\app\outputs\flutter-apk\app-release.apk
 | `CAMERA` | Seans fotoğrafı çekme |
 | `READ_EXTERNAL_STORAGE` (API ≤ 32) | Galeriden seçim |
 | `POST_NOTIFICATIONS` (API ≥ 33) | Takip hatırlatmaları |
+| `RECEIVE_BOOT_COMPLETED` | Yeniden başlatmada zamanlanmış bildirimleri geri kurma |
+| `RECORD_AUDIO` | Sesli not |
+
+Uygulama verisi bulut yedeğine ve cihaz aktarımına dahil edilmez (`allowBackup=false`, `data_extraction_rules.xml`).
 
 `image_picker` FileProvider yolları: `res/xml/flutter_image_picker_file_paths.xml`
 

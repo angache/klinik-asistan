@@ -46,9 +46,11 @@ class PushService {
   Future<void> init() async {
     if (!isSupported) return;
     try {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      }
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       final messaging = FirebaseMessaging.instance;
@@ -120,16 +122,13 @@ class PushService {
     if (user == null) return;
 
     try {
-      await Supabase.instance.client.from('device_tokens').upsert(
-        {
-          'user_id': user.id,
-          'token': token,
-          'platform': _platformLabel,
-          'guncelleme_tarihi': DateTime.now().toUtc().toIso8601String(),
-        },
-        onConflict: 'token',
+      // RPC: token daha önce bu cihazdaki başka kullanıcıya aitse devralır.
+      await Supabase.instance.client.rpc(
+        'register_device_token',
+        params: {'p_token': token, 'p_platform': _platformLabel},
       );
       _token = token;
+      await NotificationService.instance.setServerPushActive(true);
     } catch (e) {
       debugPrint('PushService._persistToken hata: $e');
     }

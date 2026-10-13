@@ -12,6 +12,9 @@ class TreatmentTemplate {
   final bool aktif;
   final int sira;
 
+  /// Bu işlemden kaç ay sonra hasta periyodik kontrole çağrılır; null = yok.
+  final int? kontrolAy;
+
   const TreatmentTemplate({
     this.id,
     required this.kategori,
@@ -21,6 +24,7 @@ class TreatmentTemplate {
     this.labTakip = false,
     this.aktif = true,
     this.sira = 0,
+    this.kontrolAy,
   });
 
   factory TreatmentTemplate.fromJson(Map<String, dynamic> json) {
@@ -33,6 +37,7 @@ class TreatmentTemplate {
       labTakip: json['lab_takip'] as bool? ?? false,
       aktif: json['aktif'] as bool? ?? true,
       sira: (json['sira'] as num?)?.toInt() ?? 0,
+      kontrolAy: (json['kontrol_ay'] as num?)?.toInt(),
     );
   }
 
@@ -45,6 +50,7 @@ class TreatmentTemplate {
         'lab_takip': labTakip,
         'aktif': aktif,
         'sira': sira,
+        'kontrol_ay': kontrolAy,
       };
 }
 
@@ -86,12 +92,14 @@ const List<TreatmentTemplate> kDefaultTreatmentTemplates = [
     baslik: 'Kanal Bitim',
     isKanal: true,
     sira: 11,
+    kontrolAy: 6,
   ),
   TreatmentTemplate(
     kategori: 'Tedavi',
     baslik: 'Kanal Yenileme',
     isKanal: true,
     sira: 12,
+    kontrolAy: 6,
   ),
   TreatmentTemplate(
     kategori: 'Tedavi',
@@ -127,6 +135,7 @@ const List<TreatmentTemplate> kDefaultTreatmentTemplates = [
     kategori: 'Tedavi',
     baslik: 'Küretaj',
     sira: 19,
+    kontrolAy: 3,
   ),
   TreatmentTemplate(
     kategori: 'Tedavi',
@@ -167,6 +176,7 @@ const List<TreatmentTemplate> kDefaultTreatmentTemplates = [
     kategori: 'Protez',
     baslik: 'Daimi Simantasyon',
     sira: 35,
+    kontrolAy: 6,
   ),
   TreatmentTemplate(
     kategori: 'Protez',
@@ -180,12 +190,14 @@ const List<TreatmentTemplate> kDefaultTreatmentTemplates = [
     baslik: 'Detertraj (Temizlik)',
     requiresTooth: false,
     sira: 40,
+    kontrolAy: 6,
   ),
   TreatmentTemplate(
     kategori: 'Genel',
     baslik: 'Kontrol',
     requiresTooth: false,
     sira: 41,
+    kontrolAy: 6,
   ),
 ];
 

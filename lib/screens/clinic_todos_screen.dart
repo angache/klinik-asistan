@@ -69,7 +69,7 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Yüklenemedi.\nmigration_klinik_todolar.sql çalıştırıldı mı?\n\n${snap.error}',
+                      'Yüklenemedi.\n\n${snap.error}',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: scheme.error),
                     ),

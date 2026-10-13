@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/session_controller.dart';
+import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -112,7 +113,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     onFieldSubmitted: (_) => _submit(),
                   ),
-                  const SizedBox(height: 24),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ForgotPasswordScreen(
+                                    session: widget.session,
+                                    initialEmail: _email.text.trim(),
+                                  ),
+                                ),
+                              ),
+                      child: const Text('Şifremi unuttum'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   FilledButton(
                     onPressed: _busy ? null : _submit,
                     child: _busy

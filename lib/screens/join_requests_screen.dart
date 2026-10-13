@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/clinic.dart';
 import '../services/session_controller.dart';
+import 'settings_screen.dart';
 
 /// Klinik yöneticisi: bekleyen katılım isteklerini onaylar / reddeder.
 class JoinRequestsScreen extends StatefulWidget {
@@ -204,6 +205,15 @@ class PendingJoinScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Onay bekleniyor'),
         actions: [
+          IconButton(
+            tooltip: 'Ayarlar ve hesap',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SettingsScreen(session: session),
+              ),
+            ),
+          ),
           TextButton(
             onPressed: () => session.signOut(),
             child: const Text('Çıkış'),

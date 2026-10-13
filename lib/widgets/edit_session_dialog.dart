@@ -26,18 +26,13 @@ Future<bool?> showEditSessionDialog({
   );
 }
 
-/// "MB: 19mm, P: 21mm" → map
+/// "MB: 19mm, MB 2: 19,5mm, P: 21mm" → map
 Map<String, String> parseKanalBoyu(String? raw) {
   final out = <String, String>{};
   if (raw == null || raw.trim().isEmpty) return out;
-  for (final part in raw.split(',')) {
-    final p = part.trim();
-    final m =
-        RegExp(r'^([A-Za-z0-9]+)\s*:\s*([\d.]+)\s*mm$', caseSensitive: false)
-            .firstMatch(p);
-    if (m != null) {
-      out[m.group(1)!] = m.group(2)!;
-    }
+  final pattern = RegExp(r'\s*([^,:]+?)\s*:\s*(.+?)\s*mm\s*(?:,|$)');
+  for (final m in pattern.allMatches(raw)) {
+    out[m.group(1)!] = m.group(2)!;
   }
   return out;
 }
@@ -257,19 +252,19 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
           ? 'Fotoğraflar buluta yükleniyor…'
           : 'İşlem kaydediliyor…';
     });
+    final uploadedUrls = <String>[];
     try {
-      final photoUrls = List<String>.from(_existingPhotoUrls);
       for (var i = 0; i < _newPhotos.length; i++) {
         if (_newPhotos.length > 1) {
           setState(() => _uploadMessage =
               'Fotoğraf yükleniyor (${i + 1}/${_newPhotos.length})…');
         }
-        photoUrls.add(await widget.db.uploadSessionPhoto(
+        uploadedUrls.add(await widget.db.uploadSessionPhoto(
           hastaId: widget.patient.id,
           file: _newPhotos[i],
         ));
-        if (!mounted) return;
       }
+      final photoUrls = [..._existingPhotoUrls, ...uploadedUrls];
       if (_newPhotos.isNotEmpty) {
         setState(() => _uploadMessage = 'İşlem kaydediliyor…');
       }
@@ -309,10 +304,12 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       }
       Navigator.pop(context, true);
     } catch (e) {
+      await widget.db.removeStorageObjects(uploadedUrls);
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _validationError = 'Kayıt başarısız: $e';
+        _validationError =
+            e is NoteConflictException ? e.toString() : 'Kayıt başarısız: $e';
       });
     }
   }
@@ -327,259 +324,272 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
         _requiresTooth || _kapsam == TreatmentScope.tekDis;
     final effectiveKapsam = _requiresTooth ? TreatmentScope.tekDis : _kapsam;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'İşlemi düzenle',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            Text(
-                              'v${widget.note.versiyon} → yeni sürüm kaydedilir; eski korunur',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: scheme.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed:
-                            _saving ? null : () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    return PopScope(
+      canPop: !_saving,
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                    child: Row(
                       children: [
-                        Text(
-                          'İşlem tarihi',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(
-                            Icons.event_outlined,
-                            color: scheme.primary,
-                          ),
-                          title: Text(
-                            DateFormat('dd.MM.yyyy HH:mm').format(_sessionDate),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          trailing: TextButton(
-                            onPressed: _saving ? null : _pickSessionDate,
-                            child: const Text('Değiştir'),
-                          ),
-                          onTap: _saving ? null : _pickSessionDate,
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          'Kapsam',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        if (_requiresTooth) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Bu işlem için diş seçimi zorunlu',
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: scheme.onSurfaceVariant,
-                                    ),
-                          ),
-                        ],
-                        const SizedBox(height: 8),
-                        SegmentedButton<TreatmentScope>(
-                          segments: scopes
-                              .map(
-                                (s) => ButtonSegment(
-                                  value: s,
-                                  label: Text(s.label,
-                                      textAlign: TextAlign.center),
-                                ),
-                              )
-                              .toList(),
-                          selected: {effectiveKapsam},
-                          onSelectionChanged: (set) {
-                            setState(() {
-                              _kapsam = set.first;
-                              if (_kapsam != TreatmentScope.tekDis) {
-                                _selectedTeeth = {};
-                              }
-                            });
-                          },
-                          style: const ButtonStyle(
-                            visualDensity: VisualDensity.compact,
-                            textStyle: WidgetStatePropertyAll(
-                              TextStyle(fontSize: 12),
-                            ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'İşlemi düzenle',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                'v${widget.note.versiyon} → yeni sürüm kaydedilir; eski korunur',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: scheme.onSurfaceVariant),
+                              ),
+                            ],
                           ),
                         ),
-                        if (showToothSelector) ...[
-                          const SizedBox(height: 14),
-                          ToothSelector(
-                            selected: _selectedTeeth,
-                            onChanged: (t) =>
-                                setState(() => _selectedTeeth = t),
-                          ),
-                        ],
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: _titleController,
-                          decoration: const InputDecoration(
-                            labelText: 'İşlem Başlığı',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _noteController,
-                          minLines: 2,
-                          maxLines: 5,
-                          decoration: const InputDecoration(
-                            labelText: 'Not (isteğe bağlı)',
-                            alignLabelWithHint: true,
-                          ),
-                        ),
-                        if (_showKanal) ...[
-                          const SizedBox(height: 14),
-                          KanalParamsSection(
-                            canalCodes: canalCodes,
-                            typicalCodes: canalsForTooth(tooth),
-                            toothLabel: tooth,
-                            kanalControllers: _kanalControllers,
-                            selectedEge: _egeSistemi,
-                            selectedIlac: _kanalIlaci,
-                            onEgeChanged: (v) =>
-                                setState(() => _egeSistemi = v),
-                            onIlacChanged: (v) =>
-                                setState(() => _kanalIlaci = v),
-                            onAddCanal: _addExtraCanal,
-                            onRemoveExtraCanal: (kod) {
-                              setState(() {
-                                _ekstraKanallar.remove(kod);
-                                _kanalControllers[kod]?.clear();
-                              });
-                            },
-                          ),
-                        ],
-                        const SizedBox(height: 16),
-                        Text(
-                          'Fotoğraf',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        SessionPhotosEditor(
-                          existingUrls: _existingPhotoUrls,
-                          newFiles: _newPhotos,
-                          enabled: !_saving,
-                          onAddFiles: (files) =>
-                              setState(() => _newPhotos.addAll(files)),
-                          onRemoveExisting: (url) =>
-                              setState(() => _existingPhotoUrls.remove(url)),
-                          onRemoveNew: (file) =>
-                              setState(() => _newPhotos.remove(file)),
+                        IconButton(
+                          onPressed:
+                              _saving ? null : () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const Divider(height: 1),
-                if (_validationError != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                    child: Material(
-                      color: scheme.errorContainer,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 20,
-                              color: scheme.onErrorContainer,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _validationError!,
-                                style: TextStyle(
-                                  color: scheme.onErrorContainer,
+                  const Divider(height: 1),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'İşlem tarihi',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 13,
                                 ),
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.event_outlined,
+                              color: scheme.primary,
+                            ),
+                            title: Text(
+                              DateFormat('dd.MM.yyyy HH:mm')
+                                  .format(_sessionDate),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            trailing: TextButton(
+                              onPressed: _saving ? null : _pickSessionDate,
+                              child: const Text('Değiştir'),
+                            ),
+                            onTap: _saving ? null : _pickSessionDate,
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Kapsam',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          if (_requiresTooth) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Bu işlem için diş seçimi zorunlu',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
                             ),
                           ],
-                        ),
+                          const SizedBox(height: 8),
+                          SegmentedButton<TreatmentScope>(
+                            segments: scopes
+                                .map(
+                                  (s) => ButtonSegment(
+                                    value: s,
+                                    label: Text(s.label,
+                                        textAlign: TextAlign.center),
+                                  ),
+                                )
+                                .toList(),
+                            selected: {effectiveKapsam},
+                            onSelectionChanged: (set) {
+                              setState(() {
+                                _kapsam = set.first;
+                                if (_kapsam != TreatmentScope.tekDis) {
+                                  _selectedTeeth = {};
+                                }
+                              });
+                            },
+                            style: const ButtonStyle(
+                              visualDensity: VisualDensity.compact,
+                              textStyle: WidgetStatePropertyAll(
+                                TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ),
+                          if (showToothSelector) ...[
+                            const SizedBox(height: 14),
+                            ToothSelector(
+                              selected: _selectedTeeth,
+                              onChanged: (t) =>
+                                  setState(() => _selectedTeeth = t),
+                            ),
+                          ],
+                          const SizedBox(height: 14),
+                          TextField(
+                            controller: _titleController,
+                            decoration: const InputDecoration(
+                              labelText: 'İşlem Başlığı',
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _noteController,
+                            minLines: 2,
+                            maxLines: 5,
+                            decoration: const InputDecoration(
+                              labelText: 'Not (isteğe bağlı)',
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                          if (_showKanal) ...[
+                            const SizedBox(height: 14),
+                            KanalParamsSection(
+                              canalCodes: canalCodes,
+                              typicalCodes: canalsForTooth(tooth),
+                              toothLabel: tooth,
+                              kanalControllers: _kanalControllers,
+                              selectedEge: _egeSistemi,
+                              selectedIlac: _kanalIlaci,
+                              onEgeChanged: (v) =>
+                                  setState(() => _egeSistemi = v),
+                              onIlacChanged: (v) =>
+                                  setState(() => _kanalIlaci = v),
+                              onAddCanal: _addExtraCanal,
+                              onRemoveExtraCanal: (kod) {
+                                setState(() {
+                                  _ekstraKanallar.remove(kod);
+                                  _kanalControllers[kod]?.clear();
+                                });
+                              },
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          Text(
+                            'Fotoğraf',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                          ),
+                          const SizedBox(height: 8),
+                          SessionPhotosEditor(
+                            existingUrls: _existingPhotoUrls,
+                            newFiles: _newPhotos,
+                            enabled: !_saving,
+                            onAddFiles: (files) =>
+                                setState(() => _newPhotos.addAll(files)),
+                            onRemoveExisting: (url) =>
+                                setState(() => _existingPhotoUrls.remove(url)),
+                            onRemoveNew: (file) =>
+                                setState(() => _newPhotos.remove(file)),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                  child: FilledButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save),
-                    label: Text(
-                      _saving ? _uploadMessage : 'Yeni sürüm olarak kaydet',
+                  const Divider(height: 1),
+                  if (_validationError != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      child: Material(
+                        color: scheme.errorContainer,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 20,
+                                color: scheme.onErrorContainer,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _validationError!,
+                                  style: TextStyle(
+                                    color: scheme.onErrorContainer,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                    child: FilledButton.icon(
+                      onPressed: _saving ? null : _save,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save),
+                      label: Text(
+                        _saving ? _uploadMessage : 'Yeni sürüm olarak kaydet',
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            CloudUploadOverlay(
-              visible: _saving,
-              message: _uploadMessage,
-            ),
-          ],
+                ],
+              ),
+              CloudUploadOverlay(
+                visible: _saving,
+                message: _uploadMessage,
+              ),
+            ],
+          ),
         ),
       ),
     );

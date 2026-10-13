@@ -25,7 +25,7 @@ Diş hekimi asistanı için Flutter + Supabase uygulaması ayağa kaldırıldı.
 | Storage bucket | `seans-fotograflari` |
 
 - Önceki (yanlış) proje bilgileri kaldırıldı.
-- `supabase/schema.sql` doğru projede SQL Editor ile çalıştırıldı.
+- `supabase/sql/` altındaki numaralı dosyalar doğru projede SQL Editor ile sırayla çalıştırıldı.
 - Tablolar: `hastalar`, `seans_notlari` (+ index, realtime, geliştirme RLS politikaları).
 
 ### 2. Geliştirme ortamı (bu makine)
@@ -129,7 +129,7 @@ build\windows\x64\runner\Release\klinik_asistan.exe
 
 ```
 lib/config/supabase_config.dart   → URL, anon/publishable key, bucket
-supabase/schema.sql               → DB şeması (SQL Editor)
+supabase/sql/NNN_*.sql            → DB şeması, sırayla (SQL Editor)
 android/app/src/main/AndroidManifest.xml  → INTERNET, CAMERA, storage izinleri
 android/app/build.gradle.kts      → applicationId: com.klinik.klinik_asistan
 docs/ILERLEME.md                  → bu dosya
@@ -150,7 +150,7 @@ docs/ILERLEME.md                  → bu dosya
 ## Kısa kronoloji
 
 1. Yanlış Supabase bilgileri → `dentasist` ile değiştirildi  
-2. `schema.sql` doğru projede çalıştırıldı  
+2. `supabase/sql/` dosyaları doğru projede sırayla çalıştırıldı  
 3. Flutter SDK kuruldu, Developer Mode açıldı  
 4. Windows release derlendi  
 5. Android Studio + SDK kuruldu  

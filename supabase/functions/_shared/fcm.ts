@@ -109,16 +109,50 @@ function loadServiceAccount(): ServiceAccount {
   }
 }
 
+/**
+ * Cron / webhook isteğini doğrular. CRON_SECRET tanımlı değilse de reddeder:
+ * verify_jwt kapalı fonksiyon aksi halde herkese açık kalır.
+ */
+export function unauthorizedResponse(
+  req: Request,
+  headers: Record<string, string>,
+): Response | null {
+  const secret = Deno.env.get('CRON_SECRET');
+  if (!secret) {
+    return new Response('CRON_SECRET tanımlı değil', { status: 500, headers });
+  }
+  if (req.headers.get('Authorization') !== `Bearer ${secret}`) {
+    return new Response('Unauthorized', { status: 401, headers });
+  }
+  return null;
+}
+
+/** "Ayşe Yılmaz" → "A.Y." — push metni Google sunucularından geçer. */
+export function initials(name: string | null | undefined): string {
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'Hasta';
+  return parts.map((p) => `${p[0].toLocaleUpperCase('tr-TR')}.`).join('');
+}
+
+// Uygulama silinmiş / token yenilenmiş: bu token'a bir daha gönderilmemeli.
+function isInvalidTokenError(status: number, body: string): boolean {
+  if (status === 404) return true;
+  return status === 400 &&
+    (body.includes('UNREGISTERED') ||
+      body.includes('registration token is not a valid'));
+}
+
 export async function sendFcmToTokens(opts: {
   tokens: string[];
   title: string;
   body: string;
   data?: Record<string, string>;
-}): Promise<{ sent: number; failed: number }> {
+}): Promise<{ sent: number; failed: number; invalid: string[] }> {
   const sa = loadServiceAccount();
   const accessToken = await getAccessToken(sa);
   let sent = 0;
   let failed = 0;
+  const invalid: string[] = [];
 
   for (const token of opts.tokens) {
     const res = await fetch(
@@ -136,7 +170,7 @@ export async function sendFcmToTokens(opts: {
             data: opts.data ?? {},
             android: {
               priority: 'HIGH',
-              notification: { channel_id: 'klinik_push' },
+              notification: { channel_id: 'klinik_push', visibility: 'PRIVATE' },
             },
             apns: {
               payload: { aps: { sound: 'default' } },
@@ -145,9 +179,16 @@ export async function sendFcmToTokens(opts: {
         }),
       },
     );
-    if (res.ok) sent++;
-    else failed++;
+    if (res.ok) {
+      sent++;
+      await res.body?.cancel();
+    } else {
+      failed++;
+      if (isInvalidTokenError(res.status, await res.text())) {
+        invalid.push(token);
+      }
+    }
   }
 
-  return { sent, failed };
+  return { sent, failed, invalid };
 }

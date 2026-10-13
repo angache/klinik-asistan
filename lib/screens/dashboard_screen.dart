@@ -18,6 +18,9 @@ import 'follow_ups_screen.dart';
 import 'join_requests_screen.dart';
 import 'manage_clinics_screen.dart';
 import 'patient_detail_screen.dart';
+import 'recall_screen.dart';
+import 'reports_screen.dart';
+import 'settings_screen.dart';
 import 'treatment_templates_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -47,6 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Timer? _debounce;
   int _followUpAttention = 0;
   int _todoAttention = 0;
+  int _recallCount = 0;
   String? _followUpError;
   Patient? _selectedPatient;
   PatientListSort _sort = PatientListSort.lastVisit;
@@ -87,7 +91,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _load(reset: true);
   }
 
+  /// 027 çalıştırılmamışsa ya da bağlantı yoksa rozet sessizce gizlenir.
+  Future<void> _loadRecallBadge() async {
+    try {
+      final count = await widget.db.countRecallPatients();
+      if (mounted) setState(() => _recallCount = count);
+    } catch (_) {
+      if (mounted) setState(() => _recallCount = 0);
+    }
+  }
+
   Future<void> _loadFollowUpBadge() async {
+    unawaited(_loadRecallBadge());
     try {
       final results = await Future.wait([
         widget.db.countAttentionFollowUps(),
@@ -110,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               msg.contains('Failed host lookup') ||
               msg.contains('ClientException')
           ? 'İnternet bağlantısı yok veya sunucuya ulaşılamıyor. Takip listesi yüklenemedi.'
-          : 'Takipler yüklenemedi. migration_followups.sql çalıştırıldı mı?\n$msg';
+          : 'Takipler yüklenemedi.\n$msg';
       setState(() => _followUpError = friendly);
     }
   }
@@ -296,6 +311,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _openReports() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ReportsScreen(db: widget.db)),
+    );
+    await _loadRecallBadge();
+  }
+
+  Future<void> _openRecalls() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => RecallScreen(db: widget.db)),
+    );
+    await _loadFollowUpBadge();
+  }
+
   Future<void> _openTreatmentTemplates() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -422,6 +451,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   FilledButton.tonalIcon(
                     onPressed: () {
                       Navigator.pop(ctx);
+                      _openReports();
+                    },
+                    icon: const Icon(Icons.insights_outlined),
+                    label: const Text('Raporlar'),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showAppearanceSheet(context);
+                    },
+                    icon: Icon(_themeIcon(context)),
+                    label: const Text('Görünüm'),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
                       _openTreatmentTemplates();
                     },
                     icon: const Icon(Icons.medical_services_outlined),
@@ -435,6 +482,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                     icon: const Icon(Icons.add_business_outlined),
                     label: const Text('Başka klinik ekle / katıl'),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              SettingsScreen(session: widget.session),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.settings_outlined),
+                    label: const Text('Ayarlar ve hesap'),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
@@ -489,9 +550,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Görünüm',
-            onPressed: () => _showAppearanceSheet(context),
-            icon: Icon(_themeIcon(context)),
+            tooltip: 'Kontrol çağrıları',
+            onPressed: _openRecalls,
+            icon: Badge(
+              isLabelVisible: _recallCount > 0,
+              label: Text('$_recallCount'),
+              child: const Icon(Icons.event_repeat_outlined),
+            ),
           ),
           IconButton(
             tooltip: 'Yapılacaklar',
@@ -524,6 +589,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: Text('$_followUpAttention'),
               child: const Icon(Icons.event_note_outlined),
             ),
+          ),
+          IconButton(
+            tooltip: 'Raporlar',
+            onPressed: _openReports,
+            icon: const Icon(Icons.insights_outlined),
           ),
           IconButton(
             tooltip: 'Klinikler',

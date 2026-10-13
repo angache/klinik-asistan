@@ -1,5 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
-import { sendFcmToTokens } from '../_shared/fcm.ts';
+import {
+  initials,
+  sendFcmToTokens,
+  unauthorizedResponse,
+} from '../_shared/fcm.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -26,14 +30,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Cron secret koruması (opsiyonel ama önerilir)
-    const cronSecret = Deno.env.get('CRON_SECRET');
-    if (cronSecret) {
-      const auth = req.headers.get('Authorization') ?? '';
-      if (auth !== `Bearer ${cronSecret}`) {
-        return new Response('Unauthorized', { status: 401, headers: cors });
-      }
-    }
+    const denied = unauthorizedResponse(req, cors);
+    if (denied) return denied;
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -42,6 +40,16 @@ Deno.serve(async (req) => {
 
     const today = todayIstanbul();
     const summary: Record<string, unknown> = { today };
+
+    let pruned = 0;
+    async function send(opts: Parameters<typeof sendFcmToTokens>[0]) {
+      const r = await sendFcmToTokens(opts);
+      if (r.invalid.length > 0) {
+        await supabase.from('device_tokens').delete().in('token', r.invalid);
+        pruned += r.invalid.length;
+      }
+      return r;
+    }
 
     // Bir klinikteki (opsiyonel: belirli üyenin) cihaz token'larını getir.
     async function tokensForClinic(
@@ -112,9 +120,11 @@ Deno.serve(async (req) => {
 
       if (group.length <= INDIVIDUAL_THRESHOLD) {
         for (const f of group) {
-          const hasta =
-            (f.hastalar as { ad_soyad?: string } | null)?.ad_soyad ?? 'Hasta';
-          const r = await sendFcmToTokens({
+          // KVKK: tam ad yurt dışı sunucudan geçmesin, kilit ekranında görünmesin.
+          const hasta = initials(
+            (f.hastalar as { ad_soyad?: string } | null)?.ad_soyad,
+          );
+          const r = await send({
             tokens: list,
             title: `${itemTitle}: ${hasta}`,
             body: f.baslik as string,
@@ -126,7 +136,7 @@ Deno.serve(async (req) => {
           followSent += r.sent;
         }
       } else {
-        const r = await sendFcmToTokens({
+        const r = await send({
           tokens: list,
           title: summaryTitle,
           body: summaryBody,
@@ -188,7 +198,7 @@ Deno.serve(async (req) => {
 
       if (group.length <= INDIVIDUAL_THRESHOLD) {
         for (const t of group) {
-          const r = await sendFcmToTokens({
+          const r = await send({
             tokens: list,
             title,
             body: (t.icerik as string | null) ?? 'Açık görev',
@@ -197,7 +207,7 @@ Deno.serve(async (req) => {
           todoSent += r.sent;
         }
       } else {
-        const r = await sendFcmToTokens({
+        const r = await send({
           tokens: list,
           title,
           body: `${group.length} açık görev zamanı geldi`,
@@ -212,6 +222,7 @@ Deno.serve(async (req) => {
         .in('id', group.map((t) => t.id as string));
     }
     summary.todos = { due: dueTodos.length, groups: groups.size, sent: todoSent };
+    summary.prunedTokens = pruned;
 
     return new Response(JSON.stringify(summary), {
       headers: { ...cors, 'Content-Type': 'application/json' },

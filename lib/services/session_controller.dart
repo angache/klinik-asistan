@@ -6,19 +6,48 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/clinic.dart';
+import 'notification_service.dart';
 import 'push_service.dart';
+import 'storage_media.dart';
+
+class AccountDeletionPreview {
+  const AccountDeletionPreview({
+    required this.clinicsToDelete,
+    required this.blockingClinics,
+  });
+
+  /// Tek üyesi bu kullanıcı olan klinikler: tüm hasta verisiyle silinir.
+  final List<String> clinicsToDelete;
+
+  /// Kullanıcının son admin olduğu ve başka üyesi olan klinikler.
+  final List<String> blockingClinics;
+
+  bool get canDelete => blockingClinics.isEmpty;
+
+  factory AccountDeletionPreview.fromJson(Map<String, dynamic> json) {
+    List<String> names(Object? v) =>
+        (v as List? ?? const []).map((e) => e.toString()).toList();
+    return AccountDeletionPreview(
+      clinicsToDelete: names(json['clinicsToDelete']),
+      blockingClinics: names(json['blockingClinics']),
+    );
+  }
+}
 
 /// Oturum + çoklu klinik üyeliği.
 class SessionController extends ChangeNotifier {
   SessionController({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client {
     _authSub = _client.auth.onAuthStateChange.listen((data) {
+      final previousId = _user?.id;
       _user = data.session?.user;
       if (_user == null) {
         _clearClinicState();
         _loading = false;
         notifyListeners();
-      } else {
+      } else if (_user!.id != previousId) {
+        // tokenRefreshed / initialSession aynı kullanıcı için tekrar gelir;
+        // üyeliği yeniden yüklemek paneli sıfırlar.
         refreshMembership();
         PushService.instance.syncToken();
       }
@@ -45,17 +74,20 @@ class SessionController extends ChangeNotifier {
   ClinicMember? _member;
   bool _loading = true;
   String? _error;
+  bool _membershipLoadFailed = false;
 
   User? get user => _user;
   Clinic? get clinic => _clinic;
   ClinicMember? get member => _member;
-  List<ClinicMembership> get memberships =>
-      List.unmodifiable(_memberships);
+  List<ClinicMembership> get memberships => List.unmodifiable(_memberships);
   List<ClinicJoinRequest> get myPendingRequests =>
       List.unmodifiable(_myPendingRequests);
   int get pendingJoinCountForActiveClinic => _pendingJoinCountForActiveClinic;
   bool get loading => _loading;
   String? get error => _error;
+
+  /// Klinik bilgisi sunucudan alınamadı (çoğunlukla bağlantı yok).
+  bool get membershipLoadFailed => _membershipLoadFailed;
   bool get isLoggedIn => _user != null;
   bool get hasClinic => _clinic != null && _member != null;
   bool get hasMultipleClinics => _memberships.length > 1;
@@ -88,8 +120,12 @@ class SessionController extends ChangeNotifier {
       return;
     }
 
-    _loading = true;
+    // Klinik zaten yüklüyse arka planda yenile: tam ekran spinner paneli
+    // (açık diyaloglar dahil) sıfırlar.
+    final background = hasClinic;
+    if (!background) _loading = true;
     _error = null;
+    _membershipLoadFailed = false;
     notifyListeners();
 
     try {
@@ -99,35 +135,41 @@ class SessionController extends ChangeNotifier {
           .eq('user_id', uid)
           .order('olusturma_tarihi', ascending: true);
 
+      final loaded = (rows as List).map((raw) {
+        final map = Map<String, dynamic>.from(raw as Map);
+        final member = ClinicMember.fromJson(map);
+        final klinikJson = map['klinikler'];
+        if (klinikJson is! Map) {
+          throw StateError('Klinik bilgisi eksik');
+        }
+        final clinic = Clinic.fromJson(Map<String, dynamic>.from(klinikJson));
+        return ClinicMembership(member: member, clinic: clinic);
+      }).toList();
+
       _memberships
         ..clear()
-        ..addAll(
-          (rows as List).map((raw) {
-            final map = Map<String, dynamic>.from(raw as Map);
-            final member = ClinicMember.fromJson(map);
-            final klinikJson = map['klinikler'];
-            if (klinikJson is! Map) {
-              throw StateError('Klinik bilgisi eksik');
-            }
-            final clinic =
-                Clinic.fromJson(Map<String, dynamic>.from(klinikJson));
-            return ClinicMembership(member: member, clinic: clinic);
-          }),
-        );
+        ..addAll(loaded);
 
       if (_memberships.isEmpty) {
         _clinic = null;
         _member = null;
       } else {
         await _applySelection(
-          preferKlinikId: preferKlinikId ?? await _readSavedKlinikId(),
+          preferKlinikId: preferKlinikId ??
+              (background ? _clinic?.id : null) ??
+              await _readSavedKlinikId(),
         );
       }
 
       await _refreshJoinRequestCaches();
     } catch (e) {
-      _error = e.toString();
-      _clearClinicState();
+      if (background) {
+        debugPrint('refreshMembership (arka plan) hata: $e');
+      } else {
+        _error = e.toString();
+        _membershipLoadFailed = true;
+        _clearClinicState();
+      }
     } finally {
       _loading = false;
       notifyListeners();
@@ -395,7 +437,8 @@ class SessionController extends ChangeNotifier {
     return ClinicJoinRequest.fromJson(Map<String, dynamic>.from(row as Map));
   }
 
-  Future<List<ClinicJoinRequest>> getPendingJoinRequestsForActiveClinic() async {
+  Future<List<ClinicJoinRequest>>
+      getPendingJoinRequestsForActiveClinic() async {
     final klinikId = _clinic?.id;
     if (klinikId == null || _member?.isAdmin != true) return [];
 
@@ -434,7 +477,65 @@ class SessionController extends ChangeNotifier {
 
   Future<void> signOut() async {
     await PushService.instance.clearToken();
+    await NotificationService.instance.clearAll();
+    await StorageMedia.clearCache();
     await _client.auth.signOut();
+    await _clearSavedKlinikId();
+    _user = null;
+    _clearClinicState();
+    notifyListeners();
+  }
+
+  /// Şifre sıfırlama kodu gönderir. E-posta şablonunda {{ .Token }} olmalı.
+  Future<void> sendPasswordResetCode(String email) async {
+    try {
+      await _client.auth.resetPasswordForEmail(email.trim());
+    } catch (e) {
+      throw Exception(_friendlyAuthError(e));
+    }
+  }
+
+  /// E-postadaki kodla oturum açar ve yeni şifreyi kaydeder.
+  Future<void> resetPasswordWithCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.auth.verifyOTP(
+        type: OtpType.recovery,
+        email: email.trim(),
+        token: code.trim(),
+      );
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } catch (e) {
+      throw Exception(_friendlyAuthError(e));
+    }
+  }
+
+  /// Hesap silinirse ne olacağını sunucuya sorar (hiçbir şey silinmez).
+  Future<AccountDeletionPreview> previewAccountDeletion() async {
+    final res = await _client.functions.invoke(
+      'delete-account',
+      body: {'dryRun': true},
+    );
+    return AccountDeletionPreview.fromJson(
+      Map<String, dynamic>.from(res.data as Map),
+    );
+  }
+
+  /// Hesabı kalıcı olarak siler. Tek üyesi olunan klinikler tüm verisiyle
+  /// silinir; son admin olunan ve başka üyesi olan klinik varsa reddedilir.
+  Future<void> deleteAccount() async {
+    await _client.functions.invoke('delete-account', body: {'confirm': true});
+    await NotificationService.instance.clearAll();
+    await StorageMedia.clearCache();
+    await PushService.instance.clearToken();
+    try {
+      await _client.auth.signOut();
+    } catch (_) {
+      // Kullanıcı sunucuda silindiği için oturum kapatma hata verebilir.
+    }
     await _clearSavedKlinikId();
     _user = null;
     _clearClinicState();
@@ -472,6 +573,14 @@ class SessionController extends ChangeNotifier {
     }
     if (s.contains('Sadece klinik yöneticisi')) {
       return 'Sadece klinik yöneticisi onaylayabilir';
+    }
+    if (s.contains('otp_expired') ||
+        s.contains('Token has expired or is invalid')) {
+      return 'Kod hatalı veya süresi dolmuş. Yeni kod isteyin.';
+    }
+    if (s.contains('same_password') ||
+        s.contains('should be different from the old password')) {
+      return 'Yeni şifre eskisinden farklı olmalı';
     }
     return s;
   }

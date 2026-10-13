@@ -150,7 +150,23 @@ class _GalleryPageState extends State<_GalleryPage> {
         future: _bytes,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const CircularProgressIndicator(color: Colors.white);
+            final preview = StorageMedia.peekThumbnail(widget.url);
+            if (preview == null) {
+              return const CircularProgressIndicator(color: Colors.white);
+            }
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: Image.memory(
+                    preview,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                  ),
+                ),
+                const CircularProgressIndicator(color: Colors.white),
+              ],
+            );
           }
           if (snapshot.hasError || snapshot.data == null) {
             return Column(

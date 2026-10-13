@@ -145,8 +145,8 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
 
           final overdue = items.where((e) => e.isOverdue).toList();
           final today = items.where((e) => e.isDueToday).toList();
-          final upcoming =
-              items.where((e) => !e.isOverdue && !e.isDueToday).toList();
+          final reminded = items.where((e) => e.isReminderDue).toList();
+          final upcoming = items.where((e) => !e.needsAttention).toList();
 
           return RefreshIndicator(
             onRefresh: _reload,
@@ -165,6 +165,15 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
                     Theme.of(context).colorScheme.primary,
                   ),
                   ...today.map((f) => _tile(context, f, fmt)),
+                  const SizedBox(height: 12),
+                ],
+                if (reminded.isNotEmpty) ...[
+                  _sectionTitle(
+                    context,
+                    'Yaklaşan (uyarı zamanı geldi)',
+                    Colors.orange.shade800,
+                  ),
+                  ...reminded.map((f) => _tile(context, f, fmt)),
                   const SizedBox(height: 12),
                 ],
                 if (upcoming.isNotEmpty) ...[
@@ -198,7 +207,9 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
         ? scheme.error
         : f.isDueToday
             ? scheme.primary
-            : scheme.onSurfaceVariant;
+            : f.isReminderDue
+                ? Colors.orange.shade800
+                : scheme.onSurfaceVariant;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),

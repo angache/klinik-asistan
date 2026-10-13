@@ -9,6 +9,10 @@ import 'full_screen_image.dart';
 
 const int kMaxSessionPhotos = 10;
 
+/// Yüklenen fotoğrafların uzun kenarı ve JPEG kalitesi (depolama kotası).
+const double kPhotoMaxSide = 1600;
+const int kPhotoQuality = 80;
+
 /// Seans kartlarında fotoğrafları yan yana gösterir; dokununca galeri açılır.
 class NetworkPhotoStrip extends StatelessWidget {
   const NetworkPhotoStrip({super.key, required this.urls, this.shareText});
@@ -68,14 +72,16 @@ class SessionPhotosEditor extends StatelessWidget {
       if (source == ImageSource.camera || remaining == 1) {
         final x = await picker.pickImage(
           source: source,
-          imageQuality: 85,
-          maxWidth: 1920,
+          imageQuality: kPhotoQuality,
+          maxWidth: kPhotoMaxSide,
+          maxHeight: kPhotoMaxSide,
         );
         picked = x == null ? const [] : [x];
       } else {
         picked = await picker.pickMultiImage(
-          imageQuality: 85,
-          maxWidth: 1920,
+          imageQuality: kPhotoQuality,
+          maxWidth: kPhotoMaxSide,
+          maxHeight: kPhotoMaxSide,
           limit: remaining,
         );
       }
@@ -220,14 +226,14 @@ class _NetworkPhotoThumbnailState extends State<NetworkPhotoThumbnail> {
   @override
   void initState() {
     super.initState();
-    _bytes = StorageMedia.downloadBytes(widget.url);
+    _bytes = StorageMedia.thumbnailBytes(widget.url);
   }
 
   @override
   void didUpdateWidget(covariant NetworkPhotoThumbnail oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.url != widget.url) {
-      _bytes = StorageMedia.downloadBytes(widget.url);
+      _bytes = StorageMedia.thumbnailBytes(widget.url);
     }
   }
 
@@ -262,11 +268,14 @@ class _NetworkPhotoThumbnailState extends State<NetworkPhotoThumbnail> {
                 child: const Icon(Icons.broken_image_outlined),
               );
             }
+            final dpr = MediaQuery.devicePixelRatioOf(context);
             return Image.memory(
               snapshot.data!,
               height: 72,
               width: 96,
+              cacheWidth: (96 * dpr).round(),
               fit: BoxFit.cover,
+              gaplessPlayback: true,
             );
           },
         ),

@@ -151,6 +151,63 @@ class TreatmentNote {
   bool get hasPhoto => fotografUrls.isNotEmpty;
 }
 
+/// Kaydedilecek yeni seans notu (henüz id'si yok).
+class TreatmentNoteInput {
+  const TreatmentNoteInput({
+    required this.hastaId,
+    required this.kapsam,
+    this.disNo,
+    required this.islemBaslik,
+    this.kanalBoyu,
+    this.egeSistemi,
+    this.kanalIlaci,
+    required this.notIcerik,
+    this.fotografUrls = const [],
+    this.tarih,
+    this.planlandi = false,
+    this.labGitti = false,
+    this.labBeklenenTarih,
+  });
+
+  final String hastaId;
+  final TreatmentScope kapsam;
+  final String? disNo;
+  final String islemBaslik;
+  final String? kanalBoyu;
+  final String? egeSistemi;
+  final String? kanalIlaci;
+  final String notIcerik;
+  final List<String> fotografUrls;
+  final DateTime? tarih;
+  final bool planlandi;
+  final bool labGitti;
+  final DateTime? labBeklenenTarih;
+
+  Map<String, dynamic> toRpcJson({required String klinikId}) {
+    final lab = labBeklenenTarih;
+    return {
+      'hasta_id': hastaId,
+      'klinik_id': klinikId,
+      'kapsam': kapsam.value,
+      'dis_no': kapsam == TreatmentScope.tekDis ? disNo : null,
+      'islem_baslik': islemBaslik,
+      'kanal_boyu': kanalBoyu,
+      'ege_sistemi': egeSistemi,
+      'kanal_ilaci': kanalIlaci,
+      'not_icerik': notIcerik,
+      'fotograf_url': fotografUrls.isEmpty ? null : fotografUrls.first,
+      'fotograf_urls': fotografUrls,
+      if (tarih != null) 'tarih': tarih!.toUtc().toIso8601String(),
+      'planlandi': planlandi,
+      'lab_gitti': labGitti,
+      if (lab != null)
+        'lab_beklenen_tarih': '${lab.year.toString().padLeft(4, '0')}-'
+            '${lab.month.toString().padLeft(2, '0')}-'
+            '${lab.day.toString().padLeft(2, '0')}',
+    };
+  }
+}
+
 /// İki sürüm arasındaki alan farklarını insan okunur satırlara çevirir.
 List<String> diffTreatmentNotes(TreatmentNote onceki, TreatmentNote yeni) {
   String n(String? v) => (v == null || v.trim().isEmpty) ? '—' : v.trim();

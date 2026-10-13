@@ -6,14 +6,25 @@ import 'package:uuid/uuid.dart';
 import '../config/supabase_config.dart';
 import '../data/treatment_templates.dart';
 import '../models/clinic.dart';
+import '../models/clinic_report.dart';
 import '../models/clinic_todo.dart';
 import '../models/completed_next_plan.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../models/voice_memo.dart';
+import 'image_thumbnail.dart';
 import 'session_controller.dart';
 import 'storage_media.dart';
+
+/// Düzenlenen not bu arada başka biri tarafından güncellendi.
+class NoteConflictException implements Exception {
+  const NoteConflictException();
+
+  @override
+  String toString() => 'Bu işlem bu arada başka biri tarafından düzenlendi. '
+      'Listeyi yenileyip tekrar deneyin.';
+}
 
 enum PatientListSort {
   name,
@@ -66,6 +77,63 @@ class DatabaseService {
   }
 
   String? get _userId => _session.user?.id;
+
+  // ── Raporlar ──────────────────────────────────────────────
+
+  /// [stalledDays] gündür gelmeyen, planlanmış işlemi olan hastalar listelenir.
+  Future<ClinicReport> getClinicReport(
+    ReportPeriod period, {
+    int stalledDays = 30,
+  }) async {
+    final row = await _client.rpc('klinik_rapor', params: {
+      'p_klinik_id': _requireKlinikId,
+      'p_baslangic': period.start.toUtc().toIso8601String(),
+      'p_bitis': period.end.toUtc().toIso8601String(),
+      'p_onceki_baslangic': period.previousStart.toUtc().toIso8601String(),
+      'p_onceki_bitis': period.previousEnd.toUtc().toIso8601String(),
+      'p_yarim_gun': stalledDays,
+    });
+    return ClinicReport.fromJson(Map<String, dynamic>.from(row as Map));
+  }
+
+  /// Periyodik kontrol zamanı gelen hastalar. [old] = kontrol tarihi 12 aydan
+  /// eski olanlar; [limit] = 0 yalnızca sayıları getirir.
+  Future<RecallList> getRecallPatients({bool old = false, int limit = 200}) async {
+    final row = await _client.rpc('kontrol_cagrilari_listesi', params: {
+      'p_klinik_id': _requireKlinikId,
+      'p_eski': old,
+      'p_limit': limit,
+    });
+    return RecallList.fromJson(Map<String, dynamic>.from(row as Map));
+  }
+
+  Future<int> countRecallPatients() async =>
+      (await getRecallPatients(limit: 0)).total;
+
+  /// Arama sonucunu kaydeder; geri almak için kaydın id'sini döndürür.
+  Future<String> logRecallCall(
+    String hastaId,
+    RecallCallResult result, {
+    String? aciklama,
+  }) async {
+    final row = await _client
+        .from('kontrol_cagrilari')
+        .insert({
+          'klinik_id': _requireKlinikId,
+          'hasta_id': hastaId,
+          'sonuc': result.value,
+          'aciklama': aciklama,
+          'arayan_user_id': _userId,
+          'arayan_ad_soyad': _session.member?.adSoyad,
+        })
+        .select('id')
+        .single();
+    return row['id'] as String;
+  }
+
+  Future<void> deleteRecallCall(String id) async {
+    await _client.from('kontrol_cagrilari').delete().eq('id', id);
+  }
 
   // ── Hastalar ──────────────────────────────────────────────
 
@@ -204,8 +272,45 @@ class DatabaseService {
         .toList();
   }
 
+  /// Hastayı ve Storage'daki fotoğraf / ses dosyalarını siler.
   Future<void> deletePatient(String id) async {
-    await _client.from('hastalar').delete().eq('id', id);
+    final notes =
+        await _client.from('seans_notlari').select().eq('hasta_id', id);
+    final voices = await _client
+        .from('ses_kayitlari')
+        .select('dosya_url')
+        .eq('hasta_id', id);
+    final paths = <String>{
+      ..._photoPaths(
+        (notes as List)
+            .map((e) => TreatmentNote.fromJson(Map<String, dynamic>.from(e))),
+      ),
+      for (final v in voices as List)
+        if (StorageMedia.pathFromUrl(v['dosya_url'] as String? ?? '')
+            case final path?)
+          path,
+    };
+    // Kayıtla bağı kopmuş (yarım kalmış yükleme) dosyalar.
+    final klinikId = _requireKlinikId;
+    for (final folder in [
+      '$klinikId/foto/$id',
+      '$klinikId/${SupabaseConfig.voicePathPrefix}/$id',
+    ]) {
+      try {
+        final files = await _client.storage
+            .from(SupabaseConfig.storageBucket)
+            .list(
+                path: folder, searchOptions: const SearchOptions(limit: 1000));
+        paths.addAll(files.map((f) => '$folder/${f.name}'));
+      } catch (_) {}
+    }
+
+    final deleted =
+        await _client.from('hastalar').delete().eq('id', id).select('id');
+    if ((deleted as List).isEmpty) {
+      throw Exception('Bu hastayı silme yetkiniz yok');
+    }
+    await _removeStoragePaths(paths);
   }
 
   Future<Patient> getPatient(String id) async {
@@ -301,72 +406,25 @@ class DatabaseService {
     return notes;
   }
 
-  Future<TreatmentNote> createNote({
-    required String hastaId,
-    required TreatmentScope kapsam,
-    String? disNo,
-    required String islemBaslik,
-    String? kanalBoyu,
-    String? egeSistemi,
-    String? kanalIlaci,
-    required String notIcerik,
-    List<String> fotografUrls = const [],
-    DateTime? tarih,
-    String? kokId,
-    String? oncekiId,
-    int versiyon = 1,
-    bool guncel = true,
-    String? degisiklikOzeti,
-    bool planlandi = false,
-    bool labGitti = false,
-    DateTime? labBeklenenTarih,
-  }) async {
-    String? labDateStr;
-    if (labBeklenenTarih != null) {
-      final d = labBeklenenTarih;
-      labDateStr =
-          '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-    }
-    final payload = {
-      'hasta_id': hastaId,
-      'klinik_id': _requireKlinikId,
-      if (_userId != null) 'olusturan_user_id': _userId,
-      'kapsam': kapsam.value,
-      'dis_no': kapsam == TreatmentScope.tekDis ? disNo : null,
-      'islem_baslik': islemBaslik,
-      'kanal_boyu': kanalBoyu,
-      'ege_sistemi': egeSistemi,
-      'kanal_ilaci': kanalIlaci,
-      'not_icerik': notIcerik,
-      'fotograf_url': fotografUrls.isEmpty ? null : fotografUrls.first,
-      'fotograf_urls': fotografUrls,
-      'versiyon': versiyon,
-      'guncel': guncel,
-      'planlandi': planlandi,
-      'lab_gitti': labGitti,
-      if (labDateStr != null) 'lab_beklenen_tarih': labDateStr,
-      if (kokId != null) 'kok_id': kokId,
-      if (oncekiId != null) 'onceki_id': oncekiId,
-      if (degisiklikOzeti != null) 'degisiklik_ozeti': degisiklikOzeti,
-      if (tarih != null) 'tarih': _formatTimestamp(tarih),
-    };
-
-    Map<String, dynamic> row;
-    try {
-      row =
-          await _client.from('seans_notlari').insert(payload).select().single();
-    } on PostgrestException catch (e) {
-      // migration_session_photos.sql henüz çalıştırılmadıysa tek fotoğrafla kaydet.
-      if (!e.message.contains('fotograf_urls')) rethrow;
-      payload.remove('fotograf_urls');
-      row =
-          await _client.from('seans_notlari').insert(payload).select().single();
-    }
-
-    return TreatmentNote.fromJson(Map<String, dynamic>.from(row));
+  /// Notların hepsini tek transaction'da ekler: biri başarısız olursa hiçbiri
+  /// kaydedilmez.
+  Future<List<TreatmentNote>> createNotes(
+    List<TreatmentNoteInput> inputs,
+  ) async {
+    final klinikId = _requireKlinikId;
+    final rows = await _client.rpc(
+      'seans_notlari_ekle',
+      params: {
+        'p_rows': [for (final i in inputs) i.toRpcJson(klinikId: klinikId)],
+      },
+    );
+    return (rows as List)
+        .map((e) => TreatmentNote.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
   }
 
   /// Düzenleme: eski sürüm kalır (guncel=false), yeni sürüm eklenir.
+  /// Not bu arada başkası tarafından düzenlendiyse [NoteConflictException].
   Future<TreatmentNote> saveEditedNoteAsNewVersion({
     required TreatmentNote previous,
     required TreatmentScope kapsam,
@@ -398,11 +456,7 @@ class DatabaseService {
       return previous; // değişiklik yok
     }
 
-    await _client
-        .from('seans_notlari')
-        .update({'guncel': false}).eq('id', previous.id);
-
-    return createNote(
+    final input = TreatmentNoteInput(
       hastaId: previous.hastaId,
       kapsam: kapsam,
       disNo: disNo,
@@ -413,15 +467,25 @@ class DatabaseService {
       notIcerik: notIcerik,
       fotografUrls: fotografUrls,
       tarih: tarih ?? previous.tarih,
-      kokId: previous.rootId,
-      oncekiId: previous.id,
-      versiyon: previous.versiyon + 1,
-      guncel: true,
-      degisiklikOzeti: changes.join('\n'),
-      planlandi: previous.planlandi,
-      labGitti: previous.labGitti,
-      labBeklenenTarih: previous.labBeklenenTarih,
     );
+    try {
+      final row = await _client.rpc(
+        'seans_notu_yeni_surum',
+        params: {
+          'p_onceki_id': previous.id,
+          'p_yeni': {
+            ...input.toRpcJson(klinikId: _requireKlinikId),
+            'degisiklik_ozeti': changes.join('\n'),
+          },
+        },
+      );
+      return TreatmentNote.fromJson(Map<String, dynamic>.from(row as Map));
+    } on PostgrestException catch (e) {
+      if (e.message.contains('NOT_GUNCEL_DEGIL')) {
+        throw const NoteConflictException();
+      }
+      rethrow;
+    }
   }
 
   // ── Storage ───────────────────────────────────────────────
@@ -438,56 +502,42 @@ class DatabaseService {
     // {klinik_id}/foto/{hasta_id}/{uuid}.ext — storage RLS path'e bağlı
     final path = '$_requireKlinikId/foto/$hastaId/${_uuid.v4()}.$safeExt';
 
-    await _client.storage.from(SupabaseConfig.storageBucket).upload(
+    final bytes = await file.readAsBytes();
+    final thumbnail = makeJpegThumbnail(bytes);
+    await _client.storage.from(SupabaseConfig.storageBucket).uploadBinary(
           path,
-          file,
+          bytes,
           fileOptions: FileOptions(
             contentType: 'image/$safeExt',
             upsert: false,
           ),
         );
+    StorageMedia.prime(path, bytes);
+
+    final thumbPath = StorageMedia.thumbnailPathFor(path);
+    final thumbBytes = await thumbnail;
+    if (thumbPath != null && thumbBytes != null) {
+      try {
+        await _client.storage.from(SupabaseConfig.storageBucket).uploadBinary(
+              thumbPath,
+              thumbBytes,
+              fileOptions: const FileOptions(
+                contentType: 'image/jpeg',
+                upsert: false,
+              ),
+            );
+        StorageMedia.prime(thumbPath, thumbBytes);
+      } catch (_) {}
+    }
 
     return path;
   }
 
-  Future<TreatmentNote> saveNoteWithOptionalPhoto({
-    required String hastaId,
-    required TreatmentScope kapsam,
-    String? disNo,
-    required String islemBaslik,
-    String? kanalBoyu,
-    String? egeSistemi,
-    String? kanalIlaci,
-    required String notIcerik,
-    List<File> photoFiles = const [],
-    List<String> fotografUrls = const [],
-    DateTime? tarih,
-    bool planlandi = false,
-    bool labGitti = false,
-    DateTime? labBeklenenTarih,
-  }) async {
-    final photoUrls = [
-      ...fotografUrls,
-      for (final file in photoFiles)
-        await uploadSessionPhoto(hastaId: hastaId, file: file),
-    ];
-
-    return createNote(
-      hastaId: hastaId,
-      kapsam: kapsam,
-      disNo: disNo,
-      islemBaslik: islemBaslik,
-      kanalBoyu: kanalBoyu,
-      egeSistemi: egeSistemi,
-      kanalIlaci: kanalIlaci,
-      notIcerik: notIcerik,
-      fotografUrls: photoUrls,
-      tarih: tarih,
-      planlandi: planlandi,
-      labGitti: labGitti,
-      labBeklenenTarih: labBeklenenTarih,
-    );
-  }
+  /// Kayıt başarısız olduğunda yüklenmiş ama bağlanmamış dosyaları siler.
+  Future<void> removeStorageObjects(List<String> urls) => _removeStoragePaths([
+        for (final url in urls)
+          if (StorageMedia.pathFromUrl(url) case final path?) path,
+      ]);
 
   /// Planlanan işlemi bugün yapılmış sayar (geçmişe düşer).
   Future<TreatmentNote> completePlannedNote(String id) async {
@@ -609,21 +659,50 @@ class DatabaseService {
     final ids = versions.map((v) => v.id).toList();
     if (ids.isEmpty) return;
 
-    // Sürümler aynı fotoğrafı paylaşabilir; her dosyayı bir kez sil.
-    final paths = <String>{
-      for (final v in versions)
-        for (final url in v.fotografUrls)
-          if (StorageMedia.pathFromUrl(url) case final path?) path,
-    };
-    if (paths.isNotEmpty) {
-      try {
-        await _client.storage
-            .from(SupabaseConfig.storageBucket)
-            .remove(paths.toList());
-      } catch (_) {}
+    // RLS yetkisi yoksa silme sessizce 0 satır döner; dosyalar kalmalı.
+    final deleted = await _client
+        .from('seans_notlari')
+        .delete()
+        .inFilter('id', ids)
+        .select('id');
+    if ((deleted as List).isEmpty) {
+      throw Exception('Bu işlemi silme yetkiniz yok');
     }
 
-    await _client.from('seans_notlari').delete().inFilter('id', ids);
+    // Çok dişli kayıtta diğer dişlerin notları aynı dosyaları kullanır.
+    final others = await _client
+        .from('seans_notlari')
+        .select()
+        .eq('hasta_id', note.hastaId);
+    final stillUsed = _photoPaths(
+      (others as List)
+          .map((e) => TreatmentNote.fromJson(Map<String, dynamic>.from(e))),
+    );
+    final orphaned = _photoPaths(versions).difference(stillUsed);
+    await _removeStoragePaths(orphaned);
+  }
+
+  Set<String> _photoPaths(Iterable<TreatmentNote> notes) => {
+        for (final n in notes)
+          for (final url in n.fotografUrls)
+            if (StorageMedia.pathFromUrl(url) case final path?) path,
+      };
+
+  Future<void> _removeStoragePaths(Iterable<String> paths) async {
+    final list = {
+      for (final p in paths) ...[
+        p,
+        if (StorageMedia.thumbnailPathFor(p) case final thumb?) thumb,
+      ],
+    }.toList();
+    // Storage API tek istekte en fazla 1000 nesne siler.
+    for (var i = 0; i < list.length; i += 1000) {
+      try {
+        await _client.storage.from(SupabaseConfig.storageBucket).remove(
+              list.sublist(i, i + 1000 > list.length ? list.length : i + 1000),
+            );
+      } catch (_) {}
+    }
   }
 
   Future<List<ClinicMember>> getClinicMembers() async {
@@ -873,6 +952,7 @@ class DatabaseService {
         'is_kanal': d.isKanal,
         'dis_zorunlu': d.requiresTooth,
         'lab_takip': d.labTakip,
+        'kontrol_ay': d.kontrolAy,
         'aktif': true,
         'sira': d.sira > 0 ? d.sira : nextSira,
       });
@@ -899,6 +979,7 @@ class DatabaseService {
     bool isKanal = false,
     bool requiresTooth = true,
     bool labTakip = false,
+    int? kontrolAy,
   }) async {
     final klinikId = _requireKlinikId;
     final existing = await getTreatmentTemplates(onlyActive: false);
@@ -915,6 +996,7 @@ class DatabaseService {
           'is_kanal': isKanal,
           'dis_zorunlu': requiresTooth,
           'lab_takip': labTakip,
+          'kontrol_ay': kontrolAy,
           'aktif': true,
           'sira': maxSira + 1,
         })
@@ -931,6 +1013,7 @@ class DatabaseService {
     required bool requiresTooth,
     required bool labTakip,
     required bool aktif,
+    required int? kontrolAy,
     int? sira,
   }) async {
     final payload = <String, dynamic>{
@@ -939,6 +1022,7 @@ class DatabaseService {
       'is_kanal': isKanal,
       'dis_zorunlu': requiresTooth,
       'lab_takip': labTakip,
+      'kontrol_ay': kontrolAy,
       'aktif': aktif,
       if (sira != null) 'sira': sira,
     };
@@ -1235,26 +1319,25 @@ class DatabaseService {
   }
 
   Future<void> completeClinicTodo(ClinicTodo todo) async {
-    await _client.from('klinik_todolar').update({
-      'tamamlandi': true,
-      'tamamlanma_tarihi': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', todo.id);
+    // Yalnızca açık görevi kapat: çift tıklama / iki cihaz aynı anda
+    // tamamlarsa tekrarlanan görevin ikinci kopyası oluşmaz.
+    final updated = await _client
+        .from('klinik_todolar')
+        .update({
+          'tamamlandi': true,
+          'tamamlanma_tarihi': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', todo.id)
+        .eq('tamamlandi', false)
+        .select('id');
+    if ((updated as List).isEmpty) return;
     await _addTodoEvent(todo.id, 'tamamlandi');
 
     if (todo.tekrar != TodoRecurrence.none) {
-      final base = todo.planlananZaman ?? todo.planlananTarih ?? DateTime.now();
-      final next = switch (todo.tekrar) {
-        TodoRecurrence.daily => base.add(const Duration(days: 1)),
-        TodoRecurrence.weekly => base.add(const Duration(days: 7)),
-        TodoRecurrence.monthly => DateTime(
-            base.month == 12 ? base.year + 1 : base.year,
-            base.month == 12 ? 1 : base.month + 1,
-            base.day,
-            base.hour,
-            base.minute,
-          ),
-        TodoRecurrence.none => base,
-      };
+      final base =
+          (todo.planlananZaman ?? todo.planlananTarih ?? DateTime.now())
+              .toLocal();
+      final next = nextRecurrenceDate(base, todo.tekrar);
       await createClinicTodo(
         icerik: todo.icerik ?? 'Tekrarlanan görev',
         planlananTarih: next,

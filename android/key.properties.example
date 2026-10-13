@@ -1,0 +1,12 @@
+# Bu dosyayı android/key.properties olarak kopyalayıp doldurun (git'e girmez).
+#
+# Anahtar oluşturma (bir kez; .jks dosyasını ve şifreleri güvenli yerde saklayın,
+# kaybolursa uygulama güncellenemez):
+#   keytool -genkey -v -keystore %USERPROFILE%\klinik-asistan-upload.jks ^
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# storeFile mutlak yol olabilir; göreli yol android/app klasörüne göredir.
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=C:\\Users\\PC\\klinik-asistan-upload.jks

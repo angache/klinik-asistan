@@ -15,6 +15,10 @@ class NotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
+  /// Cihaz push token'ı sunucuya kayıtlıysa günlük hatırlatmaları sunucu
+  /// (daily-reminders, 08:00) gönderir; yerel zamanlama çift bildirim olur.
+  bool _serverPushActive = false;
+
   Future<void> init() async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
       return;
@@ -26,7 +30,7 @@ class NotificationService {
       tz.setLocalLocation(tz.UTC);
     }
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('ic_stat_notification');
     const ios = DarwinInitializationSettings();
     await _plugin.initialize(
       settings: const InitializationSettings(android: android, iOS: ios),
@@ -63,7 +67,9 @@ class NotificationService {
         '${f.planDateOnly.year}';
     final body =
         f.hatirlatmaGunOnce > 0 ? '${f.baslik} · Kontrol: $date' : f.baslik;
-    if (when.isBefore(tz.TZDateTime.now(tz.local))) {
+    final isPast = when.isBefore(tz.TZDateTime.now(tz.local));
+    if (!isPast && _serverPushActive) return;
+    if (isPast) {
       if (!notifyIfPast) return;
       // Yeni oluştururken: gecikmiş / bugün için tek seferlik bilgi
       await _plugin.show(
@@ -77,6 +83,7 @@ class NotificationService {
             channelDescription: 'Kontrol ve takip hatırlatmaları',
             importance: Importance.high,
             priority: Priority.high,
+            visibility: NotificationVisibility.private,
           ),
           iOS: DarwinNotificationDetails(),
         ),
@@ -96,6 +103,7 @@ class NotificationService {
           channelDescription: 'Kontrol ve takip hatırlatmaları',
           importance: Importance.high,
           priority: Priority.high,
+          visibility: NotificationVisibility.private,
         ),
         iOS: DarwinNotificationDetails(),
       ),
@@ -108,11 +116,30 @@ class NotificationService {
     await _plugin.cancel(id: _notifId(id));
   }
 
+  /// Zamanlanmışları baştan kurar: başka cihazda tamamlanan / silinen
+  /// takiplerin eski bildirimleri de böylece temizlenir.
   Future<void> syncOpenFollowUps(List<FollowUp> items) async {
     if (!_ready) return;
+    await _plugin.cancelAllPendingNotifications();
+    if (_serverPushActive) return;
     for (final f in items) {
       await scheduleFollowUp(f, notifyIfPast: false);
     }
+  }
+
+  Future<void> setServerPushActive(bool active) async {
+    if (_serverPushActive == active) return;
+    _serverPushActive = active;
+    if (active && _ready) {
+      await _plugin.cancelAllPendingNotifications();
+    }
+  }
+
+  /// Çıkışta: bu cihazda önceki kullanıcıya ait bildirim kalmasın.
+  Future<void> clearAll() async {
+    _serverPushActive = false;
+    if (!_ready) return;
+    await _plugin.cancelAll();
   }
 
   /// Ön planda gelen FCM mesajını yerel bildirim olarak göster.
@@ -132,6 +159,7 @@ class NotificationService {
           channelDescription: 'Katılım, takip ve yapılacak hatırlatmaları',
           importance: Importance.high,
           priority: Priority.high,
+          visibility: NotificationVisibility.private,
         ),
         iOS: DarwinNotificationDetails(),
       ),

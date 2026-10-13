@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
-import { sendFcmToTokens } from '../_shared/fcm.ts';
+import { sendFcmToTokens, unauthorizedResponse } from '../_shared/fcm.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -13,14 +13,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Webhook secret koruması (verify_jwt kapalıyken zorunlu)
-    const secret = Deno.env.get('CRON_SECRET');
-    if (secret) {
-      const auth = req.headers.get('Authorization') ?? '';
-      if (auth !== `Bearer ${secret}`) {
-        return new Response('Unauthorized', { status: 401, headers: cors });
-      }
-    }
+    const denied = unauthorizedResponse(req, cors);
+    if (denied) return denied;
 
     const payload = await req.json();
     // Database Webhook: { type, table, record, ... }
@@ -71,6 +65,9 @@ Deno.serve(async (req) => {
       body: `${adSoyad} kliniğe katılmak istiyor`,
       data: { type: 'join_request', klinik_id: klinikId },
     });
+    if (result.invalid.length > 0) {
+      await supabase.from('device_tokens').delete().in('token', result.invalid);
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...cors, 'Content-Type': 'application/json' },
