@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
 import '../data/treatment_templates.dart';
+import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
@@ -78,7 +79,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
   final List<File> _photos = [];
   bool _saving = false;
-  String _uploadMessage = 'Kaydediliyor…';
+  String _uploadMessage = '';
   late DateTime _sessionDate;
   List<TreatmentTemplate> _templates =
       List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
@@ -150,9 +151,9 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       initialDate: _sessionDate,
       firstDate: DateTime(2000),
       lastDate: _today,
-      helpText: 'İşlem tarihi',
-      cancelText: 'İptal',
-      confirmText: 'Seç',
+      helpText: context.l10n.procedureDate,
+      cancelText: context.l10n.cancel,
+      confirmText: context.l10n.select,
     );
     if (picked == null) return;
     setState(() {
@@ -274,6 +275,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       showDragHandle: true,
       builder: (ctx) {
         final customCtrl = TextEditingController();
+        final l10n = ctx.l10n;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -282,14 +284,14 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Ekstra kanal ekle · Diş $tooth',
+                  l10n.addExtraCanalForTooth(tooth),
                   style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tipik listede olmayan kanalı seçin veya özel ad yazın.',
+                  l10n.extraCanalHint,
                   style: Theme.of(ctx).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -299,23 +301,23 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                     runSpacing: 8,
                     children: available.map((kod) {
                       return ActionChip(
-                        label: Text(kod),
+                        label: Text(canalLabel(kod)),
                         onPressed: () => Navigator.pop(ctx, kod),
                       );
                     }).toList(),
                   )
                 else
                   Text(
-                    'Standart kodların hepsi ekli. Özel ad kullanın.',
+                    l10n.allStandardCanalsAdded,
                     style: Theme.of(ctx).textTheme.bodySmall,
                   ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: customCtrl,
                   textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'Özel kanal adı',
-                    hintText: 'örn. MB3, DB2…',
+                  decoration: InputDecoration(
+                    labelText: l10n.customCanalName,
+                    hintText: l10n.customCanalHint,
                   ),
                   onSubmitted: (v) {
                     final t = v.trim();
@@ -328,7 +330,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                     final t = customCtrl.text.trim();
                     if (t.isNotEmpty) Navigator.pop(ctx, t);
                   },
-                  child: const Text('Ekle'),
+                  child: Text(l10n.add),
                 ),
               ],
             ),
@@ -406,8 +408,8 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
         findTreatmentTemplate(_titleController.text, inList: _templates);
     setState(() {
       _selectedTemplate = match;
-      _showKanal = match?.isKanal == true ||
-          _titleController.text.toLowerCase().contains('kanal');
+      _showKanal =
+          match?.isKanal == true || looksLikeCanalTitle(_titleController.text);
       if (match?.labTakip != true) {
         _labSent = false;
         _labReturnDate = null;
@@ -444,7 +446,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       initialDate: initial.isBefore(today) ? today : initial,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365)),
-      helpText: 'Beklenen lab dönüşü',
+      helpText: context.l10n.expectedLabReturn,
     );
     if (picked == null || !mounted) return;
     setState(() => _labReturnDate = picked);
@@ -470,7 +472,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       initialDate: initial.isBefore(today) ? today : initial,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365 * 3)),
-      helpText: 'Kontrol tarihi',
+      helpText: context.l10n.followUpDate,
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -480,37 +482,38 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      _showFormError('İşlem seçin veya işlem başlığı yazın');
+      _showFormError(l10n.errSelectOrTypeProcedure);
       return;
     }
 
     final kapsam = _kapsam;
     if (kapsam == null) {
-      _showFormError('Kapsam seçin');
+      _showFormError(l10n.errSelectScope);
       return;
     }
 
     final needTeeth = _requiresTooth || kapsam == TreatmentScope.tekDis;
     if (needTeeth && _selectedTeeth.isEmpty) {
-      _showFormError('En az bir diş seçin');
+      _showFormError(l10n.errSelectTooth);
       return;
     }
 
     final labActive = !_planForNext && _labEligible && _labSent;
     if (labActive && _labReturnDate == null) {
-      _showFormError('Lab beklenen dönüş tarihini seçin');
+      _showFormError(l10n.errSelectLabDate);
       return;
     }
 
     final kontrolActive = !_planForNext && _kontrolEnabled;
     if (kontrolActive && _kontrolEffectiveDate == null) {
-      _showFormError('Kontrol tarihini seçin');
+      _showFormError(l10n.errSelectFollowUpDate);
       return;
     }
     if (kontrolActive && _kontrolNoteController.text.trim().isEmpty) {
-      _showFormError('Takip notunu yazın');
+      _showFormError(l10n.errFollowUpNoteRequired);
       return;
     }
 
@@ -523,9 +526,8 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
     setState(() {
       _saving = true;
-      _uploadMessage = _photos.isNotEmpty
-          ? 'Fotoğraflar buluta yükleniyor…'
-          : 'İşlem kaydediliyor…';
+      _uploadMessage =
+          _photos.isNotEmpty ? l10n.uploadingPhotos : l10n.savingProcedure;
     });
 
     // Notlar kaydedilene kadar hata = hiçbir şey kaydedilmedi; yüklenen
@@ -536,14 +538,14 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       for (var i = 0; i < _photos.length; i++) {
         if (_photos.length > 1) {
           setState(() => _uploadMessage =
-              'Fotoğraf yükleniyor (${i + 1}/${_photos.length})…');
+              l10n.uploadingPhotoProgress(i + 1, _photos.length));
         }
         uploadedUrls.add(await widget.db.uploadSessionPhoto(
           hastaId: widget.patient.id,
           file: _photos[i],
         ));
       }
-      setState(() => _uploadMessage = 'İşlem kaydediliyor…');
+      setState(() => _uploadMessage = l10n.savingProcedure);
 
       final List<TreatmentNoteInput> inputs;
       if (_showKanal && kapsam == TreatmentScope.tekDis) {
@@ -581,14 +583,14 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       await widget.db.removeStorageObjects(uploadedUrls);
       if (!mounted) return;
       setState(() => _saving = false);
-      _showFormError('Kayıt başarısız: $e');
+      _showFormError(l10n.saveFailed('$e'));
       return;
     }
 
     // Not kaydedildi; hatırlatma hatası notu geri almaz, sadece bildirilir.
     final reminderErrors = <String>[];
     if (labActive && _labReturnDate != null) {
-      setState(() => _uploadMessage = 'Lab hatırlatması oluşturuluyor…');
+      setState(() => _uploadMessage = l10n.creatingLabReminder);
       try {
         final labFollowUp = await widget.db.createLabReminder(
           hastaId: widget.patient.id,
@@ -599,24 +601,24 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
         );
         await NotificationService.instance.scheduleFollowUp(labFollowUp);
       } catch (_) {
-        reminderErrors.add('lab');
+        reminderErrors.add(l10n.reminderKindLab);
       }
     }
 
     final kontrolDate = kontrolActive ? _kontrolEffectiveDate : null;
     if (kontrolDate != null) {
-      setState(() => _uploadMessage = 'Kontrol hatırlatması oluşturuluyor…');
+      setState(() => _uploadMessage = l10n.creatingFollowUpReminder);
       try {
         final dis = _selectedTeeth.isEmpty
             ? null
             : formatToothSelection(_selectedTeeth);
         final aciklama = [
           _kontrolNoteController.text.trim(),
-          if (dis != null) 'Diş: $dis',
+          if (dis != null) l10n.scopeToothWithNumber(dis),
         ].join('\n');
         final kontrolFollowUp = await widget.db.createFollowUp(
           hastaId: widget.patient.id,
-          baslik: 'Kontrol: $title',
+          baslik: l10n.followUpTitle(title),
           planlananTarih: kontrolDate,
           aciklama: aciklama,
           seansNotuId: savedNote.id,
@@ -625,7 +627,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
         );
         await NotificationService.instance.scheduleFollowUp(kontrolFollowUp);
       } catch (_) {
-        reminderErrors.add('kontrol');
+        reminderErrors.add(l10n.reminderKindFollowUp);
       }
     }
 
@@ -634,10 +636,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 6),
-          content: Text(
-            'İşlem kaydedildi ancak ${reminderErrors.join(' ve ')} '
-            'hatırlatması oluşturulamadı. Takipler ekranından ekleyin.',
-          ),
+          content: Text(l10n.reminderCreateFailed(reminderErrors.join(', '))),
         ),
       );
     }
@@ -675,6 +674,8 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    final dateFmt = DateFormat.yMd();
     final categories = <String>{
       for (final t in _templates) t.kategori,
     }.toList();
@@ -685,10 +686,10 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
     final saveLabel = _saving
         ? _uploadMessage
         : _planForNext
-            ? 'Sonraki seansa planla'
+            ? l10n.planForNextSession
             : (kanalMulti && _selectedTeeth.length > 1)
-                ? '${_selectedTeeth.length} diş kaydet'
-                : 'Kaydet';
+                ? l10n.saveTeethCount(_selectedTeeth.length)
+                : l10n.save;
     final scopes = _availableScopes;
     final showToothSelector =
         _requiresTooth || _kapsam == TreatmentScope.tekDis;
@@ -716,7 +717,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Yeni İşlem',
+                                l10n.newProcedure,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleLarge
@@ -775,7 +776,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                       ),
                                     ),
                                     IconButton(
-                                      tooltip: 'Kapat',
+                                      tooltip: l10n.close,
                                       visualDensity: VisualDensity.compact,
                                       onPressed: _clearFormError,
                                       icon: Icon(
@@ -790,7 +791,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                             const SizedBox(height: 14),
                           ],
                           Text(
-                            'İşlem tarihi',
+                            l10n.procedureDate,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -806,24 +807,22 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                               color: scheme.primary,
                             ),
                             title: Text(
-                              DateFormat('dd.MM.yyyy').format(_sessionDate),
+                              dateFmt.format(_sessionDate),
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             subtitle: Text(
-                              _isPastSession
-                                  ? 'Geçmiş kayıt (defterden aktarım)'
-                                  : 'Bugün',
+                              _isPastSession ? l10n.pastRecordHint : l10n.today,
                             ),
                             trailing: TextButton(
                               onPressed: _saving ? null : _pickSessionDate,
-                              child: const Text('Değiştir'),
+                              child: Text(l10n.change),
                             ),
                             onTap: _saving ? null : _pickSessionDate,
                           ),
                           const SizedBox(height: 18),
                           Text(
-                            'İşlem',
+                            l10n.procedureSection,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -833,7 +832,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'En az bir işlem seçin veya başlık yazın',
+                            l10n.procedureSectionHint,
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: scheme.onSurfaceVariant,
@@ -889,8 +888,8 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           TextField(
                             controller: _titleController,
                             onChanged: _onTitleChanged,
-                            decoration: const InputDecoration(
-                              labelText: 'İşlem Başlığı',
+                            decoration: InputDecoration(
+                              labelText: l10n.procedureTitleLabel,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -898,9 +897,9 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                             controller: _noteController,
                             minLines: 2,
                             maxLines: 5,
-                            decoration: const InputDecoration(
-                              labelText: 'Not (isteğe bağlı)',
-                              hintText: 'Gerekirse buraya yazın…',
+                            decoration: InputDecoration(
+                              labelText: l10n.noteOptionalLabel,
+                              hintText: l10n.noteHint,
                               alignLabelWithHint: true,
                             ),
                           ),
@@ -914,10 +913,8 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                 children: [
                                   CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
-                                    title: const Text('Takip ekle'),
-                                    subtitle: const Text(
-                                      'İşlem sonrası kontrol tarihi ve hatırlatma',
-                                    ),
+                                    title: Text(l10n.addFollowUp),
+                                    subtitle: Text(l10n.addFollowUpSubtitle),
                                     value: _kontrolEnabled,
                                     onChanged: _saving
                                         ? null
@@ -935,16 +932,15 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                           TextCapitalization.sentences,
                                       minLines: 1,
                                       maxLines: 3,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Takip notu',
-                                        hintText:
-                                            'örn. Perküsyon ve radyografik kontrol',
+                                      decoration: InputDecoration(
+                                        labelText: l10n.followUpNoteLabel,
+                                        hintText: l10n.followUpNoteHint,
                                         alignLabelWithHint: true,
                                       ),
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'Kontrol tarihi',
+                                      l10n.followUpDate,
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelLarge,
@@ -954,11 +950,11 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
-                                        for (final option in const [
-                                          (7, '1 hafta'),
-                                          (30, '1 ay'),
-                                          (90, '3 ay'),
-                                          (180, '6 ay'),
+                                        for (final option in [
+                                          (7, l10n.presetOneWeek),
+                                          (30, l10n.presetOneMonth),
+                                          (90, l10n.presetThreeMonths),
+                                          (180, l10n.presetSixMonths),
                                         ])
                                           ChoiceChip(
                                             label: Text(option.$2),
@@ -980,9 +976,9 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                           label: Text(
                                             _kontrolCustomDate != null &&
                                                     _kontrolPresetDays == null
-                                                ? DateFormat('dd.MM.yyyy')
+                                                ? dateFmt
                                                     .format(_kontrolCustomDate!)
-                                                : 'Tarih seç',
+                                                : l10n.pickDate,
                                           ),
                                           onPressed:
                                               _saving ? null : _pickKontrolDate,
@@ -992,25 +988,26 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                     const SizedBox(height: 12),
                                     DropdownButtonFormField<int>(
                                       initialValue: _kontrolReminderDays,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Ne zaman uyarılsın?',
+                                      decoration: InputDecoration(
+                                        labelText: l10n.remindWhenLabel,
                                       ),
-                                      items: const [
+                                      items: [
                                         DropdownMenuItem(
                                           value: 0,
-                                          child: Text('Kontrol günü'),
+                                          child: Text(l10n.remindOnDay),
                                         ),
                                         DropdownMenuItem(
                                           value: 1,
-                                          child: Text('1 gün önce'),
+                                          child: Text(l10n.remindOneDayBefore),
                                         ),
                                         DropdownMenuItem(
                                           value: 3,
-                                          child: Text('3 gün önce'),
+                                          child:
+                                              Text(l10n.remindThreeDaysBefore),
                                         ),
                                         DropdownMenuItem(
                                           value: 7,
-                                          child: Text('1 hafta önce'),
+                                          child: Text(l10n.remindOneWeekBefore),
                                         ),
                                       ],
                                       onChanged: _saving
@@ -1023,8 +1020,17 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                     if (_kontrolEffectiveDate != null) ...[
                                       const SizedBox(height: 8),
                                       Text(
-                                        'Kontrol: ${DateFormat('dd.MM.yyyy').format(_kontrolEffectiveDate!)} · '
-                                        'Uyarı: ${DateFormat('dd.MM.yyyy').format(_kontrolEffectiveDate!.subtract(Duration(days: _kontrolReminderDays)))}',
+                                        l10n.followUpSummary(
+                                          dateFmt
+                                              .format(_kontrolEffectiveDate!),
+                                          dateFmt.format(
+                                            _kontrolEffectiveDate!.subtract(
+                                              Duration(
+                                                days: _kontrolReminderDays,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
@@ -1040,7 +1046,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           ),
                           const SizedBox(height: 18),
                           Text(
-                            'Kapsam',
+                            l10n.fieldScope,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -1051,10 +1057,10 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           const SizedBox(height: 4),
                           Text(
                             _requiresTooth
-                                ? 'Bu işlem için diş seçimi zorunlu'
+                                ? l10n.scopeToothRequired
                                 : _kapsam == null
-                                    ? 'Kapsam seçimi zorunlu'
-                                    : 'İşleme uygun kapsam',
+                                    ? l10n.scopeRequired
+                                    : l10n.scopeSuitable,
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: scheme.onSurfaceVariant,
@@ -1117,8 +1123,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  'Kanal parametreleri için önce diş seçin. '
-                                  'Birden fazla dişte her diş ayrı kaydedilir.',
+                                  l10n.canalSelectToothFirst,
                                   style:
                                       TextStyle(color: scheme.onSurfaceVariant),
                                 ),
@@ -1126,7 +1131,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                             else ...[
                               if (_selectedTeeth.length > 1) ...[
                                 Text(
-                                  'Her diş için kanal bilgisi',
+                                  l10n.canalPerToothTitle,
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
@@ -1134,7 +1139,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Dişe dokunun, parametreleri girin. Kayıtta her diş ayrı not olur.',
+                                  l10n.canalPerToothHint,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -1170,7 +1175,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Diş $_activeKanalTooth',
+                                  l10n.toothNumber(_activeKanalTooth ?? ''),
                                   style: Theme.of(context)
                                       .textTheme
                                       .labelLarge
@@ -1206,7 +1211,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           ],
                           const SizedBox(height: 16),
                           Text(
-                            'Fotoğraf',
+                            l10n.photoSection,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -1216,7 +1221,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
+                            l10n.photoPrivacyHint,
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: scheme.onSurfaceVariant,
@@ -1235,7 +1240,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Planlama',
+                            l10n.planningSection,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -1267,7 +1272,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                       ),
                                       Expanded(
                                         child: Text(
-                                          'Sonraki seansa planla',
+                                          l10n.planForNextSession,
                                           style: _labSent
                                               ? TextStyle(
                                                   color: Theme.of(context)
@@ -1280,27 +1285,24 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                       ),
                                       IconButton(
                                         tooltip: _labSent
-                                            ? 'Lab’a gittiyse işlem yapılmış sayılır'
-                                            : 'Bilgi',
+                                            ? l10n.labCountsAsDone
+                                            : l10n.info,
                                         onPressed: () {
                                           showDialog<void>(
                                             context: context,
                                             builder: (ctx) => AlertDialog(
-                                              title: const Text(
-                                                  'Sonraki seansa planla'),
+                                              title:
+                                                  Text(l10n.planForNextSession),
                                               content: Text(
                                                 _labSent
-                                                    ? 'Lab’a gitti işaretliyken bu seçenek kullanılamaz; '
-                                                        'işlem bu seans yapılmış kabul edilir.'
-                                                    : 'Bu işlem bugün yapılmadı kabul edilir. '
-                                                        'Hasta bir sonraki gelişinde üstte uyarılır; '
-                                                        '“Yapıldı” dendiğinde o günün işlem geçmişine eklenir.',
+                                                    ? l10n.planInfoLabBlocked
+                                                    : l10n.planInfo,
                                               ),
                                               actions: [
                                                 TextButton(
                                                   onPressed: () =>
                                                       Navigator.pop(ctx),
-                                                  child: const Text('Tamam'),
+                                                  child: Text(l10n.ok),
                                                 ),
                                               ],
                                             ),
@@ -1340,7 +1342,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                         ),
                                         Expanded(
                                           child: Text(
-                                            'Lab’a gitti',
+                                            l10n.sentToLab,
                                             style: _planForNext
                                                 ? TextStyle(
                                                     color: Theme.of(context)
@@ -1353,25 +1355,19 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                           ),
                                         ),
                                         IconButton(
-                                          tooltip: 'Bilgi',
+                                          tooltip: l10n.info,
                                           onPressed: () {
                                             showDialog<void>(
                                               context: context,
                                               builder: (ctx) => AlertDialog(
-                                                title:
-                                                    const Text('Lab’a gitti'),
-                                                content: const Text(
-                                                  'İş laboratuvara gönderildiğinde işaretleyin. '
-                                                  'Beklenen dönüş tarihinden 1 gün önce takip '
-                                                  'listesi ve bildirim hatırlatır. '
-                                                  'Bu seçimde işlem yapılmış sayılır; '
-                                                  '“Sonraki seansa planla” kapanır.',
-                                                ),
+                                                title: Text(l10n.sentToLab),
+                                                content:
+                                                    Text(l10n.sentToLabInfo),
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () =>
                                                         Navigator.pop(ctx),
-                                                    child: const Text('Tamam'),
+                                                    child: Text(l10n.ok),
                                                   ),
                                                 ],
                                               ),
@@ -1392,18 +1388,19 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           child: InputDecorator(
-                                            decoration: const InputDecoration(
-                                              labelText: 'Beklenen lab dönüşü',
-                                              border: OutlineInputBorder(),
+                                            decoration: InputDecoration(
+                                              labelText: l10n.expectedLabReturn,
+                                              border:
+                                                  const OutlineInputBorder(),
                                               isDense: true,
-                                              suffixIcon: Icon(
+                                              suffixIcon: const Icon(
                                                   Icons.calendar_today,
                                                   size: 18),
                                             ),
                                             child: Text(
                                               _labReturnDate == null
-                                                  ? 'Tarih seçin'
-                                                  : DateFormat('dd.MM.yyyy')
+                                                  ? l10n.pickDate
+                                                  : dateFmt
                                                       .format(_labReturnDate!),
                                             ),
                                           ),

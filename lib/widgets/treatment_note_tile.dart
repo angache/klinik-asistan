@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../data/tooth_canals.dart';
+import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
@@ -28,7 +30,7 @@ class TreatmentNoteTile extends StatelessWidget {
   String get _shareCaption => [
         note.islemBaslik,
         note.kapsam.badgeLabel(disNo: note.disNo),
-        DateFormat('dd.MM.yyyy').format(note.tarih.toLocal()),
+        DateFormat.yMd().format(note.tarih.toLocal()),
       ].join(' · ');
 
   Future<void> _edit(BuildContext context) async {
@@ -40,28 +42,27 @@ class TreatmentNoteTile extends StatelessWidget {
     );
     if (ok == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Yeni sürüm kaydedildi')),
+        SnackBar(content: Text(context.l10n.newVersionSaved)),
       );
       await onChanged?.call();
     }
   }
 
   Future<void> _delete(BuildContext context) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('İşlemi sil'),
-        content: const Text(
-          'Bu not ve varsa önceki sürümleri kalıcı olarak silinecek.',
-        ),
+        title: Text(l10n.deleteProcedureTitle),
+        content: Text(l10n.deleteProcedureConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -71,13 +72,13 @@ class TreatmentNoteTile extends StatelessWidget {
       await db.deleteNote(note);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İşlem silindi')),
+        SnackBar(content: Text(l10n.procedureDeleted)),
       );
       await onChanged?.call();
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('İşlem silinemedi: $e')),
+        SnackBar(content: Text(l10n.procedureDeleteFailed('$e'))),
       );
     }
   }
@@ -85,10 +86,11 @@ class TreatmentNoteTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final local = note.tarih.toLocal();
     final dateStr = showDate
-        ? DateFormat('dd.MM.yyyy HH:mm').format(local)
-        : DateFormat('HH:mm').format(local);
+        ? DateFormat.yMd().add_Hm().format(local)
+        : DateFormat.Hm().format(local);
 
     return Container(
       width: double.infinity,
@@ -136,8 +138,10 @@ class TreatmentNoteTile extends StatelessWidget {
                   ),
                   child: Text(
                     note.labBeklenenTarih == null
-                        ? 'Lab'
-                        : 'Lab → ${DateFormat('dd.MM').format(note.labBeklenenTarih!)}',
+                        ? l10n.labShort
+                        : l10n.labReturnShort(
+                            DateFormat.Md().format(note.labBeklenenTarih!),
+                          ),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -174,7 +178,7 @@ class TreatmentNoteTile extends StatelessWidget {
           if (note.kanalBoyu != null && note.kanalBoyu!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'Kanal boyu: ${note.kanalBoyu}',
+              '${l10n.fieldCanalLength}: ${localizeKanalBoyu(note.kanalBoyu!)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.primary,
                     fontWeight: FontWeight.w500,
@@ -185,8 +189,10 @@ class TreatmentNoteTile extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               [
-                if (note.egeSistemi != null) 'Eğe: ${note.egeSistemi}',
-                if (note.kanalIlaci != null) 'İlaç: ${note.kanalIlaci}',
+                if (note.egeSistemi != null)
+                  '${l10n.fieldFile}: ${egeLabel(note.egeSistemi)}',
+                if (note.kanalIlaci != null)
+                  '${l10n.fieldMedicament}: ${ilacLabel(note.kanalIlaci)}',
               ].join(' · '),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
@@ -219,7 +225,7 @@ class TreatmentNoteTile extends StatelessWidget {
               TextButton.icon(
                 onPressed: () => _edit(context),
                 icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Düzenle'),
+                label: Text(l10n.edit),
               ),
               TextButton.icon(
                 onPressed: () => showNoteHistorySheet(
@@ -228,7 +234,7 @@ class TreatmentNoteTile extends StatelessWidget {
                   note: note,
                 ),
                 icon: const Icon(Icons.history, size: 18),
-                label: const Text('Geçmiş'),
+                label: Text(l10n.history),
               ),
               if (note.hasPhoto)
                 Builder(
@@ -239,14 +245,14 @@ class TreatmentNoteTile extends StatelessWidget {
                       text: _shareCaption,
                     ),
                     icon: const Icon(Icons.share_outlined, size: 18),
-                    label: const Text('Paylaş'),
+                    label: Text(l10n.share),
                   ),
                 ),
               if (db.canManageRecords)
                 TextButton.icon(
                   onPressed: () => _delete(context),
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Sil'),
+                  label: Text(l10n.delete),
                 ),
             ],
           ),

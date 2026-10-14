@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
+import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
@@ -56,7 +57,7 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
     if (status.isGranted) return true;
     if (!mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Mikrofon izni gerekli')),
+      SnackBar(content: Text(context.l10n.micPermissionRequired)),
     );
     return false;
   }
@@ -66,7 +67,7 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
     if (!await _recorder.hasPermission()) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mikrofon izni yok')),
+        SnackBar(content: Text(context.l10n.micPermissionMissing)),
       );
       return;
     }
@@ -110,7 +111,7 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
     if (!await file.exists() || await file.length() == 0) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kayıt boş veya oluşturulamadı')),
+        SnackBar(content: Text(context.l10n.recordingEmpty)),
       );
       return;
     }
@@ -128,7 +129,7 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ses kaydı yüklenemedi: $e')),
+        SnackBar(content: Text(context.l10n.voiceUploadFailed('$e'))),
       );
     }
   }
@@ -150,9 +151,10 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
 
     return AlertDialog(
-      title: const Text('Hızlı sesli not'),
+      title: Text(l10n.quickVoiceNote),
       content: Stack(
         alignment: Alignment.center,
         children: [
@@ -167,8 +169,7 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Ses yalnızca doktor/asistanın işlem özeti içindir. '
-                'Hasta konuşması kaydedilmez.',
+                l10n.voicePrivacyHint,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
@@ -178,17 +179,17 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
               Text(
                 _timeLabel,
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 _recording
-                    ? 'Kayıt sürüyor…'
+                    ? l10n.recordingInProgress
                     : _saving
-                        ? 'Ses buluta yükleniyor…'
-                        : 'Başlat’a basıp konuşun, bitince Kaydet',
+                        ? l10n.uploadingVoice
+                        : l10n.voiceStartHint,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
@@ -216,22 +217,22 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
             Positioned.fill(
               child: ColoredBox(
                 color: scheme.surface.withValues(alpha: 0.85),
-                child: const Center(
+                child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 36,
                         height: 36,
                         child: CircularProgressIndicator(strokeWidth: 3),
                       ),
-                      SizedBox(height: 14),
+                      const SizedBox(height: 14),
                       Text(
-                        'Ses buluta yükleniyor…',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        l10n.uploadingVoice,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      SizedBox(height: 4),
-                      Text('Lütfen bekleyin…'),
+                      const SizedBox(height: 4),
+                      Text(l10n.pleaseWait),
                     ],
                   ),
                 ),
@@ -242,13 +243,13 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
       actions: [
         TextButton(
           onPressed: _saving ? null : _cancel,
-          child: const Text('İptal'),
+          child: Text(l10n.cancel),
         ),
         if (_recording)
           FilledButton.icon(
             onPressed: _stopAndSave,
             icon: const Icon(Icons.stop),
-            label: const Text('Bitir & Kaydet'),
+            label: Text(l10n.finishAndSave),
           ),
       ],
     );

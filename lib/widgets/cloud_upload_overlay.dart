@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
+
 /// Fotoğraf / ses buluta giderken diyalog üstünde görünen yükleme katmanı.
 class CloudUploadOverlay extends StatelessWidget {
   const CloudUploadOverlay({
@@ -24,7 +26,8 @@ class CloudUploadOverlay extends StatelessWidget {
             child: Card(
               elevation: 6,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -43,7 +46,7 @@ class CloudUploadOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Lütfen bekleyin…',
+                      context.l10n.pleaseWait,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),

@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../config/supabase_config.dart';
 import '../data/treatment_templates.dart';
+import '../l10n/l10n.dart';
 import '../models/clinic.dart';
 import '../models/clinic_report.dart';
 import '../models/clinic_todo.dart';
@@ -22,8 +24,7 @@ class NoteConflictException implements Exception {
   const NoteConflictException();
 
   @override
-  String toString() => 'Bu işlem bu arada başka biri tarafından düzenlendi. '
-      'Listeyi yenileyip tekrar deneyin.';
+  String toString() => currentL10n.errNoteConflict;
 }
 
 enum PatientListSort {
@@ -71,7 +72,7 @@ class DatabaseService {
   String get _requireKlinikId {
     final id = _session.klinikId;
     if (id == null || id.isEmpty) {
-      throw StateError('Klinik seçili değil — önce giriş yapın.');
+      throw StateError(currentL10n.errNoClinicSelected);
     }
     return id;
   }
@@ -98,7 +99,8 @@ class DatabaseService {
 
   /// Periyodik kontrol zamanı gelen hastalar. [old] = kontrol tarihi 12 aydan
   /// eski olanlar; [limit] = 0 yalnızca sayıları getirir.
-  Future<RecallList> getRecallPatients({bool old = false, int limit = 200}) async {
+  Future<RecallList> getRecallPatients(
+      {bool old = false, int limit = 200}) async {
     final row = await _client.rpc('kontrol_cagrilari_listesi', params: {
       'p_klinik_id': _requireKlinikId,
       'p_eski': old,
@@ -308,7 +310,7 @@ class DatabaseService {
     final deleted =
         await _client.from('hastalar').delete().eq('id', id).select('id');
     if ((deleted as List).isEmpty) {
-      throw Exception('Bu hastayı silme yetkiniz yok');
+      throw Exception(currentL10n.errNoPermissionDeletePatient);
     }
     await _removeStoragePaths(paths);
   }
@@ -666,7 +668,7 @@ class DatabaseService {
         .inFilter('id', ids)
         .select('id');
     if ((deleted as List).isEmpty) {
-      throw Exception('Bu işlemi silme yetkiniz yok');
+      throw Exception(currentL10n.errNoPermissionDeleteNote);
     }
 
     // Çok dişli kayıtta diğer dişlerin notları aynı dosyaları kullanır.
@@ -780,19 +782,18 @@ class DatabaseService {
     var remind = donus.subtract(const Duration(days: 1));
     if (remind.isBefore(todayOnly)) remind = todayOnly;
 
-    final fmt =
-        '${donus.day.toString().padLeft(2, '0')}.${donus.month.toString().padLeft(2, '0')}.${donus.year}';
+    final fmt = DateFormat.yMd().format(donus);
     final who = (hastaAdSoyad != null && hastaAdSoyad.trim().isNotEmpty)
         ? hastaAdSoyad.trim()
         : null;
 
     return createFollowUp(
       hastaId: hastaId,
-      baslik: 'Lab: $islemBaslik',
+      baslik: currentL10n.labFollowUpTitle(islemBaslik),
       planlananTarih: remind,
       aciklama: who == null
-          ? 'Beklenen lab dönüşü: $fmt'
-          : 'Beklenen lab dönüşü: $fmt · $who',
+          ? currentL10n.labExpectedReturnOn(fmt)
+          : currentL10n.labExpectedReturnFor(fmt, who),
       seansNotuId: seansNotuId,
       tur: 'lab',
       hatirlatmaGunOnce: 0,

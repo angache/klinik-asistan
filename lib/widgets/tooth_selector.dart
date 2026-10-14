@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-enum JawQuadrant {
-  upperRight('Üst sağ', ToothSelector.upperRight),
-  upperLeft('Üst sol', ToothSelector.upperLeft),
-  lowerRight('Alt sağ', ToothSelector.lowerRight),
-  lowerLeft('Alt sol', ToothSelector.lowerLeft);
+import '../l10n/l10n.dart';
 
-  const JawQuadrant(this.label, this.teeth);
-  final String label;
+enum JawQuadrant {
+  upperRight(ToothSelector.upperRight),
+  upperLeft(ToothSelector.upperLeft),
+  lowerRight(ToothSelector.lowerRight),
+  lowerLeft(ToothSelector.lowerLeft);
+
+  const JawQuadrant(this.teeth);
   final List<String> teeth;
+
+  String get label => switch (this) {
+        JawQuadrant.upperRight => currentL10n.quadrantUpperRight,
+        JawQuadrant.upperLeft => currentL10n.quadrantUpperLeft,
+        JawQuadrant.lowerRight => currentL10n.quadrantLowerRight,
+        JawQuadrant.lowerLeft => currentL10n.quadrantLowerLeft,
+      };
 }
 
 /// FDI odontogram — chart, çeyrek büyütme ve yazarak seçim.
@@ -40,7 +48,14 @@ class ToothSelector extends StatefulWidget {
     ...upperRight,
     ...upperLeft,
     ...lowerLeft,
-    '41', '42', '43', '44', '45', '46', '47', '48',
+    '41',
+    '42',
+    '43',
+    '44',
+    '45',
+    '46',
+    '47',
+    '48',
   ];
 
   @override
@@ -91,9 +106,8 @@ class _ToothSelectorState extends State<ToothSelector> {
   }
 
   void _applyFdiText(String raw) {
-    final parsed = parseToothSelection(raw)
-        .where(ToothSelector.allTeeth.contains)
-        .toSet();
+    final parsed =
+        parseToothSelection(raw).where(ToothSelector.allTeeth.contains).toSet();
     widget.onChanged(parsed);
     final pretty = formatToothSelection(parsed);
     if (_fdiCtrl.text != pretty) {
@@ -125,6 +139,7 @@ class _ToothSelectorState extends State<ToothSelector> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final label = formatToothSelection(widget.selected);
+    final l10n = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +147,7 @@ class _ToothSelectorState extends State<ToothSelector> {
         Row(
           children: [
             Text(
-              'Diş Numarası',
+              l10n.toothNumberSection,
               style: textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -156,7 +171,7 @@ class _ToothSelectorState extends State<ToothSelector> {
               ),
               const SizedBox(width: 4),
               IconButton(
-                tooltip: 'Seçimi temizle',
+                tooltip: l10n.clearSelection,
                 visualDensity: VisualDensity.compact,
                 onPressed: () {
                   widget.onChanged({});
@@ -174,10 +189,10 @@ class _ToothSelectorState extends State<ToothSelector> {
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
-            labelText: 'Yazarak seç (FDI)',
-            hintText: 'örn. 15  veya  14-17  veya  36,37',
+            labelText: l10n.typeToSelectLabel,
+            hintText: l10n.typeToSelectHint,
             suffixIcon: IconButton(
-              tooltip: 'Uygula',
+              tooltip: l10n.apply,
               onPressed: () {
                 _applyFdiText(_fdiCtrl.text);
                 _fdiFocus.unfocus();
@@ -196,7 +211,7 @@ class _ToothSelectorState extends State<ToothSelector> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Dokun: seç · Uzun bas: çeyreği büyüt · Aşağı kaydır veya Tamam: küçült',
+          l10n.toothSelectorHelp,
           style: textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant,
           ),
@@ -213,7 +228,7 @@ class _ToothSelectorState extends State<ToothSelector> {
           child: Column(
             children: [
               Text(
-                'ÜST',
+                l10n.jawUpper,
                 style: textTheme.labelLarge?.copyWith(
                   color: scheme.primary,
                   fontWeight: FontWeight.w700,
@@ -234,7 +249,7 @@ class _ToothSelectorState extends State<ToothSelector> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Sağ',
+                        l10n.sideRight,
                         textAlign: TextAlign.left,
                         style: textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
@@ -248,7 +263,7 @@ class _ToothSelectorState extends State<ToothSelector> {
                     ),
                     Expanded(
                       child: Text(
-                        'Sol',
+                        l10n.sideLeft,
                         textAlign: TextAlign.right,
                         style: textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
@@ -267,7 +282,7 @@ class _ToothSelectorState extends State<ToothSelector> {
               ),
               const SizedBox(height: 8),
               Text(
-                'ALT',
+                l10n.jawLower,
                 style: textTheme.labelLarge?.copyWith(
                   color: scheme.primary,
                   fontWeight: FontWeight.w700,
@@ -381,7 +396,9 @@ class _QuadrantZoomBodyState extends State<_QuadrantZoomBody> {
             ),
             const SizedBox(height: 4),
             Text(
-              label.isEmpty ? 'Diş seçin' : 'Seçili: $label',
+              label.isEmpty
+                  ? context.l10n.selectTeeth
+                  : context.l10n.selectedTeeth(label),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: widget.scheme.onSurfaceVariant,
@@ -438,11 +455,11 @@ class _QuadrantZoomBodyState extends State<_QuadrantZoomBody> {
             const SizedBox(height: 20),
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Tamam'),
+              child: Text(context.l10n.ok),
             ),
             const SizedBox(height: 4),
             Text(
-              'Aşağı kaydırarak da kapatabilirsiniz',
+              context.l10n.swipeDownToClose,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: widget.scheme.onSurfaceVariant,
@@ -467,7 +484,14 @@ String formatToothSelection(Iterable<String> teeth) {
   ];
   const lowerArc = [
     ...ToothSelector.lowerLeft,
-    '41', '42', '43', '44', '45', '46', '47', '48',
+    '41',
+    '42',
+    '43',
+    '44',
+    '45',
+    '46',
+    '47',
+    '48',
   ];
 
   final upperSel = upperArc.where(set.contains).toList();
@@ -575,7 +599,14 @@ Set<String> parseToothSelection(String? raw) {
           ],
           [
             ...ToothSelector.lowerLeft,
-            '41', '42', '43', '44', '45', '46', '47', '48',
+            '41',
+            '42',
+            '43',
+            '44',
+            '45',
+            '46',
+            '47',
+            '48',
           ],
         ]) {
           final i = arc.indexOf(a);

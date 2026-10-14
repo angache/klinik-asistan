@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../services/photo_share.dart';
 import '../services/storage_media.dart';
 
@@ -73,12 +74,12 @@ class _FullScreenImageState extends State<FullScreenImage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.image_outlined),
-                title: const Text('Bu fotoğrafı paylaş'),
+                title: Text(ctx.l10n.shareThisPhoto),
                 onTap: () => Navigator.pop(ctx, false),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: Text('Tüm fotoğrafları paylaş (${urls.length})'),
+                title: Text(ctx.l10n.shareAllPhotos(urls.length)),
                 onTap: () => Navigator.pop(ctx, true),
               ),
             ],
@@ -102,13 +103,13 @@ class _FullScreenImageState extends State<FullScreenImage> {
         foregroundColor: Colors.white,
         title: Text(
           count > 1
-              ? 'İşlem Fotoğrafı ${_index + 1}/$count'
-              : 'İşlem Fotoğrafı',
+              ? context.l10n.procedurePhotoIndex(_index + 1, count)
+              : context.l10n.procedurePhoto,
         ),
         actions: [
           Builder(
             builder: (btnContext) => IconButton(
-              tooltip: 'Paylaş (WhatsApp, e-posta…)',
+              tooltip: context.l10n.shareTooltip,
               icon: const Icon(Icons.share_outlined),
               onPressed: () => _share(btnContext),
             ),
@@ -175,7 +176,7 @@ class _GalleryPageState extends State<_GalleryPage> {
                 const Icon(Icons.broken_image, color: Colors.white54, size: 48),
                 const SizedBox(height: 8),
                 Text(
-                  'Fotoğraf yüklenemedi\n${snapshot.error ?? ''}',
+                  '${context.l10n.photoLoadFailed}\n${snapshot.error ?? ''}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white70),
                 ),

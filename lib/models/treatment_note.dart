@@ -1,12 +1,23 @@
-enum TreatmentScope {
-  tekDis('tek_dis', 'Diş'),
-  ustCene('ust_cene', 'Üst Çene'),
-  altCene('alt_cene', 'Alt Çene'),
-  tumAgiz('tum_agiz', 'Tüm Ağız');
+import 'package:intl/intl.dart';
 
-  const TreatmentScope(this.value, this.label);
+import '../data/tooth_canals.dart';
+import '../l10n/l10n.dart';
+
+enum TreatmentScope {
+  tekDis('tek_dis'),
+  ustCene('ust_cene'),
+  altCene('alt_cene'),
+  tumAgiz('tum_agiz');
+
+  const TreatmentScope(this.value);
   final String value;
-  final String label;
+
+  String get label => switch (this) {
+        TreatmentScope.tekDis => currentL10n.scopeTooth,
+        TreatmentScope.ustCene => currentL10n.scopeUpperJaw,
+        TreatmentScope.altCene => currentL10n.scopeLowerJaw,
+        TreatmentScope.tumAgiz => currentL10n.scopeFullMouth,
+      };
 
   static TreatmentScope fromValue(String value) {
     return TreatmentScope.values.firstWhere(
@@ -16,16 +27,10 @@ enum TreatmentScope {
   }
 
   String badgeLabel({String? disNo}) {
-    switch (this) {
-      case TreatmentScope.tekDis:
-        return disNo != null && disNo.isNotEmpty ? 'Diş: $disNo' : 'Diş';
-      case TreatmentScope.ustCene:
-        return 'Üst Çene';
-      case TreatmentScope.altCene:
-        return 'Alt Çene';
-      case TreatmentScope.tumAgiz:
-        return 'Tüm Ağız';
+    if (this == TreatmentScope.tekDis && disNo != null && disNo.isNotEmpty) {
+      return currentL10n.scopeToothWithNumber(disNo);
     }
+    return label;
   }
 }
 
@@ -210,6 +215,7 @@ class TreatmentNoteInput {
 
 /// İki sürüm arasındaki alan farklarını insan okunur satırlara çevirir.
 List<String> diffTreatmentNotes(TreatmentNote onceki, TreatmentNote yeni) {
+  final l10n = currentL10n;
   String n(String? v) => (v == null || v.trim().isEmpty) ? '—' : v.trim();
   final changes = <String>[];
 
@@ -220,20 +226,34 @@ List<String> diffTreatmentNotes(TreatmentNote onceki, TreatmentNote yeni) {
   }
 
   if (onceki.kapsam != yeni.kapsam) {
-    changes.add('Kapsam: ${onceki.kapsam.label} → ${yeni.kapsam.label}');
+    changes.add(
+      '${l10n.fieldScope}: ${onceki.kapsam.label} → ${yeni.kapsam.label}',
+    );
   }
-  add('Diş', onceki.disNo, yeni.disNo);
-  add('Başlık', onceki.islemBaslik, yeni.islemBaslik);
-  add('Not', onceki.notIcerik, yeni.notIcerik);
-  add('Kanal boyu', onceki.kanalBoyu, yeni.kanalBoyu);
-  add('Eğe', onceki.egeSistemi, yeni.egeSistemi);
-  add('İlaç', onceki.kanalIlaci, yeni.kanalIlaci);
+  add(l10n.fieldTooth, onceki.disNo, yeni.disNo);
+  add(l10n.fieldTitle, onceki.islemBaslik, yeni.islemBaslik);
+  add(l10n.fieldNote, onceki.notIcerik, yeni.notIcerik);
+  add(
+    l10n.fieldCanalLength,
+    onceki.kanalBoyu == null ? null : localizeKanalBoyu(onceki.kanalBoyu!),
+    yeni.kanalBoyu == null ? null : localizeKanalBoyu(yeni.kanalBoyu!),
+  );
+  add(
+    l10n.fieldFile,
+    egeLabel(onceki.egeSistemi),
+    egeLabel(yeni.egeSistemi),
+  );
+  add(
+    l10n.fieldMedicament,
+    ilacLabel(onceki.kanalIlaci),
+    ilacLabel(yeni.kanalIlaci),
+  );
   final oncekiFotolar = onceki.fotografUrls.toSet();
   final yeniFotolar = yeni.fotografUrls.toSet();
   final eklenen = yeniFotolar.difference(oncekiFotolar).length;
   final kaldirilan = oncekiFotolar.difference(yeniFotolar).length;
-  if (eklenen > 0) changes.add('$eklenen fotoğraf eklendi');
-  if (kaldirilan > 0) changes.add('$kaldirilan fotoğraf kaldırıldı');
+  if (eklenen > 0) changes.add(l10n.photosAdded(eklenen));
+  if (kaldirilan > 0) changes.add(l10n.photosRemoved(kaldirilan));
   final oncekiLocal = onceki.tarih.toLocal();
   final yeniLocal = yeni.tarih.toLocal();
   if (oncekiLocal.year != yeniLocal.year ||
@@ -241,10 +261,10 @@ List<String> diffTreatmentNotes(TreatmentNote onceki, TreatmentNote yeni) {
       oncekiLocal.day != yeniLocal.day ||
       oncekiLocal.hour != yeniLocal.hour ||
       oncekiLocal.minute != yeniLocal.minute) {
-    String fmt(DateTime d) =>
-        '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year} '
-        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-    changes.add('Tarih: ${fmt(oncekiLocal)} → ${fmt(yeniLocal)}');
+    final fmt = DateFormat.yMd().add_Hm();
+    changes.add(
+      '${l10n.fieldDate}: ${fmt.format(oncekiLocal)} → ${fmt.format(yeniLocal)}',
+    );
   }
 
   return changes;

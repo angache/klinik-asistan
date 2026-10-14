@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../l10n/l10n.dart';
 import '../services/storage_media.dart';
 import 'full_screen_image.dart';
 
@@ -90,7 +91,7 @@ class SessionPhotosEditor extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fotoğraf açılamadı: $e')),
+        SnackBar(content: Text(context.l10n.photoOpenFailed('$e'))),
       );
     }
   }
@@ -136,7 +137,7 @@ class SessionPhotosEditor extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '$_count / $kMaxSessionPhotos fotoğraf',
+            context.l10n.photoCount(_count, kMaxSessionPhotos),
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
@@ -152,7 +153,7 @@ class SessionPhotosEditor extends StatelessWidget {
                   onPressed:
                       enabled ? () => _pick(context, ImageSource.camera) : null,
                   icon: const Icon(Icons.photo_camera),
-                  label: const Text('Fotoğraf Çek'),
+                  label: Text(context.l10n.takePhoto),
                 ),
               ),
               const SizedBox(width: 8),
@@ -162,7 +163,7 @@ class SessionPhotosEditor extends StatelessWidget {
                       ? () => _pick(context, ImageSource.gallery)
                       : null,
                   icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Galeriden'),
+                  label: Text(context.l10n.fromGallery),
                 ),
               ),
             ],

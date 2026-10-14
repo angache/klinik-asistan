@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
 import '../data/treatment_templates.dart';
+import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
@@ -65,15 +66,14 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
   late List<String> _existingPhotoUrls;
   final List<File> _newPhotos = [];
   bool _saving = false;
-  String _uploadMessage = 'Kaydediliyor…';
+  String _uploadMessage = '';
   late DateTime _sessionDate;
   String? _validationError;
   List<TreatmentTemplate> _templates =
       List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
 
   bool get _showKanal {
-    final t = _titleController.text.toLowerCase();
-    return t.contains('kanal') ||
+    return looksLikeCanalTitle(_titleController.text) ||
         (widget.note.kanalBoyu?.isNotEmpty == true) ||
         widget.note.egeSistemi != null ||
         widget.note.kanalIlaci != null;
@@ -159,7 +159,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Ekstra kanal ekle',
+                ctx.l10n.addExtraCanal,
                 style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -171,7 +171,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                 children: available
                     .map(
                       (kod) => ActionChip(
-                        label: Text(kod),
+                        label: Text(canalLabel(kod)),
                         onPressed: () => Navigator.pop(ctx, kod),
                       ),
                     )
@@ -180,8 +180,8 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
               const SizedBox(height: 12),
               TextField(
                 controller: customCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Özel kanal adı',
+                decoration: InputDecoration(
+                  labelText: ctx.l10n.customCanalName,
                 ),
               ),
               const SizedBox(height: 8),
@@ -190,7 +190,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                   final t = customCtrl.text.trim();
                   if (t.isNotEmpty) Navigator.pop(ctx, t);
                 },
-                child: const Text('Ekle'),
+                child: Text(ctx.l10n.add),
               ),
             ],
           ),
@@ -216,9 +216,9 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       initialDate: _sessionDate.isAfter(today) ? today : _sessionDate,
       firstDate: DateTime(2000),
       lastDate: today,
-      helpText: 'İşlem tarihi',
-      cancelText: 'İptal',
-      confirmText: 'Seç',
+      helpText: context.l10n.procedureDate,
+      cancelText: context.l10n.cancel,
+      confirmText: context.l10n.select,
     );
     if (picked == null) return;
     setState(() {
@@ -227,9 +227,10 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      setState(() => _validationError = 'İşlem başlığı zorunludur');
+      setState(() => _validationError = l10n.errTitleRequired);
       return;
     }
 
@@ -241,23 +242,22 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
 
     final needTeeth = _requiresTooth || kapsam == TreatmentScope.tekDis;
     if (needTeeth && _selectedTeeth.isEmpty) {
-      setState(() => _validationError = 'En az bir diş seçin');
+      setState(() => _validationError = l10n.errSelectTooth);
       return;
     }
 
     setState(() {
       _validationError = null;
       _saving = true;
-      _uploadMessage = _newPhotos.isNotEmpty
-          ? 'Fotoğraflar buluta yükleniyor…'
-          : 'İşlem kaydediliyor…';
+      _uploadMessage =
+          _newPhotos.isNotEmpty ? l10n.uploadingPhotos : l10n.savingProcedure;
     });
     final uploadedUrls = <String>[];
     try {
       for (var i = 0; i < _newPhotos.length; i++) {
         if (_newPhotos.length > 1) {
           setState(() => _uploadMessage =
-              'Fotoğraf yükleniyor (${i + 1}/${_newPhotos.length})…');
+              l10n.uploadingPhotoProgress(i + 1, _newPhotos.length));
         }
         uploadedUrls.add(await widget.db.uploadSessionPhoto(
           hastaId: widget.patient.id,
@@ -266,7 +266,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       }
       final photoUrls = [..._existingPhotoUrls, ...uploadedUrls];
       if (_newPhotos.isNotEmpty) {
-        setState(() => _uploadMessage = 'İşlem kaydediliyor…');
+        setState(() => _uploadMessage = l10n.savingProcedure);
       }
 
       final tooth = _selectedTeeth.length == 1 ? _selectedTeeth.first : null;
@@ -297,7 +297,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       if (!mounted) return;
       if (result.id == widget.note.id) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Değişiklik yok')),
+          SnackBar(content: Text(l10n.noChanges)),
         );
         Navigator.pop(context, false);
         return;
@@ -309,7 +309,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       setState(() {
         _saving = false;
         _validationError =
-            e is NoteConflictException ? e.toString() : 'Kayıt başarısız: $e';
+            e is NoteConflictException ? e.toString() : l10n.saveFailed('$e');
       });
     }
   }
@@ -323,6 +323,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
     final showToothSelector =
         _requiresTooth || _kapsam == TreatmentScope.tekDis;
     final effectiveKapsam = _requiresTooth ? TreatmentScope.tekDis : _kapsam;
+    final l10n = context.l10n;
 
     return PopScope(
       canPop: !_saving,
@@ -343,14 +344,14 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'İşlemi düzenle',
+                                l10n.editProcedureTitle,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleLarge
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                               Text(
-                                'v${widget.note.versiyon} → yeni sürüm kaydedilir; eski korunur',
+                                l10n.editVersionHint(widget.note.versiyon),
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -375,7 +376,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'İşlem tarihi',
+                            l10n.procedureDate,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -391,20 +392,19 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                               color: scheme.primary,
                             ),
                             title: Text(
-                              DateFormat('dd.MM.yyyy HH:mm')
-                                  .format(_sessionDate),
+                              DateFormat.yMd().add_Hm().format(_sessionDate),
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             trailing: TextButton(
                               onPressed: _saving ? null : _pickSessionDate,
-                              child: const Text('Değiştir'),
+                              child: Text(l10n.change),
                             ),
                             onTap: _saving ? null : _pickSessionDate,
                           ),
                           const SizedBox(height: 14),
                           Text(
-                            'Kapsam',
+                            l10n.fieldScope,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -415,7 +415,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                           if (_requiresTooth) ...[
                             const SizedBox(height: 4),
                             Text(
-                              'Bu işlem için diş seçimi zorunlu',
+                              l10n.scopeToothRequired,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -462,8 +462,8 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                           const SizedBox(height: 14),
                           TextField(
                             controller: _titleController,
-                            decoration: const InputDecoration(
-                              labelText: 'İşlem Başlığı',
+                            decoration: InputDecoration(
+                              labelText: l10n.procedureTitleLabel,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -471,8 +471,8 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                             controller: _noteController,
                             minLines: 2,
                             maxLines: 5,
-                            decoration: const InputDecoration(
-                              labelText: 'Not (isteğe bağlı)',
+                            decoration: InputDecoration(
+                              labelText: l10n.noteOptionalLabel,
                               alignLabelWithHint: true,
                             ),
                           ),
@@ -500,7 +500,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                           ],
                           const SizedBox(height: 16),
                           Text(
-                            'Fotoğraf',
+                            l10n.photoSection,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -510,7 +510,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.',
+                            l10n.photoPrivacyHint,
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Theme.of(context)
@@ -578,7 +578,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                             )
                           : const Icon(Icons.save),
                       label: Text(
-                        _saving ? _uploadMessage : 'Yeni sürüm olarak kaydet',
+                        _saving ? _uploadMessage : l10n.saveAsNewVersion,
                       ),
                     ),
                   ),

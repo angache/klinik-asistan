@@ -761,4 +761,604 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get changeRole => 'Rol değiştir';
+
+  @override
+  String get scopeTooth => 'Diş';
+
+  @override
+  String get scopeUpperJaw => 'Üst Çene';
+
+  @override
+  String get scopeLowerJaw => 'Alt Çene';
+
+  @override
+  String get scopeFullMouth => 'Tüm Ağız';
+
+  @override
+  String scopeToothWithNumber(String teeth) {
+    return 'Diş: $teeth';
+  }
+
+  @override
+  String get fieldScope => 'Kapsam';
+
+  @override
+  String get fieldTooth => 'Diş';
+
+  @override
+  String get fieldTitle => 'Başlık';
+
+  @override
+  String get fieldNote => 'Not';
+
+  @override
+  String get fieldCanalLength => 'Kanal boyu';
+
+  @override
+  String get fieldFile => 'Eğe';
+
+  @override
+  String get fieldMedicament => 'İlaç';
+
+  @override
+  String get fieldDate => 'Tarih';
+
+  @override
+  String photosAdded(int count) {
+    return '$count fotoğraf eklendi';
+  }
+
+  @override
+  String photosRemoved(int count) {
+    return '$count fotoğraf kaldırıldı';
+  }
+
+  @override
+  String get canalMain => 'Ana';
+
+  @override
+  String get handFile => 'El Eğesi';
+
+  @override
+  String get noMedicament => 'İlaçsız';
+
+  @override
+  String get errNoteConflict =>
+      'Bu işlem bu arada başka biri tarafından düzenlendi. Listeyi yenileyip tekrar deneyin.';
+
+  @override
+  String get errNoClinicSelected => 'Klinik seçili değil — önce giriş yapın.';
+
+  @override
+  String get errNoPermissionDeletePatient => 'Bu hastayı silme yetkiniz yok';
+
+  @override
+  String get errNoPermissionDeleteNote => 'Bu işlemi silme yetkiniz yok';
+
+  @override
+  String labFollowUpTitle(String title) {
+    return 'Lab: $title';
+  }
+
+  @override
+  String labExpectedReturnOn(String date) {
+    return 'Beklenen lab dönüşü: $date';
+  }
+
+  @override
+  String labExpectedReturnFor(String date, String name) {
+    return 'Beklenen lab dönüşü: $date · $name';
+  }
+
+  @override
+  String get savingEllipsis => 'Kaydediliyor…';
+
+  @override
+  String get procedureDate => 'İşlem tarihi';
+
+  @override
+  String get select => 'Seç';
+
+  @override
+  String get expectedLabReturn => 'Beklenen lab dönüşü';
+
+  @override
+  String get followUpDate => 'Kontrol tarihi';
+
+  @override
+  String get errSelectOrTypeProcedure => 'İşlem seçin veya işlem başlığı yazın';
+
+  @override
+  String get errSelectScope => 'Kapsam seçin';
+
+  @override
+  String get errSelectTooth => 'En az bir diş seçin';
+
+  @override
+  String get errSelectLabDate => 'Lab beklenen dönüş tarihini seçin';
+
+  @override
+  String get errSelectFollowUpDate => 'Kontrol tarihini seçin';
+
+  @override
+  String get errFollowUpNoteRequired => 'Takip notunu yazın';
+
+  @override
+  String get uploadingPhotos => 'Fotoğraflar buluta yükleniyor…';
+
+  @override
+  String get savingProcedure => 'İşlem kaydediliyor…';
+
+  @override
+  String uploadingPhotoProgress(int current, int total) {
+    return 'Fotoğraf yükleniyor ($current/$total)…';
+  }
+
+  @override
+  String saveFailed(String error) {
+    return 'Kayıt başarısız: $error';
+  }
+
+  @override
+  String get creatingLabReminder => 'Lab hatırlatması oluşturuluyor…';
+
+  @override
+  String get creatingFollowUpReminder => 'Kontrol hatırlatması oluşturuluyor…';
+
+  @override
+  String followUpTitle(String title) {
+    return 'Kontrol: $title';
+  }
+
+  @override
+  String get reminderKindLab => 'lab';
+
+  @override
+  String get reminderKindFollowUp => 'kontrol';
+
+  @override
+  String reminderCreateFailed(String kinds) {
+    return 'İşlem kaydedildi ancak şu hatırlatmalar oluşturulamadı: $kinds. Takipler ekranından ekleyin.';
+  }
+
+  @override
+  String get planForNextSession => 'Sonraki seansa planla';
+
+  @override
+  String saveTeethCount(int count) {
+    return '$count diş kaydet';
+  }
+
+  @override
+  String get pastRecordHint => 'Geçmiş kayıt (defterden aktarım)';
+
+  @override
+  String get change => 'Değiştir';
+
+  @override
+  String get procedureSection => 'İşlem';
+
+  @override
+  String get procedureSectionHint => 'En az bir işlem seçin veya başlık yazın';
+
+  @override
+  String get procedureTitleLabel => 'İşlem Başlığı';
+
+  @override
+  String get noteOptionalLabel => 'Not (isteğe bağlı)';
+
+  @override
+  String get noteHint => 'Gerekirse buraya yazın…';
+
+  @override
+  String get addFollowUpSubtitle =>
+      'İşlem sonrası kontrol tarihi ve hatırlatma';
+
+  @override
+  String get followUpNoteLabel => 'Takip notu';
+
+  @override
+  String get followUpNoteHint => 'örn. Perküsyon ve radyografik kontrol';
+
+  @override
+  String get presetOneWeek => '1 hafta';
+
+  @override
+  String get presetOneMonth => '1 ay';
+
+  @override
+  String get presetThreeMonths => '3 ay';
+
+  @override
+  String get presetSixMonths => '6 ay';
+
+  @override
+  String get pickDate => 'Tarih seç';
+
+  @override
+  String get remindWhenLabel => 'Ne zaman uyarılsın?';
+
+  @override
+  String get remindOnDay => 'Kontrol günü';
+
+  @override
+  String get remindOneDayBefore => '1 gün önce';
+
+  @override
+  String get remindThreeDaysBefore => '3 gün önce';
+
+  @override
+  String get remindOneWeekBefore => '1 hafta önce';
+
+  @override
+  String followUpSummary(String date, String reminder) {
+    return 'Kontrol: $date · Uyarı: $reminder';
+  }
+
+  @override
+  String get scopeToothRequired => 'Bu işlem için diş seçimi zorunlu';
+
+  @override
+  String get scopeRequired => 'Kapsam seçimi zorunlu';
+
+  @override
+  String get scopeSuitable => 'İşleme uygun kapsam';
+
+  @override
+  String get canalSelectToothFirst =>
+      'Kanal parametreleri için önce diş seçin. Birden fazla dişte her diş ayrı kaydedilir.';
+
+  @override
+  String get canalPerToothTitle => 'Her diş için kanal bilgisi';
+
+  @override
+  String get canalPerToothHint =>
+      'Dişe dokunun, parametreleri girin. Kayıtta her diş ayrı not olur.';
+
+  @override
+  String toothNumber(String tooth) {
+    return 'Diş $tooth';
+  }
+
+  @override
+  String get photoSection => 'Fotoğraf';
+
+  @override
+  String get photoPrivacyHint =>
+      'Hasta yüzü görünmesin. Yalnızca işlem / ağız içi görüntü.';
+
+  @override
+  String get planningSection => 'Planlama';
+
+  @override
+  String get labCountsAsDone => 'Lab’a gittiyse işlem yapılmış sayılır';
+
+  @override
+  String get info => 'Bilgi';
+
+  @override
+  String get planInfoLabBlocked =>
+      'Lab’a gitti işaretliyken bu seçenek kullanılamaz; işlem bu seans yapılmış kabul edilir.';
+
+  @override
+  String get planInfo =>
+      'Bu işlem bugün yapılmadı kabul edilir. Hasta bir sonraki gelişinde üstte uyarılır; “Yapıldı” dendiğinde o günün işlem geçmişine eklenir.';
+
+  @override
+  String get sentToLab => 'Lab’a gitti';
+
+  @override
+  String get sentToLabInfo =>
+      'İş laboratuvara gönderildiğinde işaretleyin. Beklenen dönüş tarihinden 1 gün önce takip listesi ve bildirim hatırlatır. Bu seçimde işlem yapılmış sayılır; “Sonraki seansa planla” kapanır.';
+
+  @override
+  String addExtraCanalForTooth(String tooth) {
+    return 'Ekstra kanal ekle · Diş $tooth';
+  }
+
+  @override
+  String get addExtraCanal => 'Ekstra kanal ekle';
+
+  @override
+  String get extraCanalHint =>
+      'Tipik listede olmayan kanalı seçin veya özel ad yazın.';
+
+  @override
+  String get allStandardCanalsAdded =>
+      'Standart kodların hepsi ekli. Özel ad kullanın.';
+
+  @override
+  String get customCanalName => 'Özel kanal adı';
+
+  @override
+  String get customCanalHint => 'örn. MB3, DB2…';
+
+  @override
+  String get editProcedureTitle => 'İşlemi düzenle';
+
+  @override
+  String editVersionHint(int version) {
+    return 'v$version → yeni sürüm kaydedilir; eski korunur';
+  }
+
+  @override
+  String get errTitleRequired => 'İşlem başlığı zorunludur';
+
+  @override
+  String get noChanges => 'Değişiklik yok';
+
+  @override
+  String get saveAsNewVersion => 'Yeni sürüm olarak kaydet';
+
+  @override
+  String get quadrantUpperRight => 'Üst sağ';
+
+  @override
+  String get quadrantUpperLeft => 'Üst sol';
+
+  @override
+  String get quadrantLowerRight => 'Alt sağ';
+
+  @override
+  String get quadrantLowerLeft => 'Alt sol';
+
+  @override
+  String get toothNumberSection => 'Diş Numarası';
+
+  @override
+  String get clearSelection => 'Seçimi temizle';
+
+  @override
+  String get typeToSelectLabel => 'Yazarak seç (FDI)';
+
+  @override
+  String get typeToSelectHint => 'örn. 15  veya  14-17  veya  36,37';
+
+  @override
+  String get apply => 'Uygula';
+
+  @override
+  String get toothSelectorHelp =>
+      'Dokun: seç · Uzun bas: çeyreği büyüt · Aşağı kaydır veya Tamam: küçült';
+
+  @override
+  String get jawUpper => 'ÜST';
+
+  @override
+  String get jawLower => 'ALT';
+
+  @override
+  String get sideRight => 'Sağ';
+
+  @override
+  String get sideLeft => 'Sol';
+
+  @override
+  String get selectTeeth => 'Diş seçin';
+
+  @override
+  String selectedTeeth(String teeth) {
+    return 'Seçili: $teeth';
+  }
+
+  @override
+  String get swipeDownToClose => 'Aşağı kaydırarak da kapatabilirsiniz';
+
+  @override
+  String canalParamsForTooth(String tooth) {
+    return 'Kanal parametreleri · Diş $tooth';
+  }
+
+  @override
+  String get canalParamsTitle => 'Kanal Tedavisi Parametreleri';
+
+  @override
+  String get canalLengthMm => 'Kanal Boyu (mm)';
+
+  @override
+  String get extra => 'Ekstra';
+
+  @override
+  String get fileSystem => 'Eğe Sistemi';
+
+  @override
+  String get intracanalMedicament => 'Kanal İçi İlaç';
+
+  @override
+  String toothCanalHint(String tooth, String canals) {
+    return 'Diş $tooth · tipik: $canals — gerekirse ekstra ekleyin';
+  }
+
+  @override
+  String get newVersionSaved => 'Yeni sürüm kaydedildi';
+
+  @override
+  String get deleteProcedureTitle => 'İşlemi sil';
+
+  @override
+  String get deleteProcedureConfirm =>
+      'Bu not ve varsa önceki sürümleri kalıcı olarak silinecek.';
+
+  @override
+  String get procedureDeleted => 'İşlem silindi';
+
+  @override
+  String procedureDeleteFailed(String error) {
+    return 'İşlem silinemedi: $error';
+  }
+
+  @override
+  String get labShort => 'Lab';
+
+  @override
+  String labReturnShort(String date) {
+    return 'Lab → $date';
+  }
+
+  @override
+  String get history => 'Geçmiş';
+
+  @override
+  String get share => 'Paylaş';
+
+  @override
+  String get versionHistory => 'Sürüm geçmişi';
+
+  @override
+  String historyLoadFailed(String error) {
+    return 'Geçmiş yüklenemedi: $error';
+  }
+
+  @override
+  String get noVersionsFound => 'Sürüm bulunamadı';
+
+  @override
+  String get currentVersion => 'Güncel';
+
+  @override
+  String get oldVersion => 'Eski sürüm';
+
+  @override
+  String get changesInVersion => 'Bu sürümde değişenler';
+
+  @override
+  String get firstRecord => 'İlk kayıt';
+
+  @override
+  String get micPermissionRequired => 'Mikrofon izni gerekli';
+
+  @override
+  String get micPermissionMissing => 'Mikrofon izni yok';
+
+  @override
+  String get recordingEmpty => 'Kayıt boş veya oluşturulamadı';
+
+  @override
+  String voiceUploadFailed(String error) {
+    return 'Ses kaydı yüklenemedi: $error';
+  }
+
+  @override
+  String get quickVoiceNote => 'Hızlı sesli not';
+
+  @override
+  String get voicePrivacyHint =>
+      'Ses yalnızca doktor/asistanın işlem özeti içindir. Hasta konuşması kaydedilmez.';
+
+  @override
+  String get recordingInProgress => 'Kayıt sürüyor…';
+
+  @override
+  String get uploadingVoice => 'Ses buluta yükleniyor…';
+
+  @override
+  String get voiceStartHint =>
+      'Mikrofona basıp konuşun, bitince Bitir & Kaydet’e basın';
+
+  @override
+  String get pleaseWait => 'Lütfen bekleyin…';
+
+  @override
+  String get finishAndSave => 'Bitir & Kaydet';
+
+  @override
+  String playFailed(String error) {
+    return 'Çalınamadı: $error';
+  }
+
+  @override
+  String get memoMarkedProcessed => 'Sesli not işlendi olarak işaretlendi';
+
+  @override
+  String markFailed(String error) {
+    return 'İşaretlenemedi: $error';
+  }
+
+  @override
+  String get deleteVoiceNoteTitle => 'Sesli notu sil';
+
+  @override
+  String get deleteVoiceNoteConfirm => 'Bu sesli not kalıcı olarak silinecek.';
+
+  @override
+  String deleteFailed(String error) {
+    return 'Silinemedi: $error';
+  }
+
+  @override
+  String get processedVoiceNote => 'İşlenmiş sesli not';
+
+  @override
+  String get pendingVoiceNote => 'Bekleyen sesli not';
+
+  @override
+  String durationLabel(String duration) {
+    return 'Süre: $duration';
+  }
+
+  @override
+  String get stop => 'Durdur';
+
+  @override
+  String get listen => 'Dinle';
+
+  @override
+  String get convertToNote => 'Nota dönüştür';
+
+  @override
+  String get audioFileEmpty => 'Ses dosyası boş';
+
+  @override
+  String photoOpenFailed(String error) {
+    return 'Fotoğraf açılamadı: $error';
+  }
+
+  @override
+  String photoCount(int count, int max) {
+    return '$count / $max fotoğraf';
+  }
+
+  @override
+  String get takePhoto => 'Fotoğraf Çek';
+
+  @override
+  String get fromGallery => 'Galeriden';
+
+  @override
+  String get shareThisPhoto => 'Bu fotoğrafı paylaş';
+
+  @override
+  String shareAllPhotos(int count) {
+    return 'Tüm fotoğrafları paylaş ($count)';
+  }
+
+  @override
+  String get procedurePhoto => 'İşlem Fotoğrafı';
+
+  @override
+  String procedurePhotoIndex(int index, int count) {
+    return 'İşlem Fotoğrafı $index/$count';
+  }
+
+  @override
+  String get shareTooltip => 'Paylaş (WhatsApp, e-posta…)';
+
+  @override
+  String get photoLoadFailed => 'Fotoğraf yüklenemedi';
+
+  @override
+  String preparingPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fotoğraf hazırlanıyor…',
+      one: 'Fotoğraf hazırlanıyor…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareFailed(String error) {
+    return 'Paylaşılamadı: $error';
+  }
 }

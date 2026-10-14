@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../data/tooth_canals.dart';
+import '../l10n/l10n.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
 import 'photo_preview.dart';
@@ -50,7 +52,7 @@ class _NoteHistorySheetState extends State<_NoteHistorySheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
-              'Sürüm geçmişi',
+              context.l10n.versionHistory,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -78,7 +80,7 @@ class _NoteHistorySheetState extends State<_NoteHistorySheet> {
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
-                        'Geçmiş yüklenemedi: ${snapshot.error}',
+                        context.l10n.historyLoadFailed('${snapshot.error}'),
                         textAlign: TextAlign.center,
                         style: TextStyle(color: scheme.error),
                       ),
@@ -87,7 +89,7 @@ class _NoteHistorySheetState extends State<_NoteHistorySheet> {
                 }
                 final versions = snapshot.data ?? [];
                 if (versions.isEmpty) {
-                  return const Center(child: Text('Sürüm bulunamadı'));
+                  return Center(child: Text(context.l10n.noVersionsFound));
                 }
 
                 return ListView.builder(
@@ -120,8 +122,8 @@ class _VersionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dt =
-        DateFormat('dd.MM.yyyy HH:mm').format(note.olusturmaTarihi.toLocal());
+    final l10n = context.l10n;
+    final dt = DateFormat.yMd().add_Hm().format(note.olusturmaTarihi.toLocal());
     final changes = note.degisiklikOzeti
             ?.split('\n')
             .where((e) => e.trim().isNotEmpty)
@@ -162,7 +164,7 @@ class _VersionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Güncel',
+                    l10n.currentVersion,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -172,7 +174,7 @@ class _VersionCard extends StatelessWidget {
                 )
               else
                 Text(
-                  'Eski sürüm',
+                  l10n.oldVersion,
                   style: TextStyle(
                     fontSize: 12,
                     color: scheme.onSurfaceVariant,
@@ -203,14 +205,14 @@ class _VersionCard extends StatelessWidget {
           if (note.kanalBoyu?.isNotEmpty == true) ...[
             const SizedBox(height: 4),
             Text(
-              'Kanal: ${note.kanalBoyu}',
+              '${l10n.fieldCanalLength}: ${localizeKanalBoyu(note.kanalBoyu!)}',
               style: TextStyle(color: scheme.primary, fontSize: 13),
             ),
           ],
           if (changes.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              'Bu sürümde değişenler',
+              l10n.changesInVersion,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -232,7 +234,7 @@ class _VersionCard extends StatelessWidget {
           ] else if (note.versiyon == 1) ...[
             const SizedBox(height: 8),
             Text(
-              'İlk kayıt',
+              l10n.firstRecord,
               style: TextStyle(
                 fontSize: 12,
                 color: scheme.onSurfaceVariant,

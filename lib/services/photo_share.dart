@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/l10n.dart';
 import 'storage_media.dart';
 
 /// Seans fotoğraflarını sistem paylaşım menüsüyle (WhatsApp, e-posta…) gönderir.
@@ -17,17 +18,14 @@ class PhotoShare {
   }) async {
     if (urls.isEmpty) return;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     final box = context.findRenderObject() as RenderBox?;
     final origin =
         box == null ? null : box.localToGlobal(Offset.zero) & box.size;
 
     messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          urls.length > 1
-              ? '${urls.length} fotoğraf hazırlanıyor…'
-              : 'Fotoğraf hazırlanıyor…',
-        ),
+        content: Text(l10n.preparingPhotos(urls.length)),
         duration: const Duration(seconds: 30),
       ),
     );
@@ -59,7 +57,7 @@ class PhotoShare {
     } catch (e) {
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Paylaşılamadı: $e')));
+        ..showSnackBar(SnackBar(content: Text(l10n.shareFailed('$e'))));
     }
   }
 

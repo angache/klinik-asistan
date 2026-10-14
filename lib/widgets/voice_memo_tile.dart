@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../models/voice_memo.dart';
 import '../services/database_service.dart';
@@ -71,7 +72,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
 
     final bytes = await StorageMedia.downloadBytes(url);
     if (bytes.isEmpty) {
-      throw Exception('Ses dosyası boş');
+      throw Exception(currentL10n.audioFileEmpty);
     }
     await file.writeAsBytes(bytes, flush: true);
     return file;
@@ -121,7 +122,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
         _loadingAudio = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Çalınamadı: $e')),
+        SnackBar(content: Text(context.l10n.playFailed('$e'))),
       );
     }
   }
@@ -146,13 +147,13 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesli not işlendi olarak işaretlendi')),
+        SnackBar(content: Text(context.l10n.memoMarkedProcessed)),
       );
       await widget.onChanged?.call();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('İşaretlenemedi: $e')),
+        SnackBar(content: Text(context.l10n.markFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -160,19 +161,20 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
   }
 
   Future<void> _delete() async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sesli notu sil'),
-        content: const Text('Bu sesli not kalıcı olarak silinecek.'),
+        title: Text(l10n.deleteVoiceNoteTitle),
+        content: Text(l10n.deleteVoiceNoteConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -185,7 +187,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silinemedi: $e')),
+        SnackBar(content: Text(l10n.deleteFailed('$e'))),
       );
       setState(() => _busy = false);
     }
@@ -195,8 +197,8 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final memo = widget.memo;
-    final dt =
-        DateFormat('dd.MM.yyyy HH:mm').format(memo.olusturmaTarihi.toLocal());
+    final l10n = context.l10n;
+    final dt = DateFormat.yMd().add_Hm().format(memo.olusturmaTarihi.toLocal());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -224,7 +226,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
               ),
               const SizedBox(width: 6),
               Text(
-                memo.islenen ? 'İşlenmiş sesli not' : 'Bekleyen sesli not',
+                memo.islenen ? l10n.processedVoiceNote : l10n.pendingVoiceNote,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: memo.islenen
@@ -243,7 +245,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Süre: ${memo.durationLabel}',
+            l10n.durationLabel(memo.durationLabel),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -258,19 +260,19 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Icon(_playing ? Icons.stop : Icons.play_arrow),
-                tooltip: _playing ? 'Durdur' : 'Dinle',
+                tooltip: _playing ? l10n.stop : l10n.listen,
               ),
               if (!memo.islenen)
                 TextButton.icon(
                   onPressed: _busy ? null : _convertToNote,
                   icon: const Icon(Icons.note_alt_outlined, size: 18),
-                  label: const Text('Nota dönüştür'),
+                  label: Text(l10n.convertToNote),
                 ),
               const Spacer(),
               IconButton(
                 onPressed: _busy ? null : _delete,
                 icon: const Icon(Icons.delete_outline),
-                tooltip: 'Sil',
+                tooltip: l10n.delete,
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../data/tooth_canals.dart';
 import '../data/treatment_templates.dart';
+import '../l10n/l10n.dart';
 
 class KanalParamsSection extends StatelessWidget {
   const KanalParamsSection({
@@ -35,6 +36,7 @@ class KanalParamsSection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final codes = canalCodes.isEmpty ? kKanalKodlari : canalCodes;
     final typical = typicalCodes.toSet();
+    final l10n = context.l10n;
 
     return Container(
       width: double.infinity,
@@ -54,8 +56,8 @@ class KanalParamsSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   toothLabel != null
-                      ? 'Kanal parametreleri · Diş $toothLabel'
-                      : 'Kanal Tedavisi Parametreleri',
+                      ? l10n.canalParamsForTooth(toothLabel!)
+                      : l10n.canalParamsTitle,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: scheme.primary,
@@ -75,7 +77,7 @@ class KanalParamsSection extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           Text(
-            'Kanal Boyu (mm)',
+            l10n.canalLengthMm,
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
@@ -119,7 +121,7 @@ class KanalParamsSection extends StatelessWidget {
                         ],
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
-                          labelText: kod,
+                          labelText: canalLabel(kod),
                           isDense: true,
                           filled: isExtra,
                           fillColor: isExtra
@@ -140,7 +142,7 @@ class KanalParamsSection extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onAddCanal,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Ekstra'),
+                  label: Text(l10n.extra),
                   style: OutlinedButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -150,28 +152,31 @@ class KanalParamsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Text('Eğe Sistemi', style: Theme.of(context).textTheme.labelLarge),
+          Text(l10n.fileSystem, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: kEgeSistemleri.map((ege) {
               return ChoiceChip(
-                label: Text(ege),
+                label: Text(egeLabel(ege)!),
                 selected: selectedEge == ege,
                 onSelected: (_) => onEgeChanged(ege),
               );
             }).toList(),
           ),
           const SizedBox(height: 14),
-          Text('Kanal İçi İlaç', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            l10n.intracanalMedicament,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: kKanalIlaclari.map((ilac) {
               return ChoiceChip(
-                label: Text(ilac),
+                label: Text(ilacLabel(ilac)!),
                 selected: selectedIlac == ilac,
                 onSelected: (_) => onIlacChanged(ilac),
               );

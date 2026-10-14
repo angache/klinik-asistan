@@ -786,4 +786,632 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get changeRole => 'Changer le rôle';
+
+  @override
+  String get scopeTooth => 'Dent';
+
+  @override
+  String get scopeUpperJaw => 'Maxillaire';
+
+  @override
+  String get scopeLowerJaw => 'Mandibule';
+
+  @override
+  String get scopeFullMouth => 'Bouche entière';
+
+  @override
+  String scopeToothWithNumber(String teeth) {
+    return 'Dent : $teeth';
+  }
+
+  @override
+  String get fieldScope => 'Zone';
+
+  @override
+  String get fieldTooth => 'Dent';
+
+  @override
+  String get fieldTitle => 'Titre';
+
+  @override
+  String get fieldNote => 'Note';
+
+  @override
+  String get fieldCanalLength => 'Longueur canalaire';
+
+  @override
+  String get fieldFile => 'Lime';
+
+  @override
+  String get fieldMedicament => 'Médication';
+
+  @override
+  String get fieldDate => 'Date';
+
+  @override
+  String photosAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos ajoutées',
+      one: '1 photo ajoutée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos supprimées',
+      one: '1 photo supprimée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get canalMain => 'Principal';
+
+  @override
+  String get handFile => 'Lime manuelle';
+
+  @override
+  String get noMedicament => 'Sans médication';
+
+  @override
+  String get errNoteConflict =>
+      'Cet acte a été modifié par quelqu\'un d\'autre entre-temps. Actualisez la liste et réessayez.';
+
+  @override
+  String get errNoClinicSelected =>
+      'Aucun cabinet sélectionné — connectez-vous d\'abord.';
+
+  @override
+  String get errNoPermissionDeletePatient =>
+      'Vous n\'avez pas l\'autorisation de supprimer ce patient';
+
+  @override
+  String get errNoPermissionDeleteNote =>
+      'Vous n\'avez pas l\'autorisation de supprimer cet acte';
+
+  @override
+  String labFollowUpTitle(String title) {
+    return 'Labo : $title';
+  }
+
+  @override
+  String labExpectedReturnOn(String date) {
+    return 'Retour labo prévu : $date';
+  }
+
+  @override
+  String labExpectedReturnFor(String date, String name) {
+    return 'Retour labo prévu : $date · $name';
+  }
+
+  @override
+  String get savingEllipsis => 'Enregistrement…';
+
+  @override
+  String get procedureDate => 'Date de l\'acte';
+
+  @override
+  String get select => 'Choisir';
+
+  @override
+  String get expectedLabReturn => 'Retour labo prévu';
+
+  @override
+  String get followUpDate => 'Date de contrôle';
+
+  @override
+  String get errSelectOrTypeProcedure =>
+      'Choisissez un acte ou saisissez un titre';
+
+  @override
+  String get errSelectScope => 'Choisissez une zone';
+
+  @override
+  String get errSelectTooth => 'Choisissez au moins une dent';
+
+  @override
+  String get errSelectLabDate => 'Choisissez la date de retour labo prévue';
+
+  @override
+  String get errSelectFollowUpDate => 'Choisissez la date de contrôle';
+
+  @override
+  String get errFollowUpNoteRequired => 'Saisissez une note de suivi';
+
+  @override
+  String get uploadingPhotos => 'Envoi des photos vers le cloud…';
+
+  @override
+  String get savingProcedure => 'Enregistrement de l\'acte…';
+
+  @override
+  String uploadingPhotoProgress(int current, int total) {
+    return 'Envoi de la photo ($current/$total)…';
+  }
+
+  @override
+  String saveFailed(String error) {
+    return 'Échec de l\'enregistrement : $error';
+  }
+
+  @override
+  String get creatingLabReminder => 'Création du rappel labo…';
+
+  @override
+  String get creatingFollowUpReminder => 'Création du rappel de contrôle…';
+
+  @override
+  String followUpTitle(String title) {
+    return 'Contrôle : $title';
+  }
+
+  @override
+  String get reminderKindLab => 'labo';
+
+  @override
+  String get reminderKindFollowUp => 'contrôle';
+
+  @override
+  String reminderCreateFailed(String kinds) {
+    return 'Acte enregistré, mais ces rappels n\'ont pas pu être créés : $kinds. Ajoutez-les depuis l\'écran Suivis.';
+  }
+
+  @override
+  String get planForNextSession => 'Prévoir pour la prochaine séance';
+
+  @override
+  String saveTeethCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Enregistrer $count dents',
+      one: 'Enregistrer 1 dent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pastRecordHint =>
+      'Ancien enregistrement (repris du cahier papier)';
+
+  @override
+  String get change => 'Modifier';
+
+  @override
+  String get procedureSection => 'Acte';
+
+  @override
+  String get procedureSectionHint =>
+      'Choisissez au moins un acte ou saisissez un titre';
+
+  @override
+  String get procedureTitleLabel => 'Titre de l\'acte';
+
+  @override
+  String get noteOptionalLabel => 'Note (facultative)';
+
+  @override
+  String get noteHint => 'Écrivez ici si nécessaire…';
+
+  @override
+  String get addFollowUpSubtitle => 'Date de contrôle après l\'acte et rappel';
+
+  @override
+  String get followUpNoteLabel => 'Note de suivi';
+
+  @override
+  String get followUpNoteHint => 'ex. percussion et contrôle radiographique';
+
+  @override
+  String get presetOneWeek => '1 semaine';
+
+  @override
+  String get presetOneMonth => '1 mois';
+
+  @override
+  String get presetThreeMonths => '3 mois';
+
+  @override
+  String get presetSixMonths => '6 mois';
+
+  @override
+  String get pickDate => 'Choisir une date';
+
+  @override
+  String get remindWhenLabel => 'Quand faut-il vous rappeler ?';
+
+  @override
+  String get remindOnDay => 'Le jour du contrôle';
+
+  @override
+  String get remindOneDayBefore => '1 jour avant';
+
+  @override
+  String get remindThreeDaysBefore => '3 jours avant';
+
+  @override
+  String get remindOneWeekBefore => '1 semaine avant';
+
+  @override
+  String followUpSummary(String date, String reminder) {
+    return 'Contrôle : $date · Rappel : $reminder';
+  }
+
+  @override
+  String get scopeToothRequired =>
+      'Le choix d\'une dent est obligatoire pour cet acte';
+
+  @override
+  String get scopeRequired => 'Le choix d\'une zone est obligatoire';
+
+  @override
+  String get scopeSuitable => 'Zone adaptée à l\'acte';
+
+  @override
+  String get canalSelectToothFirst =>
+      'Choisissez d\'abord une dent pour saisir les paramètres canalaires. Avec plusieurs dents, chaque dent est enregistrée séparément.';
+
+  @override
+  String get canalPerToothTitle => 'Détails canalaires par dent';
+
+  @override
+  String get canalPerToothHint =>
+      'Touchez une dent et saisissez ses paramètres. Chaque dent est enregistrée comme une note distincte.';
+
+  @override
+  String toothNumber(String tooth) {
+    return 'Dent $tooth';
+  }
+
+  @override
+  String get photoSection => 'Photo';
+
+  @override
+  String get photoPrivacyHint =>
+      'Le visage du patient ne doit pas apparaître. Uniquement des images de l\'acte / intrabuccales.';
+
+  @override
+  String get planningSection => 'Planification';
+
+  @override
+  String get labCountsAsDone =>
+      'Si envoyé au labo, l\'acte est considéré comme réalisé';
+
+  @override
+  String get info => 'Info';
+
+  @override
+  String get planInfoLabBlocked =>
+      'Cette option est indisponible lorsque « Envoyé au labo » est coché ; l\'acte est considéré comme réalisé lors de cette séance.';
+
+  @override
+  String get planInfo =>
+      'L\'acte est considéré comme non réalisé aujourd\'hui. Le patient est signalé en haut lors de sa prochaine visite ; une fois marqué « Fait », il est ajouté à l\'historique des actes de ce jour.';
+
+  @override
+  String get sentToLab => 'Envoyé au labo';
+
+  @override
+  String get sentToLabInfo =>
+      'Cochez lorsque le travail est envoyé au laboratoire. La liste des suivis et une notification vous le rappellent 1 jour avant la date de retour prévue. L\'acte est alors considéré comme réalisé et « Prévoir pour la prochaine séance » est désactivé.';
+
+  @override
+  String addExtraCanalForTooth(String tooth) {
+    return 'Ajouter un canal supplémentaire · Dent $tooth';
+  }
+
+  @override
+  String get addExtraCanal => 'Ajouter un canal supplémentaire';
+
+  @override
+  String get extraCanalHint =>
+      'Choisissez un canal absent de la liste habituelle ou saisissez un nom personnalisé.';
+
+  @override
+  String get allStandardCanalsAdded =>
+      'Tous les codes standard sont déjà ajoutés. Utilisez un nom personnalisé.';
+
+  @override
+  String get customCanalName => 'Nom de canal personnalisé';
+
+  @override
+  String get customCanalHint => 'ex. MB3, DB2…';
+
+  @override
+  String get editProcedureTitle => 'Modifier l\'acte';
+
+  @override
+  String editVersionHint(int version) {
+    return 'v$version → enregistré comme nouvelle version ; l\'ancienne est conservée';
+  }
+
+  @override
+  String get errTitleRequired => 'Le titre de l\'acte est obligatoire';
+
+  @override
+  String get noChanges => 'Aucune modification';
+
+  @override
+  String get saveAsNewVersion => 'Enregistrer comme nouvelle version';
+
+  @override
+  String get quadrantUpperRight => 'Haut droit';
+
+  @override
+  String get quadrantUpperLeft => 'Haut gauche';
+
+  @override
+  String get quadrantLowerRight => 'Bas droit';
+
+  @override
+  String get quadrantLowerLeft => 'Bas gauche';
+
+  @override
+  String get toothNumberSection => 'Numéro de dent';
+
+  @override
+  String get clearSelection => 'Effacer la sélection';
+
+  @override
+  String get typeToSelectLabel => 'Saisir pour choisir (FDI)';
+
+  @override
+  String get typeToSelectHint => 'ex. 15  ou  14-17  ou  36,37';
+
+  @override
+  String get apply => 'Appliquer';
+
+  @override
+  String get toothSelectorHelp =>
+      'Toucher : choisir · Appui long : agrandir le quadrant · Glisser vers le bas ou OK : fermer';
+
+  @override
+  String get jawUpper => 'HAUT';
+
+  @override
+  String get jawLower => 'BAS';
+
+  @override
+  String get sideRight => 'Droite';
+
+  @override
+  String get sideLeft => 'Gauche';
+
+  @override
+  String get selectTeeth => 'Choisissez des dents';
+
+  @override
+  String selectedTeeth(String teeth) {
+    return 'Sélection : $teeth';
+  }
+
+  @override
+  String get swipeDownToClose =>
+      'Vous pouvez aussi glisser vers le bas pour fermer';
+
+  @override
+  String canalParamsForTooth(String tooth) {
+    return 'Paramètres canalaires · Dent $tooth';
+  }
+
+  @override
+  String get canalParamsTitle => 'Paramètres du traitement canalaire';
+
+  @override
+  String get canalLengthMm => 'Longueur canalaire (mm)';
+
+  @override
+  String get extra => 'Supplément';
+
+  @override
+  String get fileSystem => 'Système de limes';
+
+  @override
+  String get intracanalMedicament => 'Médication intracanalaire';
+
+  @override
+  String toothCanalHint(String tooth, String canals) {
+    return 'Dent $tooth · habituel : $canals — ajoutez-en si nécessaire';
+  }
+
+  @override
+  String get newVersionSaved => 'Nouvelle version enregistrée';
+
+  @override
+  String get deleteProcedureTitle => 'Supprimer l\'acte';
+
+  @override
+  String get deleteProcedureConfirm =>
+      'Cette note et ses éventuelles versions précédentes seront définitivement supprimées.';
+
+  @override
+  String get procedureDeleted => 'Acte supprimé';
+
+  @override
+  String procedureDeleteFailed(String error) {
+    return 'Impossible de supprimer l\'acte : $error';
+  }
+
+  @override
+  String get labShort => 'Labo';
+
+  @override
+  String labReturnShort(String date) {
+    return 'Labo → $date';
+  }
+
+  @override
+  String get history => 'Historique';
+
+  @override
+  String get share => 'Partager';
+
+  @override
+  String get versionHistory => 'Historique des versions';
+
+  @override
+  String historyLoadFailed(String error) {
+    return 'Impossible de charger l\'historique : $error';
+  }
+
+  @override
+  String get noVersionsFound => 'Aucune version trouvée';
+
+  @override
+  String get currentVersion => 'Actuelle';
+
+  @override
+  String get oldVersion => 'Ancienne version';
+
+  @override
+  String get changesInVersion => 'Modifications dans cette version';
+
+  @override
+  String get firstRecord => 'Premier enregistrement';
+
+  @override
+  String get micPermissionRequired => 'L\'autorisation du micro est requise';
+
+  @override
+  String get micPermissionMissing => 'Pas d\'autorisation du micro';
+
+  @override
+  String get recordingEmpty =>
+      'L\'enregistrement est vide ou n\'a pas pu être créé';
+
+  @override
+  String voiceUploadFailed(String error) {
+    return 'Impossible d\'envoyer l\'enregistrement vocal : $error';
+  }
+
+  @override
+  String get quickVoiceNote => 'Note vocale rapide';
+
+  @override
+  String get voicePrivacyHint =>
+      'L\'audio sert uniquement au résumé de l\'acte par le praticien ou l\'assistant(e). Les conversations avec le patient ne sont pas enregistrées.';
+
+  @override
+  String get recordingInProgress => 'Enregistrement en cours…';
+
+  @override
+  String get uploadingVoice => 'Envoi de l\'audio vers le cloud…';
+
+  @override
+  String get voiceStartHint =>
+      'Touchez le micro et parlez, puis touchez « Terminer et enregistrer »';
+
+  @override
+  String get pleaseWait => 'Veuillez patienter…';
+
+  @override
+  String get finishAndSave => 'Terminer et enregistrer';
+
+  @override
+  String playFailed(String error) {
+    return 'Lecture impossible : $error';
+  }
+
+  @override
+  String get memoMarkedProcessed => 'Note vocale marquée comme traitée';
+
+  @override
+  String markFailed(String error) {
+    return 'Impossible de marquer : $error';
+  }
+
+  @override
+  String get deleteVoiceNoteTitle => 'Supprimer la note vocale';
+
+  @override
+  String get deleteVoiceNoteConfirm =>
+      'Cette note vocale sera définitivement supprimée.';
+
+  @override
+  String deleteFailed(String error) {
+    return 'Suppression impossible : $error';
+  }
+
+  @override
+  String get processedVoiceNote => 'Note vocale traitée';
+
+  @override
+  String get pendingVoiceNote => 'Note vocale en attente';
+
+  @override
+  String durationLabel(String duration) {
+    return 'Durée : $duration';
+  }
+
+  @override
+  String get stop => 'Arrêter';
+
+  @override
+  String get listen => 'Écouter';
+
+  @override
+  String get convertToNote => 'Convertir en note';
+
+  @override
+  String get audioFileEmpty => 'Le fichier audio est vide';
+
+  @override
+  String photoOpenFailed(String error) {
+    return 'Impossible d\'ouvrir la photo : $error';
+  }
+
+  @override
+  String photoCount(int count, int max) {
+    return '$count / $max photos';
+  }
+
+  @override
+  String get takePhoto => 'Prendre une photo';
+
+  @override
+  String get fromGallery => 'Depuis la galerie';
+
+  @override
+  String get shareThisPhoto => 'Partager cette photo';
+
+  @override
+  String shareAllPhotos(int count) {
+    return 'Partager toutes les photos ($count)';
+  }
+
+  @override
+  String get procedurePhoto => 'Photo de l\'acte';
+
+  @override
+  String procedurePhotoIndex(int index, int count) {
+    return 'Photo de l\'acte $index/$count';
+  }
+
+  @override
+  String get shareTooltip => 'Partager (WhatsApp, e-mail…)';
+
+  @override
+  String get photoLoadFailed => 'Impossible de charger la photo';
+
+  @override
+  String preparingPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Préparation de $count photos…',
+      one: 'Préparation de la photo…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareFailed(String error) {
+    return 'Partage impossible : $error';
+  }
 }

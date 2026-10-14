@@ -1413,6 +1413,1038 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change role'**
   String get changeRole;
+
+  /// No description provided for @scopeTooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth'**
+  String get scopeTooth;
+
+  /// No description provided for @scopeUpperJaw.
+  ///
+  /// In en, this message translates to:
+  /// **'Upper jaw'**
+  String get scopeUpperJaw;
+
+  /// No description provided for @scopeLowerJaw.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower jaw'**
+  String get scopeLowerJaw;
+
+  /// No description provided for @scopeFullMouth.
+  ///
+  /// In en, this message translates to:
+  /// **'Full mouth'**
+  String get scopeFullMouth;
+
+  /// No description provided for @scopeToothWithNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth: {teeth}'**
+  String scopeToothWithNumber(String teeth);
+
+  /// No description provided for @fieldScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get fieldScope;
+
+  /// No description provided for @fieldTooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth'**
+  String get fieldTooth;
+
+  /// No description provided for @fieldTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get fieldTitle;
+
+  /// No description provided for @fieldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get fieldNote;
+
+  /// No description provided for @fieldCanalLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Canal length'**
+  String get fieldCanalLength;
+
+  /// No description provided for @fieldFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get fieldFile;
+
+  /// No description provided for @fieldMedicament.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicament'**
+  String get fieldMedicament;
+
+  /// No description provided for @fieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get fieldDate;
+
+  /// No description provided for @photosAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo added} other{{count} photos added}}'**
+  String photosAdded(int count);
+
+  /// No description provided for @photosRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo removed} other{{count} photos removed}}'**
+  String photosRemoved(int count);
+
+  /// No description provided for @canalMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Main'**
+  String get canalMain;
+
+  /// No description provided for @handFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Hand file'**
+  String get handFile;
+
+  /// No description provided for @noMedicament.
+  ///
+  /// In en, this message translates to:
+  /// **'No medicament'**
+  String get noMedicament;
+
+  /// No description provided for @errNoteConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This procedure was edited by someone else in the meantime. Refresh the list and try again.'**
+  String get errNoteConflict;
+
+  /// No description provided for @errNoClinicSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No clinic selected — please sign in first.'**
+  String get errNoClinicSelected;
+
+  /// No description provided for @errNoPermissionDeletePatient.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to delete this patient'**
+  String get errNoPermissionDeletePatient;
+
+  /// No description provided for @errNoPermissionDeleteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to delete this procedure'**
+  String get errNoPermissionDeleteNote;
+
+  /// No description provided for @labFollowUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab: {title}'**
+  String labFollowUpTitle(String title);
+
+  /// No description provided for @labExpectedReturnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected lab return: {date}'**
+  String labExpectedReturnOn(String date);
+
+  /// No description provided for @labExpectedReturnFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected lab return: {date} · {name}'**
+  String labExpectedReturnFor(String date, String name);
+
+  /// No description provided for @savingEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get savingEllipsis;
+
+  /// No description provided for @procedureDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure date'**
+  String get procedureDate;
+
+  /// No description provided for @select.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get select;
+
+  /// No description provided for @expectedLabReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected lab return'**
+  String get expectedLabReturn;
+
+  /// No description provided for @followUpDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up date'**
+  String get followUpDate;
+
+  /// No description provided for @errSelectOrTypeProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a procedure or type a title'**
+  String get errSelectOrTypeProcedure;
+
+  /// No description provided for @errSelectScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a scope'**
+  String get errSelectScope;
+
+  /// No description provided for @errSelectTooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one tooth'**
+  String get errSelectTooth;
+
+  /// No description provided for @errSelectLabDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the expected lab return date'**
+  String get errSelectLabDate;
+
+  /// No description provided for @errSelectFollowUpDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the check-up date'**
+  String get errSelectFollowUpDate;
+
+  /// No description provided for @errFollowUpNoteRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a follow-up note'**
+  String get errFollowUpNoteRequired;
+
+  /// No description provided for @uploadingPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading photos to the cloud…'**
+  String get uploadingPhotos;
+
+  /// No description provided for @savingProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving procedure…'**
+  String get savingProcedure;
+
+  /// No description provided for @uploadingPhotoProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading photo ({current}/{total})…'**
+  String uploadingPhotoProgress(int current, int total);
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed: {error}'**
+  String saveFailed(String error);
+
+  /// No description provided for @creatingLabReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating lab reminder…'**
+  String get creatingLabReminder;
+
+  /// No description provided for @creatingFollowUpReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating check-up reminder…'**
+  String get creatingFollowUpReminder;
+
+  /// No description provided for @followUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up: {title}'**
+  String followUpTitle(String title);
+
+  /// No description provided for @reminderKindLab.
+  ///
+  /// In en, this message translates to:
+  /// **'lab'**
+  String get reminderKindLab;
+
+  /// No description provided for @reminderKindFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'check-up'**
+  String get reminderKindFollowUp;
+
+  /// No description provided for @reminderCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure saved, but these reminders could not be created: {kinds}. Add them from the Follow-ups screen.'**
+  String reminderCreateFailed(String kinds);
+
+  /// No description provided for @planForNextSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan for next session'**
+  String get planForNextSession;
+
+  /// No description provided for @saveTeethCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Save 1 tooth} other{Save {count} teeth}}'**
+  String saveTeethCount(int count);
+
+  /// No description provided for @pastRecordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Past record (transferred from paper records)'**
+  String get pastRecordHint;
+
+  /// No description provided for @change.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get change;
+
+  /// No description provided for @procedureSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure'**
+  String get procedureSection;
+
+  /// No description provided for @procedureSectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one procedure or type a title'**
+  String get procedureSectionHint;
+
+  /// No description provided for @procedureTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure title'**
+  String get procedureTitleLabel;
+
+  /// No description provided for @noteOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get noteOptionalLabel;
+
+  /// No description provided for @noteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write here if needed…'**
+  String get noteHint;
+
+  /// No description provided for @addFollowUpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Post-procedure check-up date and reminder'**
+  String get addFollowUpSubtitle;
+
+  /// No description provided for @followUpNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up note'**
+  String get followUpNoteLabel;
+
+  /// No description provided for @followUpNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Percussion and radiographic check'**
+  String get followUpNoteHint;
+
+  /// No description provided for @presetOneWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'1 week'**
+  String get presetOneWeek;
+
+  /// No description provided for @presetOneMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'1 month'**
+  String get presetOneMonth;
+
+  /// No description provided for @presetThreeMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'3 months'**
+  String get presetThreeMonths;
+
+  /// No description provided for @presetSixMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'6 months'**
+  String get presetSixMonths;
+
+  /// No description provided for @pickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick date'**
+  String get pickDate;
+
+  /// No description provided for @remindWhenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'When should we remind you?'**
+  String get remindWhenLabel;
+
+  /// No description provided for @remindOnDay.
+  ///
+  /// In en, this message translates to:
+  /// **'On the check-up day'**
+  String get remindOnDay;
+
+  /// No description provided for @remindOneDayBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day before'**
+  String get remindOneDayBefore;
+
+  /// No description provided for @remindThreeDaysBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'3 days before'**
+  String get remindThreeDaysBefore;
+
+  /// No description provided for @remindOneWeekBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 week before'**
+  String get remindOneWeekBefore;
+
+  /// No description provided for @followUpSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up: {date} · Reminder: {reminder}'**
+  String followUpSummary(String date, String reminder);
+
+  /// No description provided for @scopeToothRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth selection is required for this procedure'**
+  String get scopeToothRequired;
+
+  /// No description provided for @scopeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope selection is required'**
+  String get scopeRequired;
+
+  /// No description provided for @scopeSuitable.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope suited to the procedure'**
+  String get scopeSuitable;
+
+  /// No description provided for @canalSelectToothFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a tooth first to enter canal parameters. With several teeth, each tooth is saved separately.'**
+  String get canalSelectToothFirst;
+
+  /// No description provided for @canalPerToothTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Canal details for each tooth'**
+  String get canalPerToothTitle;
+
+  /// No description provided for @canalPerToothHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a tooth and enter its parameters. Each tooth is saved as a separate note.'**
+  String get canalPerToothHint;
+
+  /// No description provided for @toothNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth {tooth}'**
+  String toothNumber(String tooth);
+
+  /// No description provided for @photoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get photoSection;
+
+  /// No description provided for @photoPrivacyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not show the patient\'s face. Only procedure / intraoral images.'**
+  String get photoPrivacyHint;
+
+  /// No description provided for @planningSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning'**
+  String get planningSection;
+
+  /// No description provided for @labCountsAsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'If sent to the lab, the procedure counts as done'**
+  String get labCountsAsDone;
+
+  /// No description provided for @info.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get info;
+
+  /// No description provided for @planInfoLabBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This option is unavailable while \'Sent to lab\' is checked; the procedure counts as done in this session.'**
+  String get planInfoLabBlocked;
+
+  /// No description provided for @planInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'The procedure is treated as not done today. The patient is flagged at the top on their next visit; once marked “Done”, it is added to that day\'s procedure history.'**
+  String get planInfo;
+
+  /// No description provided for @sentToLab.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to lab'**
+  String get sentToLab;
+
+  /// No description provided for @sentToLabInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this when the work is sent to the laboratory. The follow-up list and a notification remind you 1 day before the expected return date. With this option the procedure counts as done and “Plan for next session” is turned off.'**
+  String get sentToLabInfo;
+
+  /// No description provided for @addExtraCanalForTooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Add extra canal · Tooth {tooth}'**
+  String addExtraCanalForTooth(String tooth);
+
+  /// No description provided for @addExtraCanal.
+  ///
+  /// In en, this message translates to:
+  /// **'Add extra canal'**
+  String get addExtraCanal;
+
+  /// No description provided for @extraCanalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a canal that is not in the typical list, or type a custom name.'**
+  String get extraCanalHint;
+
+  /// No description provided for @allStandardCanalsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'All standard codes are already added. Use a custom name.'**
+  String get allStandardCanalsAdded;
+
+  /// No description provided for @customCanalName.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom canal name'**
+  String get customCanalName;
+
+  /// No description provided for @customCanalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. MB3, DB2…'**
+  String get customCanalHint;
+
+  /// No description provided for @editProcedureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit procedure'**
+  String get editProcedureTitle;
+
+  /// No description provided for @editVersionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'v{version} → saved as a new version; the old one is kept'**
+  String editVersionHint(int version);
+
+  /// No description provided for @errTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure title is required'**
+  String get errTitleRequired;
+
+  /// No description provided for @noChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes'**
+  String get noChanges;
+
+  /// No description provided for @saveAsNewVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as new version'**
+  String get saveAsNewVersion;
+
+  /// No description provided for @quadrantUpperRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Upper right'**
+  String get quadrantUpperRight;
+
+  /// No description provided for @quadrantUpperLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Upper left'**
+  String get quadrantUpperLeft;
+
+  /// No description provided for @quadrantLowerRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower right'**
+  String get quadrantLowerRight;
+
+  /// No description provided for @quadrantLowerLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower left'**
+  String get quadrantLowerLeft;
+
+  /// No description provided for @toothNumberSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth number'**
+  String get toothNumberSection;
+
+  /// No description provided for @clearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get clearSelection;
+
+  /// No description provided for @typeToSelectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type to select (FDI)'**
+  String get typeToSelectLabel;
+
+  /// No description provided for @typeToSelectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 15  or  14-17  or  36,37'**
+  String get typeToSelectHint;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @toothSelectorHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap: select · Long press: zoom quadrant · Swipe down or OK: close'**
+  String get toothSelectorHelp;
+
+  /// No description provided for @jawUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'UPPER'**
+  String get jawUpper;
+
+  /// No description provided for @jawLower.
+  ///
+  /// In en, this message translates to:
+  /// **'LOWER'**
+  String get jawLower;
+
+  /// No description provided for @sideRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get sideRight;
+
+  /// No description provided for @sideLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get sideLeft;
+
+  /// No description provided for @selectTeeth.
+  ///
+  /// In en, this message translates to:
+  /// **'Select teeth'**
+  String get selectTeeth;
+
+  /// No description provided for @selectedTeeth.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {teeth}'**
+  String selectedTeeth(String teeth);
+
+  /// No description provided for @swipeDownToClose.
+  ///
+  /// In en, this message translates to:
+  /// **'You can also swipe down to close'**
+  String get swipeDownToClose;
+
+  /// No description provided for @canalParamsForTooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Canal parameters · Tooth {tooth}'**
+  String canalParamsForTooth(String tooth);
+
+  /// No description provided for @canalParamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Root canal treatment parameters'**
+  String get canalParamsTitle;
+
+  /// No description provided for @canalLengthMm.
+  ///
+  /// In en, this message translates to:
+  /// **'Canal length (mm)'**
+  String get canalLengthMm;
+
+  /// No description provided for @extra.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra'**
+  String get extra;
+
+  /// No description provided for @fileSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'File system'**
+  String get fileSystem;
+
+  /// No description provided for @intracanalMedicament.
+  ///
+  /// In en, this message translates to:
+  /// **'Intracanal medicament'**
+  String get intracanalMedicament;
+
+  /// No description provided for @toothCanalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth {tooth} · typical: {canals} — add extras if needed'**
+  String toothCanalHint(String tooth, String canals);
+
+  /// No description provided for @newVersionSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'New version saved'**
+  String get newVersionSaved;
+
+  /// No description provided for @deleteProcedureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete procedure'**
+  String get deleteProcedureTitle;
+
+  /// No description provided for @deleteProcedureConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This note and any previous versions will be permanently deleted.'**
+  String get deleteProcedureConfirm;
+
+  /// No description provided for @procedureDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure deleted'**
+  String get procedureDeleted;
+
+  /// No description provided for @procedureDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete procedure: {error}'**
+  String procedureDeleteFailed(String error);
+
+  /// No description provided for @labShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab'**
+  String get labShort;
+
+  /// No description provided for @labReturnShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab → {date}'**
+  String labReturnShort(String date);
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @versionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get versionHistory;
+
+  /// No description provided for @historyLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load history: {error}'**
+  String historyLoadFailed(String error);
+
+  /// No description provided for @noVersionsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No versions found'**
+  String get noVersionsFound;
+
+  /// No description provided for @currentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get currentVersion;
+
+  /// No description provided for @oldVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Old version'**
+  String get oldVersion;
+
+  /// No description provided for @changesInVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes in this version'**
+  String get changesInVersion;
+
+  /// No description provided for @firstRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'First record'**
+  String get firstRecord;
+
+  /// No description provided for @micPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission is required'**
+  String get micPermissionRequired;
+
+  /// No description provided for @micPermissionMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No microphone permission'**
+  String get micPermissionMissing;
+
+  /// No description provided for @recordingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording is empty or could not be created'**
+  String get recordingEmpty;
+
+  /// No description provided for @voiceUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not upload the voice recording: {error}'**
+  String voiceUploadFailed(String error);
+
+  /// No description provided for @quickVoiceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick voice note'**
+  String get quickVoiceNote;
+
+  /// No description provided for @voicePrivacyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio is only for the doctor\'s or assistant\'s procedure summary. Patient conversations are not recorded.'**
+  String get voicePrivacyHint;
+
+  /// No description provided for @recordingInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording…'**
+  String get recordingInProgress;
+
+  /// No description provided for @uploadingVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading audio to the cloud…'**
+  String get uploadingVoice;
+
+  /// No description provided for @voiceStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the microphone and speak, then tap Finish & save'**
+  String get voiceStartHint;
+
+  /// No description provided for @pleaseWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait…'**
+  String get pleaseWait;
+
+  /// No description provided for @finishAndSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish & save'**
+  String get finishAndSave;
+
+  /// No description provided for @playFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not play: {error}'**
+  String playFailed(String error);
+
+  /// No description provided for @memoMarkedProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note marked as processed'**
+  String get memoMarkedProcessed;
+
+  /// No description provided for @markFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not mark: {error}'**
+  String markFailed(String error);
+
+  /// No description provided for @deleteVoiceNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete voice note'**
+  String get deleteVoiceNoteTitle;
+
+  /// No description provided for @deleteVoiceNoteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This voice note will be permanently deleted.'**
+  String get deleteVoiceNoteConfirm;
+
+  /// No description provided for @deleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete: {error}'**
+  String deleteFailed(String error);
+
+  /// No description provided for @processedVoiceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed voice note'**
+  String get processedVoiceNote;
+
+  /// No description provided for @pendingVoiceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending voice note'**
+  String get pendingVoiceNote;
+
+  /// No description provided for @durationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {duration}'**
+  String durationLabel(String duration);
+
+  /// No description provided for @stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stop;
+
+  /// No description provided for @listen.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get listen;
+
+  /// No description provided for @convertToNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert to note'**
+  String get convertToNote;
+
+  /// No description provided for @audioFileEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The audio file is empty'**
+  String get audioFileEmpty;
+
+  /// No description provided for @photoOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open photo: {error}'**
+  String photoOpenFailed(String error);
+
+  /// No description provided for @photoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} / {max} photos'**
+  String photoCount(int count, int max);
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get takePhoto;
+
+  /// No description provided for @fromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'From gallery'**
+  String get fromGallery;
+
+  /// No description provided for @shareThisPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this photo'**
+  String get shareThisPhoto;
+
+  /// No description provided for @shareAllPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Share all photos ({count})'**
+  String shareAllPhotos(int count);
+
+  /// No description provided for @procedurePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure photo'**
+  String get procedurePhoto;
+
+  /// No description provided for @procedurePhotoIndex.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure photo {index}/{count}'**
+  String procedurePhotoIndex(int index, int count);
+
+  /// No description provided for @shareTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share (WhatsApp, email…)'**
+  String get shareTooltip;
+
+  /// No description provided for @photoLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load photo'**
+  String get photoLoadFailed;
+
+  /// No description provided for @preparingPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Preparing photo…} other{Preparing {count} photos…}}'**
+  String preparingPhotos(int count);
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not share: {error}'**
+  String shareFailed(String error);
 }
 
 class _AppLocalizationsDelegate

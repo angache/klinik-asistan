@@ -770,4 +770,633 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get changeRole => 'Изменить роль';
+
+  @override
+  String get scopeTooth => 'Зуб';
+
+  @override
+  String get scopeUpperJaw => 'Верхняя челюсть';
+
+  @override
+  String get scopeLowerJaw => 'Нижняя челюсть';
+
+  @override
+  String get scopeFullMouth => 'Вся полость рта';
+
+  @override
+  String scopeToothWithNumber(String teeth) {
+    return 'Зуб: $teeth';
+  }
+
+  @override
+  String get fieldScope => 'Область';
+
+  @override
+  String get fieldTooth => 'Зуб';
+
+  @override
+  String get fieldTitle => 'Название';
+
+  @override
+  String get fieldNote => 'Заметка';
+
+  @override
+  String get fieldCanalLength => 'Длина канала';
+
+  @override
+  String get fieldFile => 'Файл';
+
+  @override
+  String get fieldMedicament => 'Препарат';
+
+  @override
+  String get fieldDate => 'Дата';
+
+  @override
+  String photosAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Добавлено $count фото',
+      one: 'Добавлено 1 фото',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Удалено $count фото',
+      one: 'Удалено 1 фото',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get canalMain => 'Основной';
+
+  @override
+  String get handFile => 'Ручной файл';
+
+  @override
+  String get noMedicament => 'Без препарата';
+
+  @override
+  String get errNoteConflict =>
+      'Эту процедуру тем временем изменил другой пользователь. Обновите список и попробуйте снова.';
+
+  @override
+  String get errNoClinicSelected => 'Клиника не выбрана — сначала войдите.';
+
+  @override
+  String get errNoPermissionDeletePatient =>
+      'У вас нет прав на удаление этого пациента';
+
+  @override
+  String get errNoPermissionDeleteNote =>
+      'У вас нет прав на удаление этой процедуры';
+
+  @override
+  String labFollowUpTitle(String title) {
+    return 'Лаборатория: $title';
+  }
+
+  @override
+  String labExpectedReturnOn(String date) {
+    return 'Ожидаемый возврат из лаборатории: $date';
+  }
+
+  @override
+  String labExpectedReturnFor(String date, String name) {
+    return 'Ожидаемый возврат из лаборатории: $date · $name';
+  }
+
+  @override
+  String get savingEllipsis => 'Сохранение…';
+
+  @override
+  String get procedureDate => 'Дата процедуры';
+
+  @override
+  String get select => 'Выбрать';
+
+  @override
+  String get expectedLabReturn => 'Ожидаемый возврат из лаборатории';
+
+  @override
+  String get followUpDate => 'Дата контроля';
+
+  @override
+  String get errSelectOrTypeProcedure =>
+      'Выберите процедуру или введите название';
+
+  @override
+  String get errSelectScope => 'Выберите область';
+
+  @override
+  String get errSelectTooth => 'Выберите хотя бы один зуб';
+
+  @override
+  String get errSelectLabDate =>
+      'Выберите ожидаемую дату возврата из лаборатории';
+
+  @override
+  String get errSelectFollowUpDate => 'Выберите дату контроля';
+
+  @override
+  String get errFollowUpNoteRequired => 'Введите текст напоминания';
+
+  @override
+  String get uploadingPhotos => 'Фото загружаются в облако…';
+
+  @override
+  String get savingProcedure => 'Процедура сохраняется…';
+
+  @override
+  String uploadingPhotoProgress(int current, int total) {
+    return 'Загрузка фото ($current/$total)…';
+  }
+
+  @override
+  String saveFailed(String error) {
+    return 'Не удалось сохранить: $error';
+  }
+
+  @override
+  String get creatingLabReminder => 'Создаётся напоминание о лаборатории…';
+
+  @override
+  String get creatingFollowUpReminder => 'Создаётся напоминание о контроле…';
+
+  @override
+  String followUpTitle(String title) {
+    return 'Контроль: $title';
+  }
+
+  @override
+  String get reminderKindLab => 'лаборатория';
+
+  @override
+  String get reminderKindFollowUp => 'контроль';
+
+  @override
+  String reminderCreateFailed(String kinds) {
+    return 'Процедура сохранена, но не удалось создать напоминания: $kinds. Добавьте их в разделе «Напоминания».';
+  }
+
+  @override
+  String get planForNextSession => 'Запланировать на следующий визит';
+
+  @override
+  String saveTeethCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сохранить $count зуба',
+      many: 'Сохранить $count зубов',
+      few: 'Сохранить $count зуба',
+      one: 'Сохранить $count зуб',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pastRecordHint => 'Прошлая запись (перенос из бумажного журнала)';
+
+  @override
+  String get change => 'Изменить';
+
+  @override
+  String get procedureSection => 'Процедура';
+
+  @override
+  String get procedureSectionHint =>
+      'Выберите хотя бы одну процедуру или введите название';
+
+  @override
+  String get procedureTitleLabel => 'Название процедуры';
+
+  @override
+  String get noteOptionalLabel => 'Заметка (необязательно)';
+
+  @override
+  String get noteHint => 'При необходимости напишите здесь…';
+
+  @override
+  String get addFollowUpSubtitle =>
+      'Дата контроля после процедуры и напоминание';
+
+  @override
+  String get followUpNoteLabel => 'Текст напоминания';
+
+  @override
+  String get followUpNoteHint =>
+      'напр. перкуссия и рентгенологический контроль';
+
+  @override
+  String get presetOneWeek => '1 неделя';
+
+  @override
+  String get presetOneMonth => '1 месяц';
+
+  @override
+  String get presetThreeMonths => '3 месяца';
+
+  @override
+  String get presetSixMonths => '6 месяцев';
+
+  @override
+  String get pickDate => 'Выбрать дату';
+
+  @override
+  String get remindWhenLabel => 'Когда напомнить?';
+
+  @override
+  String get remindOnDay => 'В день контроля';
+
+  @override
+  String get remindOneDayBefore => 'За 1 день';
+
+  @override
+  String get remindThreeDaysBefore => 'За 3 дня';
+
+  @override
+  String get remindOneWeekBefore => 'За 1 неделю';
+
+  @override
+  String followUpSummary(String date, String reminder) {
+    return 'Контроль: $date · Напоминание: $reminder';
+  }
+
+  @override
+  String get scopeToothRequired => 'Для этой процедуры нужно выбрать зуб';
+
+  @override
+  String get scopeRequired => 'Нужно выбрать область';
+
+  @override
+  String get scopeSuitable => 'Подходящая область для процедуры';
+
+  @override
+  String get canalSelectToothFirst =>
+      'Сначала выберите зуб для параметров канала. При нескольких зубах каждый сохраняется отдельно.';
+
+  @override
+  String get canalPerToothTitle => 'Данные каналов для каждого зуба';
+
+  @override
+  String get canalPerToothHint =>
+      'Нажмите на зуб и введите параметры. Каждый зуб сохраняется отдельной записью.';
+
+  @override
+  String toothNumber(String tooth) {
+    return 'Зуб $tooth';
+  }
+
+  @override
+  String get photoSection => 'Фото';
+
+  @override
+  String get photoPrivacyHint =>
+      'Лицо пациента не должно быть видно. Только снимки процедуры / полости рта.';
+
+  @override
+  String get planningSection => 'Планирование';
+
+  @override
+  String get labCountsAsDone =>
+      'Если отправлено в лабораторию, процедура считается выполненной';
+
+  @override
+  String get info => 'Информация';
+
+  @override
+  String get planInfoLabBlocked =>
+      'Эта опция недоступна, пока отмечено «Отправлено в лабораторию»; процедура считается выполненной в этот визит.';
+
+  @override
+  String get planInfo =>
+      'Процедура считается невыполненной сегодня. При следующем визите пациент будет отмечен вверху; после отметки «Выполнено» она добавится в историю процедур того дня.';
+
+  @override
+  String get sentToLab => 'Отправлено в лабораторию';
+
+  @override
+  String get sentToLabInfo =>
+      'Отметьте, когда работа отправлена в лабораторию. Список напоминаний и уведомление напомнят за 1 день до ожидаемой даты возврата. При этом процедура считается выполненной, а «Запланировать на следующий визит» отключается.';
+
+  @override
+  String addExtraCanalForTooth(String tooth) {
+    return 'Добавить дополнительный канал · Зуб $tooth';
+  }
+
+  @override
+  String get addExtraCanal => 'Добавить дополнительный канал';
+
+  @override
+  String get extraCanalHint =>
+      'Выберите канал, которого нет в типичном списке, или введите своё название.';
+
+  @override
+  String get allStandardCanalsAdded =>
+      'Все стандартные коды уже добавлены. Используйте своё название.';
+
+  @override
+  String get customCanalName => 'Своё название канала';
+
+  @override
+  String get customCanalHint => 'напр. MB3, DB2…';
+
+  @override
+  String get editProcedureTitle => 'Редактировать процедуру';
+
+  @override
+  String editVersionHint(int version) {
+    return 'v$version → сохраняется новая версия; старая остаётся';
+  }
+
+  @override
+  String get errTitleRequired => 'Название процедуры обязательно';
+
+  @override
+  String get noChanges => 'Изменений нет';
+
+  @override
+  String get saveAsNewVersion => 'Сохранить как новую версию';
+
+  @override
+  String get quadrantUpperRight => 'Верхний правый';
+
+  @override
+  String get quadrantUpperLeft => 'Верхний левый';
+
+  @override
+  String get quadrantLowerRight => 'Нижний правый';
+
+  @override
+  String get quadrantLowerLeft => 'Нижний левый';
+
+  @override
+  String get toothNumberSection => 'Номер зуба';
+
+  @override
+  String get clearSelection => 'Очистить выбор';
+
+  @override
+  String get typeToSelectLabel => 'Ввести вручную (FDI)';
+
+  @override
+  String get typeToSelectHint => 'напр. 15  или  14-17  или  36,37';
+
+  @override
+  String get apply => 'Применить';
+
+  @override
+  String get toothSelectorHelp =>
+      'Нажатие: выбрать · Долгое нажатие: увеличить квадрант · Свайп вниз или ОК: закрыть';
+
+  @override
+  String get jawUpper => 'ВЕРХ';
+
+  @override
+  String get jawLower => 'НИЗ';
+
+  @override
+  String get sideRight => 'Право';
+
+  @override
+  String get sideLeft => 'Лево';
+
+  @override
+  String get selectTeeth => 'Выберите зубы';
+
+  @override
+  String selectedTeeth(String teeth) {
+    return 'Выбрано: $teeth';
+  }
+
+  @override
+  String get swipeDownToClose => 'Можно также закрыть свайпом вниз';
+
+  @override
+  String canalParamsForTooth(String tooth) {
+    return 'Параметры канала · Зуб $tooth';
+  }
+
+  @override
+  String get canalParamsTitle => 'Параметры эндодонтического лечения';
+
+  @override
+  String get canalLengthMm => 'Длина канала (мм)';
+
+  @override
+  String get extra => 'Доп.';
+
+  @override
+  String get fileSystem => 'Система файлов';
+
+  @override
+  String get intracanalMedicament => 'Внутриканальный препарат';
+
+  @override
+  String toothCanalHint(String tooth, String canals) {
+    return 'Зуб $tooth · типично: $canals — при необходимости добавьте другие';
+  }
+
+  @override
+  String get newVersionSaved => 'Новая версия сохранена';
+
+  @override
+  String get deleteProcedureTitle => 'Удалить процедуру';
+
+  @override
+  String get deleteProcedureConfirm =>
+      'Эта запись и все её предыдущие версии будут удалены безвозвратно.';
+
+  @override
+  String get procedureDeleted => 'Процедура удалена';
+
+  @override
+  String procedureDeleteFailed(String error) {
+    return 'Не удалось удалить процедуру: $error';
+  }
+
+  @override
+  String get labShort => 'Лаб.';
+
+  @override
+  String labReturnShort(String date) {
+    return 'Лаб. → $date';
+  }
+
+  @override
+  String get history => 'История';
+
+  @override
+  String get share => 'Поделиться';
+
+  @override
+  String get versionHistory => 'История версий';
+
+  @override
+  String historyLoadFailed(String error) {
+    return 'Не удалось загрузить историю: $error';
+  }
+
+  @override
+  String get noVersionsFound => 'Версии не найдены';
+
+  @override
+  String get currentVersion => 'Текущая';
+
+  @override
+  String get oldVersion => 'Старая версия';
+
+  @override
+  String get changesInVersion => 'Изменения в этой версии';
+
+  @override
+  String get firstRecord => 'Первая запись';
+
+  @override
+  String get micPermissionRequired => 'Нужен доступ к микрофону';
+
+  @override
+  String get micPermissionMissing => 'Нет доступа к микрофону';
+
+  @override
+  String get recordingEmpty => 'Запись пуста или не создана';
+
+  @override
+  String voiceUploadFailed(String error) {
+    return 'Не удалось загрузить аудиозапись: $error';
+  }
+
+  @override
+  String get quickVoiceNote => 'Быстрая голосовая заметка';
+
+  @override
+  String get voicePrivacyHint =>
+      'Запись предназначена только для резюме процедуры врачом или ассистентом. Разговоры с пациентом не записываются.';
+
+  @override
+  String get recordingInProgress => 'Идёт запись…';
+
+  @override
+  String get uploadingVoice => 'Аудио загружается в облако…';
+
+  @override
+  String get voiceStartHint =>
+      'Нажмите на микрофон и говорите, затем нажмите «Завершить и сохранить»';
+
+  @override
+  String get pleaseWait => 'Пожалуйста, подождите…';
+
+  @override
+  String get finishAndSave => 'Завершить и сохранить';
+
+  @override
+  String playFailed(String error) {
+    return 'Не удалось воспроизвести: $error';
+  }
+
+  @override
+  String get memoMarkedProcessed =>
+      'Голосовая заметка отмечена как обработанная';
+
+  @override
+  String markFailed(String error) {
+    return 'Не удалось отметить: $error';
+  }
+
+  @override
+  String get deleteVoiceNoteTitle => 'Удалить голосовую заметку';
+
+  @override
+  String get deleteVoiceNoteConfirm =>
+      'Эта голосовая заметка будет удалена безвозвратно.';
+
+  @override
+  String deleteFailed(String error) {
+    return 'Не удалось удалить: $error';
+  }
+
+  @override
+  String get processedVoiceNote => 'Обработанная голосовая заметка';
+
+  @override
+  String get pendingVoiceNote => 'Необработанная голосовая заметка';
+
+  @override
+  String durationLabel(String duration) {
+    return 'Длительность: $duration';
+  }
+
+  @override
+  String get stop => 'Стоп';
+
+  @override
+  String get listen => 'Прослушать';
+
+  @override
+  String get convertToNote => 'Превратить в запись';
+
+  @override
+  String get audioFileEmpty => 'Аудиофайл пуст';
+
+  @override
+  String photoOpenFailed(String error) {
+    return 'Не удалось открыть фото: $error';
+  }
+
+  @override
+  String photoCount(int count, int max) {
+    return '$count / $max фото';
+  }
+
+  @override
+  String get takePhoto => 'Сделать фото';
+
+  @override
+  String get fromGallery => 'Из галереи';
+
+  @override
+  String get shareThisPhoto => 'Поделиться этим фото';
+
+  @override
+  String shareAllPhotos(int count) {
+    return 'Поделиться всеми фото ($count)';
+  }
+
+  @override
+  String get procedurePhoto => 'Фото процедуры';
+
+  @override
+  String procedurePhotoIndex(int index, int count) {
+    return 'Фото процедуры $index/$count';
+  }
+
+  @override
+  String get shareTooltip => 'Поделиться (WhatsApp, e-mail…)';
+
+  @override
+  String get photoLoadFailed => 'Не удалось загрузить фото';
+
+  @override
+  String preparingPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Подготовка фото ($count)…',
+      one: 'Подготовка фото…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareFailed(String error) {
+    return 'Не удалось поделиться: $error';
+  }
 }

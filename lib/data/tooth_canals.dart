@@ -1,6 +1,8 @@
 // FDI diş numarasına göre tipik kanal kodları.
 // Kaynak: Universal (#1–32) anatomi tablosu → FDI dönüşümü.
 
+import '../l10n/l10n.dart';
+
 /// Standart + sık görülen ekstra kanal etiketleri.
 const List<String> kAllKanalKodlari = [
   'Ana',
@@ -107,7 +109,35 @@ List<String> availableExtraCanals(
 }
 
 String toothCanalHint(String? disNo) {
-  final canals = canalsForTooth(disNo);
   if (disNo == null) return '';
-  return 'Diş $disNo · tipik: ${canals.join(", ")} — gerekirse ekstra ekleyin';
+  final canals = canalsForTooth(disNo).map(canalLabel).join(', ');
+  return currentL10n.toothCanalHint(disNo, canals);
 }
+
+/// Veritabanında saklanan değerler; dil değişse de aynı kalmalı.
+const kMainCanalCode = 'Ana';
+const kHandFileCode = 'El Eğesi';
+const kNoMedicamentCode = 'İlaçsız';
+
+String canalLabel(String kod) =>
+    kod == kMainCanalCode ? currentL10n.canalMain : kod;
+
+String? egeLabel(String? value) =>
+    value == kHandFileCode ? currentL10n.handFile : value;
+
+String? ilacLabel(String? value) =>
+    value == kNoMedicamentCode ? currentL10n.noMedicament : value;
+
+const _canalTitleKeywords = ['kanal', 'canal', 'канал', 'conducto', 'endo'];
+
+/// Şablonla eşleşmeyen serbest başlıklarda kanal tedavisini tanır.
+bool looksLikeCanalTitle(String title) {
+  final t = title.toLowerCase();
+  return _canalTitleKeywords.any(t.contains);
+}
+
+/// "Ana: 21mm, MB: 19mm" metnindeki kayıtlı kodları etkin dilde gösterir.
+String localizeKanalBoyu(String raw) => raw.replaceAllMapped(
+      RegExp('(^|,\\s*)$kMainCanalCode(\\s*:)'),
+      (m) => '${m[1]}${currentL10n.canalMain}${m[2]}',
+    );

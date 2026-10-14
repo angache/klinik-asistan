@@ -777,4 +777,628 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get changeRole => 'Change role';
+
+  @override
+  String get scopeTooth => 'Tooth';
+
+  @override
+  String get scopeUpperJaw => 'Upper jaw';
+
+  @override
+  String get scopeLowerJaw => 'Lower jaw';
+
+  @override
+  String get scopeFullMouth => 'Full mouth';
+
+  @override
+  String scopeToothWithNumber(String teeth) {
+    return 'Tooth: $teeth';
+  }
+
+  @override
+  String get fieldScope => 'Scope';
+
+  @override
+  String get fieldTooth => 'Tooth';
+
+  @override
+  String get fieldTitle => 'Title';
+
+  @override
+  String get fieldNote => 'Note';
+
+  @override
+  String get fieldCanalLength => 'Canal length';
+
+  @override
+  String get fieldFile => 'File';
+
+  @override
+  String get fieldMedicament => 'Medicament';
+
+  @override
+  String get fieldDate => 'Date';
+
+  @override
+  String photosAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos added',
+      one: '1 photo added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos removed',
+      one: '1 photo removed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get canalMain => 'Main';
+
+  @override
+  String get handFile => 'Hand file';
+
+  @override
+  String get noMedicament => 'No medicament';
+
+  @override
+  String get errNoteConflict =>
+      'This procedure was edited by someone else in the meantime. Refresh the list and try again.';
+
+  @override
+  String get errNoClinicSelected =>
+      'No clinic selected — please sign in first.';
+
+  @override
+  String get errNoPermissionDeletePatient =>
+      'You don\'t have permission to delete this patient';
+
+  @override
+  String get errNoPermissionDeleteNote =>
+      'You don\'t have permission to delete this procedure';
+
+  @override
+  String labFollowUpTitle(String title) {
+    return 'Lab: $title';
+  }
+
+  @override
+  String labExpectedReturnOn(String date) {
+    return 'Expected lab return: $date';
+  }
+
+  @override
+  String labExpectedReturnFor(String date, String name) {
+    return 'Expected lab return: $date · $name';
+  }
+
+  @override
+  String get savingEllipsis => 'Saving…';
+
+  @override
+  String get procedureDate => 'Procedure date';
+
+  @override
+  String get select => 'Select';
+
+  @override
+  String get expectedLabReturn => 'Expected lab return';
+
+  @override
+  String get followUpDate => 'Check-up date';
+
+  @override
+  String get errSelectOrTypeProcedure => 'Select a procedure or type a title';
+
+  @override
+  String get errSelectScope => 'Select a scope';
+
+  @override
+  String get errSelectTooth => 'Select at least one tooth';
+
+  @override
+  String get errSelectLabDate => 'Select the expected lab return date';
+
+  @override
+  String get errSelectFollowUpDate => 'Select the check-up date';
+
+  @override
+  String get errFollowUpNoteRequired => 'Enter a follow-up note';
+
+  @override
+  String get uploadingPhotos => 'Uploading photos to the cloud…';
+
+  @override
+  String get savingProcedure => 'Saving procedure…';
+
+  @override
+  String uploadingPhotoProgress(int current, int total) {
+    return 'Uploading photo ($current/$total)…';
+  }
+
+  @override
+  String saveFailed(String error) {
+    return 'Save failed: $error';
+  }
+
+  @override
+  String get creatingLabReminder => 'Creating lab reminder…';
+
+  @override
+  String get creatingFollowUpReminder => 'Creating check-up reminder…';
+
+  @override
+  String followUpTitle(String title) {
+    return 'Check-up: $title';
+  }
+
+  @override
+  String get reminderKindLab => 'lab';
+
+  @override
+  String get reminderKindFollowUp => 'check-up';
+
+  @override
+  String reminderCreateFailed(String kinds) {
+    return 'Procedure saved, but these reminders could not be created: $kinds. Add them from the Follow-ups screen.';
+  }
+
+  @override
+  String get planForNextSession => 'Plan for next session';
+
+  @override
+  String saveTeethCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Save $count teeth',
+      one: 'Save 1 tooth',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pastRecordHint => 'Past record (transferred from paper records)';
+
+  @override
+  String get change => 'Change';
+
+  @override
+  String get procedureSection => 'Procedure';
+
+  @override
+  String get procedureSectionHint =>
+      'Select at least one procedure or type a title';
+
+  @override
+  String get procedureTitleLabel => 'Procedure title';
+
+  @override
+  String get noteOptionalLabel => 'Note (optional)';
+
+  @override
+  String get noteHint => 'Write here if needed…';
+
+  @override
+  String get addFollowUpSubtitle => 'Post-procedure check-up date and reminder';
+
+  @override
+  String get followUpNoteLabel => 'Follow-up note';
+
+  @override
+  String get followUpNoteHint => 'e.g. Percussion and radiographic check';
+
+  @override
+  String get presetOneWeek => '1 week';
+
+  @override
+  String get presetOneMonth => '1 month';
+
+  @override
+  String get presetThreeMonths => '3 months';
+
+  @override
+  String get presetSixMonths => '6 months';
+
+  @override
+  String get pickDate => 'Pick date';
+
+  @override
+  String get remindWhenLabel => 'When should we remind you?';
+
+  @override
+  String get remindOnDay => 'On the check-up day';
+
+  @override
+  String get remindOneDayBefore => '1 day before';
+
+  @override
+  String get remindThreeDaysBefore => '3 days before';
+
+  @override
+  String get remindOneWeekBefore => '1 week before';
+
+  @override
+  String followUpSummary(String date, String reminder) {
+    return 'Check-up: $date · Reminder: $reminder';
+  }
+
+  @override
+  String get scopeToothRequired =>
+      'Tooth selection is required for this procedure';
+
+  @override
+  String get scopeRequired => 'Scope selection is required';
+
+  @override
+  String get scopeSuitable => 'Scope suited to the procedure';
+
+  @override
+  String get canalSelectToothFirst =>
+      'Select a tooth first to enter canal parameters. With several teeth, each tooth is saved separately.';
+
+  @override
+  String get canalPerToothTitle => 'Canal details for each tooth';
+
+  @override
+  String get canalPerToothHint =>
+      'Tap a tooth and enter its parameters. Each tooth is saved as a separate note.';
+
+  @override
+  String toothNumber(String tooth) {
+    return 'Tooth $tooth';
+  }
+
+  @override
+  String get photoSection => 'Photo';
+
+  @override
+  String get photoPrivacyHint =>
+      'Do not show the patient\'s face. Only procedure / intraoral images.';
+
+  @override
+  String get planningSection => 'Planning';
+
+  @override
+  String get labCountsAsDone =>
+      'If sent to the lab, the procedure counts as done';
+
+  @override
+  String get info => 'Info';
+
+  @override
+  String get planInfoLabBlocked =>
+      'This option is unavailable while \'Sent to lab\' is checked; the procedure counts as done in this session.';
+
+  @override
+  String get planInfo =>
+      'The procedure is treated as not done today. The patient is flagged at the top on their next visit; once marked “Done”, it is added to that day\'s procedure history.';
+
+  @override
+  String get sentToLab => 'Sent to lab';
+
+  @override
+  String get sentToLabInfo =>
+      'Check this when the work is sent to the laboratory. The follow-up list and a notification remind you 1 day before the expected return date. With this option the procedure counts as done and “Plan for next session” is turned off.';
+
+  @override
+  String addExtraCanalForTooth(String tooth) {
+    return 'Add extra canal · Tooth $tooth';
+  }
+
+  @override
+  String get addExtraCanal => 'Add extra canal';
+
+  @override
+  String get extraCanalHint =>
+      'Choose a canal that is not in the typical list, or type a custom name.';
+
+  @override
+  String get allStandardCanalsAdded =>
+      'All standard codes are already added. Use a custom name.';
+
+  @override
+  String get customCanalName => 'Custom canal name';
+
+  @override
+  String get customCanalHint => 'e.g. MB3, DB2…';
+
+  @override
+  String get editProcedureTitle => 'Edit procedure';
+
+  @override
+  String editVersionHint(int version) {
+    return 'v$version → saved as a new version; the old one is kept';
+  }
+
+  @override
+  String get errTitleRequired => 'Procedure title is required';
+
+  @override
+  String get noChanges => 'No changes';
+
+  @override
+  String get saveAsNewVersion => 'Save as new version';
+
+  @override
+  String get quadrantUpperRight => 'Upper right';
+
+  @override
+  String get quadrantUpperLeft => 'Upper left';
+
+  @override
+  String get quadrantLowerRight => 'Lower right';
+
+  @override
+  String get quadrantLowerLeft => 'Lower left';
+
+  @override
+  String get toothNumberSection => 'Tooth number';
+
+  @override
+  String get clearSelection => 'Clear selection';
+
+  @override
+  String get typeToSelectLabel => 'Type to select (FDI)';
+
+  @override
+  String get typeToSelectHint => 'e.g. 15  or  14-17  or  36,37';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get toothSelectorHelp =>
+      'Tap: select · Long press: zoom quadrant · Swipe down or OK: close';
+
+  @override
+  String get jawUpper => 'UPPER';
+
+  @override
+  String get jawLower => 'LOWER';
+
+  @override
+  String get sideRight => 'Right';
+
+  @override
+  String get sideLeft => 'Left';
+
+  @override
+  String get selectTeeth => 'Select teeth';
+
+  @override
+  String selectedTeeth(String teeth) {
+    return 'Selected: $teeth';
+  }
+
+  @override
+  String get swipeDownToClose => 'You can also swipe down to close';
+
+  @override
+  String canalParamsForTooth(String tooth) {
+    return 'Canal parameters · Tooth $tooth';
+  }
+
+  @override
+  String get canalParamsTitle => 'Root canal treatment parameters';
+
+  @override
+  String get canalLengthMm => 'Canal length (mm)';
+
+  @override
+  String get extra => 'Extra';
+
+  @override
+  String get fileSystem => 'File system';
+
+  @override
+  String get intracanalMedicament => 'Intracanal medicament';
+
+  @override
+  String toothCanalHint(String tooth, String canals) {
+    return 'Tooth $tooth · typical: $canals — add extras if needed';
+  }
+
+  @override
+  String get newVersionSaved => 'New version saved';
+
+  @override
+  String get deleteProcedureTitle => 'Delete procedure';
+
+  @override
+  String get deleteProcedureConfirm =>
+      'This note and any previous versions will be permanently deleted.';
+
+  @override
+  String get procedureDeleted => 'Procedure deleted';
+
+  @override
+  String procedureDeleteFailed(String error) {
+    return 'Could not delete procedure: $error';
+  }
+
+  @override
+  String get labShort => 'Lab';
+
+  @override
+  String labReturnShort(String date) {
+    return 'Lab → $date';
+  }
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get versionHistory => 'Version history';
+
+  @override
+  String historyLoadFailed(String error) {
+    return 'Could not load history: $error';
+  }
+
+  @override
+  String get noVersionsFound => 'No versions found';
+
+  @override
+  String get currentVersion => 'Current';
+
+  @override
+  String get oldVersion => 'Old version';
+
+  @override
+  String get changesInVersion => 'Changes in this version';
+
+  @override
+  String get firstRecord => 'First record';
+
+  @override
+  String get micPermissionRequired => 'Microphone permission is required';
+
+  @override
+  String get micPermissionMissing => 'No microphone permission';
+
+  @override
+  String get recordingEmpty => 'The recording is empty or could not be created';
+
+  @override
+  String voiceUploadFailed(String error) {
+    return 'Could not upload the voice recording: $error';
+  }
+
+  @override
+  String get quickVoiceNote => 'Quick voice note';
+
+  @override
+  String get voicePrivacyHint =>
+      'Audio is only for the doctor\'s or assistant\'s procedure summary. Patient conversations are not recorded.';
+
+  @override
+  String get recordingInProgress => 'Recording…';
+
+  @override
+  String get uploadingVoice => 'Uploading audio to the cloud…';
+
+  @override
+  String get voiceStartHint =>
+      'Tap the microphone and speak, then tap Finish & save';
+
+  @override
+  String get pleaseWait => 'Please wait…';
+
+  @override
+  String get finishAndSave => 'Finish & save';
+
+  @override
+  String playFailed(String error) {
+    return 'Could not play: $error';
+  }
+
+  @override
+  String get memoMarkedProcessed => 'Voice note marked as processed';
+
+  @override
+  String markFailed(String error) {
+    return 'Could not mark: $error';
+  }
+
+  @override
+  String get deleteVoiceNoteTitle => 'Delete voice note';
+
+  @override
+  String get deleteVoiceNoteConfirm =>
+      'This voice note will be permanently deleted.';
+
+  @override
+  String deleteFailed(String error) {
+    return 'Could not delete: $error';
+  }
+
+  @override
+  String get processedVoiceNote => 'Processed voice note';
+
+  @override
+  String get pendingVoiceNote => 'Pending voice note';
+
+  @override
+  String durationLabel(String duration) {
+    return 'Duration: $duration';
+  }
+
+  @override
+  String get stop => 'Stop';
+
+  @override
+  String get listen => 'Listen';
+
+  @override
+  String get convertToNote => 'Convert to note';
+
+  @override
+  String get audioFileEmpty => 'The audio file is empty';
+
+  @override
+  String photoOpenFailed(String error) {
+    return 'Could not open photo: $error';
+  }
+
+  @override
+  String photoCount(int count, int max) {
+    return '$count / $max photos';
+  }
+
+  @override
+  String get takePhoto => 'Take photo';
+
+  @override
+  String get fromGallery => 'From gallery';
+
+  @override
+  String get shareThisPhoto => 'Share this photo';
+
+  @override
+  String shareAllPhotos(int count) {
+    return 'Share all photos ($count)';
+  }
+
+  @override
+  String get procedurePhoto => 'Procedure photo';
+
+  @override
+  String procedurePhotoIndex(int index, int count) {
+    return 'Procedure photo $index/$count';
+  }
+
+  @override
+  String get shareTooltip => 'Share (WhatsApp, email…)';
+
+  @override
+  String get photoLoadFailed => 'Could not load photo';
+
+  @override
+  String preparingPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Preparing $count photos…',
+      one: 'Preparing photo…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareFailed(String error) {
+    return 'Could not share: $error';
+  }
 }
