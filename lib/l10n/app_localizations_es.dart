@@ -2219,4 +2219,107 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pdfTreatmentHistory => 'Historial de tratamiento';
+
+  @override
+  String get errRequestNotFound => 'No se encontró la solicitud';
+
+  @override
+  String get errRequestAlreadyAnswered => 'Esta solicitud ya fue respondida';
+
+  @override
+  String get errAssigneeOtherClinic =>
+      'El responsable debe pertenecer a la misma clínica que la tarea';
+
+  @override
+  String get errPatientOtherClinic =>
+      'El paciente debe pertenecer a la misma clínica que la tarea';
+
+  @override
+  String get errNoReportPermission =>
+      'No tienes permiso para ver los informes de esta clínica';
+
+  @override
+  String get errInvalidDateRange => 'Rango de fechas no válido';
+
+  @override
+  String get errNoListPermission =>
+      'No tienes permiso para ver esta lista de la clínica';
+
+  @override
+  String get errNothingToSave => 'No hay nada que guardar';
+
+  @override
+  String get errNoteNotFound => 'No se encontró el registro';
+
+  @override
+  String get errNoPermission => 'No tienes permiso para esta acción';
+
+  @override
+  String get errOffline => 'Sin conexión a internet. Inténtalo de nuevo.';
+
+  @override
+  String get tplTreatmentPlanning => 'Planificación del tratamiento';
+
+  @override
+  String get tplInitialExam => 'Primera consulta / Diagnóstico';
+
+  @override
+  String get tplCanalStart => 'Endodoncia – inicio';
+
+  @override
+  String get tplCanalFinish => 'Endodoncia – finalización';
+
+  @override
+  String get tplCanalRetreatment => 'Reendodoncia';
+
+  @override
+  String get tplCompositeFilling => 'Obturación de composite';
+
+  @override
+  String get tplPulpCapping => 'Recubrimiento pulpar';
+
+  @override
+  String get tplExtraction => 'Extracción dental';
+
+  @override
+  String get tplComplicatedExtraction => 'Extracción complicada';
+
+  @override
+  String get tplSurgicalExtraction => 'Extracción quirúrgica';
+
+  @override
+  String get tplAlveolitis => 'Tratamiento de alveolitis (curación)';
+
+  @override
+  String get tplCurettage => 'Curetaje';
+
+  @override
+  String get tplWhitening => 'Blanqueamiento';
+
+  @override
+  String get tplToothPreparation => 'Tallado dental';
+
+  @override
+  String get tplImpression => 'Impresión';
+
+  @override
+  String get tplFrameworkTryIn => 'Prueba de estructura';
+
+  @override
+  String get tplBisqueTryIn => 'Prueba de bizcocho';
+
+  @override
+  String get tplTempCementation => 'Cementado provisional';
+
+  @override
+  String get tplPermCementation => 'Cementado definitivo';
+
+  @override
+  String get tplNightGuardImpression => 'Impresión de férula nocturna';
+
+  @override
+  String get tplScaling => 'Tartrectomía (limpieza)';
+
+  @override
+  String get tplCheckup => 'Revisión';
 }

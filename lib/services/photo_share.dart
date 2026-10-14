@@ -57,7 +57,7 @@ class PhotoShare {
     } catch (e) {
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.shareFailed('$e'))));
+        ..showSnackBar(SnackBar(content: Text(l10n.shareFailed(errorText(e)))));
     }
   }
 

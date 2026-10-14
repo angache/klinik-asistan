@@ -122,7 +122,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
         _loadingAudio = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.playFailed('$e'))),
+        SnackBar(content: Text(context.l10n.playFailed(errorText(e)))),
       );
     }
   }
@@ -153,7 +153,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.markFailed('$e'))),
+        SnackBar(content: Text(context.l10n.markFailed(errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -187,7 +187,7 @@ class _VoiceMemoTileState extends State<VoiceMemoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.deleteFailed('$e'))),
+        SnackBar(content: Text(l10n.deleteFailed(errorText(e)))),
       );
       setState(() => _busy = false);
     }

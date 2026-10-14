@@ -28,11 +28,15 @@ class Clinic {
   final String kod;
   final DateTime olusturmaTarihi;
 
+  /// Varsayılan işlem şablonlarının dili; kuruluşta belirlenir.
+  final String dil;
+
   const Clinic({
     required this.id,
     required this.ad,
     required this.kod,
     required this.olusturmaTarihi,
+    this.dil = 'tr',
   });
 
   factory Clinic.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,7 @@ class Clinic {
       ad: json['ad'] as String,
       kod: json['kod'] as String,
       olusturmaTarihi: DateTime.parse(json['olusturma_tarihi'] as String),
+      dil: json['dil'] as String? ?? 'tr',
     );
   }
 }

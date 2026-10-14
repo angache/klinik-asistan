@@ -78,7 +78,7 @@ class TreatmentNoteTile extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.procedureDeleteFailed('$e'))),
+        SnackBar(content: Text(l10n.procedureDeleteFailed(errorText(e)))),
       );
     }
   }

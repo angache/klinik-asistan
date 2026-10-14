@@ -42,3 +42,33 @@ void setActiveLocale(Locale locale) {
   _activeLocale = locale;
   Intl.defaultLocale = locale.languageCode;
 }
+
+/// Hata metni. Veritabanı fonksiyonlarının hataları Türkçe gelir; bilinenler
+/// etkin dile çevrilir, diğerleri olduğu gibi gösterilir.
+String errorText(Object? error) {
+  final raw = '$error';
+  final l = currentL10n;
+  for (final (server, text) in [
+    ('Oturum gerekli', l.errSessionRequired),
+    ('Rol doktor veya asistan olmalı', l.errRoleInvalid),
+    ('Klinik kodu bulunamadı', l.errClinicCodeNotFound),
+    ('zaten üyesiniz', l.errAlreadyMember),
+    ('İstek bulunamadı', l.errRequestNotFound),
+    ('Sadece klinik yöneticisi', l.errOnlyAdminCanApprove),
+    ('istek zaten yanıtlanmış', l.errRequestAlreadyAnswered),
+    ('Sorumlu üye görevle aynı klinikte', l.errAssigneeOtherClinic),
+    ('Hasta görevle aynı klinikte', l.errPatientOtherClinic),
+    ('raporlarını görme yetkiniz yok', l.errNoReportPermission),
+    ('Geçersiz tarih aralığı', l.errInvalidDateRange),
+    ('listesini görme yetkiniz yok', l.errNoListPermission),
+    ('Bu kliniğe üye değilsiniz', l.errNotMember),
+    ('Kaydedilecek not yok', l.errNothingToSave),
+    ('Not bulunamadı', l.errNoteNotFound),
+    ('row-level security', l.errNoPermission),
+    ('SocketException', l.errOffline),
+    ('Failed host lookup', l.errOffline),
+  ]) {
+    if (raw.contains(server)) return text;
+  }
+  return raw;
+}

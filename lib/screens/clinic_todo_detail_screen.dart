@@ -92,7 +92,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
       _changed = true;
       await _load();
     } catch (e) {
-      _showError(l10n.commentAddFailed('$e'));
+      _showError(l10n.commentAddFailed(errorText(e)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -161,8 +161,8 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
     } catch (e) {
       _showError(
         source == ImageSource.camera
-            ? l10n.cameraOpenFailed('$e')
-            : l10n.imageAddFailed('$e'),
+            ? l10n.cameraOpenFailed(errorText(e))
+            : l10n.imageAddFailed(errorText(e)),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -179,7 +179,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
-      _showError(l10n.completeFailed('$e'));
+      _showError(l10n.completeFailed(errorText(e)));
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -223,7 +223,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
         ),
       );
     } catch (e) {
-      _showError(l10n.imageOpenFailed('$e'));
+      _showError(l10n.imageOpenFailed(errorText(e)));
     }
   }
 
@@ -253,7 +253,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
       _changed = true;
       await _load();
     } catch (e) {
-      _showError(l10n.imageDeleteFailed('$e'));
+      _showError(l10n.imageDeleteFailed(errorText(e)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -304,7 +304,8 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(l10n.loadFailed('$_error'), textAlign: TextAlign.center),
+              Text(l10n.loadFailed(errorText(_error)),
+                  textAlign: TextAlign.center),
               const SizedBox(height: 12),
               FilledButton(onPressed: _load, child: Text(l10n.retry)),
             ],

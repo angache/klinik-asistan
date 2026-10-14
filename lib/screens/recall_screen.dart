@@ -59,7 +59,7 @@ class _RecallScreenState extends State<RecallScreen> {
       );
       if (mounted) await _reload();
     } catch (e) {
-      if (mounted) _snack(context.l10n.patientOpenFailed('$e'));
+      if (mounted) _snack(context.l10n.patientOpenFailed(errorText(e)));
     }
   }
 
@@ -151,14 +151,14 @@ class _RecallScreenState extends State<RecallScreen> {
               await widget.db.deleteRecallCall(id);
               if (mounted) await _reload();
             } catch (e) {
-              if (mounted) _snack(l10n.undoFailed('$e'));
+              if (mounted) _snack(l10n.undoFailed(errorText(e)));
             }
           },
         ),
       );
       await _reload();
     } catch (e) {
-      if (mounted) _snack(l10n.saveFailed('$e'));
+      if (mounted) _snack(l10n.saveFailed(errorText(e)));
     }
   }
 
@@ -195,7 +195,7 @@ class _RecallScreenState extends State<RecallScreen> {
       _snack(l10n.checkupScheduled(p.adSoyad, dateText));
       await _reload();
     } catch (e) {
-      if (mounted) _snack(l10n.appointmentSaveFailed('$e'));
+      if (mounted) _snack(l10n.appointmentSaveFailed(errorText(e)));
     }
   }
 
@@ -295,7 +295,7 @@ class _RecallScreenState extends State<RecallScreen> {
       child: Column(
         children: [
           Text(
-            context.l10n.loadFailed('$error'),
+            context.l10n.loadFailed(errorText(error)),
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.error),
           ),

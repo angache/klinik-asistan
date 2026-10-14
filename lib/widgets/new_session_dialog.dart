@@ -81,8 +81,8 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
   bool _saving = false;
   String _uploadMessage = '';
   late DateTime _sessionDate;
-  List<TreatmentTemplate> _templates =
-      List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
+  late List<TreatmentTemplate> _templates =
+      defaultTreatmentTemplatesFor(widget.db.clinicLanguage);
   bool _templatesLoading = true;
   bool _planForNext = false;
   bool _labSent = false;
@@ -583,7 +583,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
       await widget.db.removeStorageObjects(uploadedUrls);
       if (!mounted) return;
       setState(() => _saving = false);
-      _showFormError(l10n.saveFailed('$e'));
+      _showFormError(l10n.saveFailed(errorText(e)));
       return;
     }
 

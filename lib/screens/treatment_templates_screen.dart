@@ -75,7 +75,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.addFailed('$e'))),
+        SnackBar(content: Text(l10n.addFailed(errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -117,7 +117,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.saveFailed('$e'))),
+        SnackBar(content: Text(context.l10n.saveFailed(errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -143,7 +143,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.updateFailed('$e'))),
+        SnackBar(content: Text(context.l10n.updateFailed(errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -177,7 +177,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.deleteFailed('$e'))),
+        SnackBar(content: Text(context.l10n.deleteFailed(errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -225,7 +225,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          l10n.loadFailed('$_error'),
+                          l10n.loadFailed(errorText(_error)),
                           textAlign: TextAlign.center,
                           style: TextStyle(color: scheme.error),
                         ),

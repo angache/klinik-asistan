@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../firebase_options.dart';
+import '../l10n/l10n.dart';
 import 'notification_service.dart';
 
 /// Arka plan FCM mesajı (top-level olmalı).
@@ -131,6 +132,25 @@ class PushService {
       await NotificationService.instance.setServerPushActive(true);
     } catch (e) {
       debugPrint('PushService._persistToken hata: $e');
+      return;
+    }
+    await _saveLanguage(token);
+  }
+
+  /// Uygulama dili değişince sunucu push metinlerini yeni dilde gönderir.
+  Future<void> syncLanguage() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    await _saveLanguage(token);
+  }
+
+  Future<void> _saveLanguage(String token) async {
+    try {
+      await Supabase.instance.client
+          .from('device_tokens')
+          .update({'dil': activeLocale.languageCode}).eq('token', token);
+    } catch (e) {
+      debugPrint('PushService._saveLanguage hata: $e');
     }
   }
 

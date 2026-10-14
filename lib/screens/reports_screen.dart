@@ -101,7 +101,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.patientOpenFailed('$e'))),
+        SnackBar(content: Text(context.l10n.patientOpenFailed(errorText(e)))),
       );
     }
   }
@@ -331,7 +331,7 @@ class _RecallSummaryState extends State<_RecallSummary> {
           }
           if (snap.hasError) {
             return Text(
-              l10n.loadFailed('${snap.error}'),
+              l10n.loadFailed(errorText(snap.error)),
               style: TextStyle(color: scheme.error),
             );
           }
@@ -386,7 +386,7 @@ class _ErrorBox extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            context.l10n.loadFailed('$error'),
+            context.l10n.loadFailed(errorText(error)),
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.error),
           ),

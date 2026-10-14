@@ -98,7 +98,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.saveFailed('$e'))),
+        SnackBar(content: Text(context.l10n.saveFailed(errorText(e)))),
       );
     }
   }

@@ -166,7 +166,10 @@ class KlinikAsistanAppState extends State<KlinikAsistanApp> {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       localeListResolutionCallback: (deviceLocales, _) {
         final resolved = resolveAppLocale(_locale, deviceLocales ?? const []);
-        setActiveLocale(resolved);
+        if (resolved != activeLocale) {
+          setActiveLocale(resolved);
+          PushService.instance.syncLanguage();
+        }
         return resolved;
       },
       home: AuthGate(session: widget.session, db: widget.db),

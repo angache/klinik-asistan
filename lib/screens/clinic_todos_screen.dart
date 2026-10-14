@@ -71,7 +71,7 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      l10n.loadFailed('${snap.error}'),
+                      l10n.loadFailed(errorText(snap.error)),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: scheme.error),
                     ),

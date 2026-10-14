@@ -155,7 +155,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.previewPlayFailed('$e'))),
+        SnackBar(content: Text(context.l10n.previewPlayFailed(errorText(e)))),
       );
     }
   }
@@ -222,8 +222,8 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
         SnackBar(
           content: Text(
             source == ImageSource.camera
-                ? context.l10n.cameraOpenFailed('$e')
-                : context.l10n.galleryOpenFailed('$e'),
+                ? context.l10n.cameraOpenFailed(errorText(e))
+                : context.l10n.galleryOpenFailed(errorText(e)),
           ),
         ),
       );
@@ -383,7 +383,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.saveFailed('$e'))),
+        SnackBar(content: Text(context.l10n.saveFailed(errorText(e)))),
       );
     }
   }

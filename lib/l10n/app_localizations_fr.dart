@@ -2220,4 +2220,109 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pdfTreatmentHistory => 'Historique des soins';
+
+  @override
+  String get errRequestNotFound => 'Demande introuvable';
+
+  @override
+  String get errRequestAlreadyAnswered =>
+      'Cette demande a déjà reçu une réponse';
+
+  @override
+  String get errAssigneeOtherClinic =>
+      'Le responsable doit appartenir au même cabinet que la tâche';
+
+  @override
+  String get errPatientOtherClinic =>
+      'Le patient doit appartenir au même cabinet que la tâche';
+
+  @override
+  String get errNoReportPermission =>
+      'Vous n\'êtes pas autorisé à consulter les rapports de ce cabinet';
+
+  @override
+  String get errInvalidDateRange => 'Période non valide';
+
+  @override
+  String get errNoListPermission =>
+      'Vous n\'êtes pas autorisé à consulter cette liste du cabinet';
+
+  @override
+  String get errNothingToSave => 'Rien à enregistrer';
+
+  @override
+  String get errNoteNotFound => 'Enregistrement introuvable';
+
+  @override
+  String get errNoPermission =>
+      'Vous n\'êtes pas autorisé à effectuer cette action';
+
+  @override
+  String get errOffline => 'Pas de connexion Internet. Veuillez réessayer.';
+
+  @override
+  String get tplTreatmentPlanning => 'Plan de traitement';
+
+  @override
+  String get tplInitialExam => 'Premier examen / Diagnostic';
+
+  @override
+  String get tplCanalStart => 'Traitement canalaire – début';
+
+  @override
+  String get tplCanalFinish => 'Traitement canalaire – fin';
+
+  @override
+  String get tplCanalRetreatment => 'Retraitement canalaire';
+
+  @override
+  String get tplCompositeFilling => 'Obturation composite';
+
+  @override
+  String get tplPulpCapping => 'Coiffage pulpaire';
+
+  @override
+  String get tplExtraction => 'Extraction dentaire';
+
+  @override
+  String get tplComplicatedExtraction => 'Extraction complexe';
+
+  @override
+  String get tplSurgicalExtraction => 'Extraction chirurgicale';
+
+  @override
+  String get tplAlveolitis => 'Traitement d\'alvéolite (pansement)';
+
+  @override
+  String get tplCurettage => 'Curetage';
+
+  @override
+  String get tplWhitening => 'Blanchiment';
+
+  @override
+  String get tplToothPreparation => 'Préparation dentaire';
+
+  @override
+  String get tplImpression => 'Empreinte';
+
+  @override
+  String get tplFrameworkTryIn => 'Essayage de l\'armature';
+
+  @override
+  String get tplBisqueTryIn => 'Essayage biscuit';
+
+  @override
+  String get tplTempCementation => 'Scellement provisoire';
+
+  @override
+  String get tplPermCementation => 'Scellement définitif';
+
+  @override
+  String get tplNightGuardImpression => 'Empreinte gouttière nocturne';
+
+  @override
+  String get tplScaling => 'Détartrage (nettoyage)';
+
+  @override
+  String get tplCheckup => 'Contrôle';
 }

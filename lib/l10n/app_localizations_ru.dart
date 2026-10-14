@@ -2213,4 +2213,107 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pdfTreatmentHistory => 'История лечения';
+
+  @override
+  String get errRequestNotFound => 'Запрос не найден';
+
+  @override
+  String get errRequestAlreadyAnswered => 'На этот запрос уже ответили';
+
+  @override
+  String get errAssigneeOtherClinic =>
+      'Ответственный должен быть из той же клиники, что и задача';
+
+  @override
+  String get errPatientOtherClinic =>
+      'Пациент должен быть из той же клиники, что и задача';
+
+  @override
+  String get errNoReportPermission =>
+      'У вас нет прав на просмотр отчётов этой клиники';
+
+  @override
+  String get errInvalidDateRange => 'Неверный период';
+
+  @override
+  String get errNoListPermission =>
+      'У вас нет прав на просмотр этого списка клиники';
+
+  @override
+  String get errNothingToSave => 'Нечего сохранять';
+
+  @override
+  String get errNoteNotFound => 'Запись не найдена';
+
+  @override
+  String get errNoPermission => 'У вас нет прав на это действие';
+
+  @override
+  String get errOffline => 'Нет подключения к интернету. Попробуйте ещё раз.';
+
+  @override
+  String get tplTreatmentPlanning => 'Планирование лечения';
+
+  @override
+  String get tplInitialExam => 'Первичный осмотр / Диагноз';
+
+  @override
+  String get tplCanalStart => 'Лечение каналов – начало';
+
+  @override
+  String get tplCanalFinish => 'Лечение каналов – завершение';
+
+  @override
+  String get tplCanalRetreatment => 'Перелечивание каналов';
+
+  @override
+  String get tplCompositeFilling => 'Композитная пломба';
+
+  @override
+  String get tplPulpCapping => 'Покрытие пульпы';
+
+  @override
+  String get tplExtraction => 'Удаление зуба';
+
+  @override
+  String get tplComplicatedExtraction => 'Сложное удаление';
+
+  @override
+  String get tplSurgicalExtraction => 'Хирургическое удаление';
+
+  @override
+  String get tplAlveolitis => 'Лечение альвеолита (повязка)';
+
+  @override
+  String get tplCurettage => 'Кюретаж';
+
+  @override
+  String get tplWhitening => 'Отбеливание';
+
+  @override
+  String get tplToothPreparation => 'Препарирование зубов';
+
+  @override
+  String get tplImpression => 'Слепок';
+
+  @override
+  String get tplFrameworkTryIn => 'Примерка каркаса';
+
+  @override
+  String get tplBisqueTryIn => 'Примерка (бисквит)';
+
+  @override
+  String get tplTempCementation => 'Временная фиксация';
+
+  @override
+  String get tplPermCementation => 'Постоянная фиксация';
+
+  @override
+  String get tplNightGuardImpression => 'Слепок для ночной каппы';
+
+  @override
+  String get tplScaling => 'Снятие зубного камня (чистка)';
+
+  @override
+  String get tplCheckup => 'Контрольный осмотр';
 }

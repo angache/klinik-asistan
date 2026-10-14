@@ -2201,4 +2201,108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pdfTreatmentHistory => 'Treatment history';
+
+  @override
+  String get errRequestNotFound => 'Request not found';
+
+  @override
+  String get errRequestAlreadyAnswered =>
+      'This request has already been answered';
+
+  @override
+  String get errAssigneeOtherClinic =>
+      'The assignee must belong to the same clinic as the task';
+
+  @override
+  String get errPatientOtherClinic =>
+      'The patient must belong to the same clinic as the task';
+
+  @override
+  String get errNoReportPermission =>
+      'You don\'t have permission to view this clinic\'s reports';
+
+  @override
+  String get errInvalidDateRange => 'Invalid date range';
+
+  @override
+  String get errNoListPermission =>
+      'You don\'t have permission to view this clinic\'s list';
+
+  @override
+  String get errNothingToSave => 'Nothing to save';
+
+  @override
+  String get errNoteNotFound => 'Record not found';
+
+  @override
+  String get errNoPermission => 'You don\'t have permission for this action';
+
+  @override
+  String get errOffline => 'No internet connection. Please try again.';
+
+  @override
+  String get tplTreatmentPlanning => 'Treatment Planning';
+
+  @override
+  String get tplInitialExam => 'Initial Exam / Diagnosis';
+
+  @override
+  String get tplCanalStart => 'Root Canal – Start';
+
+  @override
+  String get tplCanalFinish => 'Root Canal – Completion';
+
+  @override
+  String get tplCanalRetreatment => 'Root Canal Retreatment';
+
+  @override
+  String get tplCompositeFilling => 'Composite Filling';
+
+  @override
+  String get tplPulpCapping => 'Pulp Capping';
+
+  @override
+  String get tplExtraction => 'Tooth Extraction';
+
+  @override
+  String get tplComplicatedExtraction => 'Complicated Extraction';
+
+  @override
+  String get tplSurgicalExtraction => 'Surgical Extraction';
+
+  @override
+  String get tplAlveolitis => 'Dry Socket Treatment (Dressing)';
+
+  @override
+  String get tplCurettage => 'Curettage';
+
+  @override
+  String get tplWhitening => 'Whitening';
+
+  @override
+  String get tplToothPreparation => 'Tooth Preparation';
+
+  @override
+  String get tplImpression => 'Impression';
+
+  @override
+  String get tplFrameworkTryIn => 'Framework Try-in';
+
+  @override
+  String get tplBisqueTryIn => 'Bisque Try-in';
+
+  @override
+  String get tplTempCementation => 'Temporary Cementation';
+
+  @override
+  String get tplPermCementation => 'Permanent Cementation';
+
+  @override
+  String get tplNightGuardImpression => 'Night Guard Impression';
+
+  @override
+  String get tplScaling => 'Scaling (Cleaning)';
+
+  @override
+  String get tplCheckup => 'Check-up';
 }

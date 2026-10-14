@@ -3723,6 +3723,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Treatment history'**
   String get pdfTreatmentHistory;
+
+  /// No description provided for @errRequestNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Request not found'**
+  String get errRequestNotFound;
+
+  /// No description provided for @errRequestAlreadyAnswered.
+  ///
+  /// In en, this message translates to:
+  /// **'This request has already been answered'**
+  String get errRequestAlreadyAnswered;
+
+  /// No description provided for @errAssigneeOtherClinic.
+  ///
+  /// In en, this message translates to:
+  /// **'The assignee must belong to the same clinic as the task'**
+  String get errAssigneeOtherClinic;
+
+  /// No description provided for @errPatientOtherClinic.
+  ///
+  /// In en, this message translates to:
+  /// **'The patient must belong to the same clinic as the task'**
+  String get errPatientOtherClinic;
+
+  /// No description provided for @errNoReportPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to view this clinic\'s reports'**
+  String get errNoReportPermission;
+
+  /// No description provided for @errInvalidDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid date range'**
+  String get errInvalidDateRange;
+
+  /// No description provided for @errNoListPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to view this clinic\'s list'**
+  String get errNoListPermission;
+
+  /// No description provided for @errNothingToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to save'**
+  String get errNothingToSave;
+
+  /// No description provided for @errNoteNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Record not found'**
+  String get errNoteNotFound;
+
+  /// No description provided for @errNoPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission for this action'**
+  String get errNoPermission;
+
+  /// No description provided for @errOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Please try again.'**
+  String get errOffline;
+
+  /// No description provided for @tplTreatmentPlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment Planning'**
+  String get tplTreatmentPlanning;
+
+  /// No description provided for @tplInitialExam.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial Exam / Diagnosis'**
+  String get tplInitialExam;
+
+  /// No description provided for @tplCanalStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Root Canal – Start'**
+  String get tplCanalStart;
+
+  /// No description provided for @tplCanalFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Root Canal – Completion'**
+  String get tplCanalFinish;
+
+  /// No description provided for @tplCanalRetreatment.
+  ///
+  /// In en, this message translates to:
+  /// **'Root Canal Retreatment'**
+  String get tplCanalRetreatment;
+
+  /// No description provided for @tplCompositeFilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Composite Filling'**
+  String get tplCompositeFilling;
+
+  /// No description provided for @tplPulpCapping.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulp Capping'**
+  String get tplPulpCapping;
+
+  /// No description provided for @tplExtraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth Extraction'**
+  String get tplExtraction;
+
+  /// No description provided for @tplComplicatedExtraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Complicated Extraction'**
+  String get tplComplicatedExtraction;
+
+  /// No description provided for @tplSurgicalExtraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Surgical Extraction'**
+  String get tplSurgicalExtraction;
+
+  /// No description provided for @tplAlveolitis.
+  ///
+  /// In en, this message translates to:
+  /// **'Dry Socket Treatment (Dressing)'**
+  String get tplAlveolitis;
+
+  /// No description provided for @tplCurettage.
+  ///
+  /// In en, this message translates to:
+  /// **'Curettage'**
+  String get tplCurettage;
+
+  /// No description provided for @tplWhitening.
+  ///
+  /// In en, this message translates to:
+  /// **'Whitening'**
+  String get tplWhitening;
+
+  /// No description provided for @tplToothPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth Preparation'**
+  String get tplToothPreparation;
+
+  /// No description provided for @tplImpression.
+  ///
+  /// In en, this message translates to:
+  /// **'Impression'**
+  String get tplImpression;
+
+  /// No description provided for @tplFrameworkTryIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Framework Try-in'**
+  String get tplFrameworkTryIn;
+
+  /// No description provided for @tplBisqueTryIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Bisque Try-in'**
+  String get tplBisqueTryIn;
+
+  /// No description provided for @tplTempCementation.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary Cementation'**
+  String get tplTempCementation;
+
+  /// No description provided for @tplPermCementation.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent Cementation'**
+  String get tplPermCementation;
+
+  /// No description provided for @tplNightGuardImpression.
+  ///
+  /// In en, this message translates to:
+  /// **'Night Guard Impression'**
+  String get tplNightGuardImpression;
+
+  /// No description provided for @tplScaling.
+  ///
+  /// In en, this message translates to:
+  /// **'Scaling (Cleaning)'**
+  String get tplScaling;
+
+  /// No description provided for @tplCheckup.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up'**
+  String get tplCheckup;
 }
 
 class _AppLocalizationsDelegate

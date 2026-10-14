@@ -4,6 +4,7 @@ import {
   sendFcmToTokens,
   unauthorizedResponse,
 } from '../_shared/fcm.ts';
+import { groupByLang, type Lang, type LangToken, t } from '../_shared/i18n.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -51,11 +52,11 @@ Deno.serve(async (req) => {
       return r;
     }
 
-    // Bir klinikteki (opsiyonel: belirli üyenin) cihaz token'larını getir.
+    // Bir klinikteki (opsiyonel: belirli üyenin) cihaz token'ları, dile göre.
     async function tokensForClinic(
       klinikId: string,
       memberId?: string | null,
-    ): Promise<string[]> {
+    ): Promise<Map<Lang, string[]>> {
       let memberQuery = supabase
         .from('klinik_uyeleri')
         .select('id, user_id')
@@ -63,12 +64,12 @@ Deno.serve(async (req) => {
       if (memberId) memberQuery = memberQuery.eq('id', memberId);
       const { data: members } = await memberQuery;
       const ids = (members ?? []).map((m) => m.user_id as string);
-      if (ids.length === 0) return [];
+      if (ids.length === 0) return new Map();
       const { data: tokens } = await supabase
         .from('device_tokens')
-        .select('token')
+        .select('token, dil')
         .in('user_id', ids);
-      return (tokens ?? []).map((t) => t.token as string);
+      return groupByLang((tokens ?? []) as LangToken[]);
     }
 
     // ── Takipler: hatırlatma günü = bugün ─────────────────
@@ -107,42 +108,44 @@ Deno.serve(async (req) => {
     let followSent = 0;
     for (const [key, group] of followGroups) {
       const [klinikId, kind] = key.split(':') as [string, FollowKind];
-      const list = await tokensForClinic(klinikId);
-      if (list.length === 0) continue;
+      const byLang = await tokensForClinic(klinikId);
+      if (byLang.size === 0) continue;
 
       const isLab = kind === 'lab';
-      const itemTitle = isLab ? 'Lab takibi' : 'Kontrol';
-      const summaryTitle = isLab ? 'Günün lab takipleri' : 'Günün kontrolleri';
-      const summaryBody = isLab
-        ? `${group.length} lab takibi bugün`
-        : `${group.length} kontrol bugün`;
       const summaryType = isLab ? 'lab_summary' : 'follow_up_summary';
 
-      if (group.length <= INDIVIDUAL_THRESHOLD) {
-        for (const f of group) {
-          // KVKK: tam ad yurt dışı sunucudan geçmesin, kilit ekranında görünmesin.
-          const hasta = initials(
-            (f.hastalar as { ad_soyad?: string } | null)?.ad_soyad,
-          );
+      for (const [lang, list] of byLang) {
+        const m = t(lang);
+        if (group.length <= INDIVIDUAL_THRESHOLD) {
+          for (const f of group) {
+            // KVKK: tam ad yurt dışı sunucudan geçmesin, kilit ekranında görünmesin.
+            const hasta = initials(
+              (f.hastalar as { ad_soyad?: string } | null)?.ad_soyad,
+              lang,
+              m.patientFallback,
+            );
+            const r = await send({
+              tokens: list,
+              title: `${isLab ? m.labItem : m.controlItem}: ${hasta}`,
+              body: f.baslik as string,
+              data: {
+                type: isLab ? 'lab' : 'follow_up',
+                id: f.id as string,
+              },
+            });
+            followSent += r.sent;
+          }
+        } else {
           const r = await send({
             tokens: list,
-            title: `${itemTitle}: ${hasta}`,
-            body: f.baslik as string,
-            data: {
-              type: isLab ? 'lab' : 'follow_up',
-              id: f.id as string,
-            },
+            title: isLab ? m.labSummaryTitle : m.controlSummaryTitle,
+            body: isLab
+              ? m.labSummaryBody(group.length)
+              : m.controlSummaryBody(group.length),
+            data: { type: summaryType, klinik_id: klinikId },
           });
           followSent += r.sent;
         }
-      } else {
-        const r = await send({
-          tokens: list,
-          title: summaryTitle,
-          body: summaryBody,
-          data: { type: summaryType, klinik_id: klinikId },
-        });
-        followSent += r.sent;
       }
 
       await supabase
@@ -189,31 +192,31 @@ Deno.serve(async (req) => {
       const klinikId = first.klinik_id as string;
       const assignedMemberId = first.sorumlu_uye_id as string | null;
 
-      const list = await tokensForClinic(klinikId, assignedMemberId);
-      if (list.length === 0) continue;
+      const byLang = await tokensForClinic(klinikId, assignedMemberId);
+      if (byLang.size === 0) continue;
 
-      const title = assignedMemberId
-        ? 'Size atanan görevler'
-        : 'Günün yapılacakları';
-
-      if (group.length <= INDIVIDUAL_THRESHOLD) {
-        for (const t of group) {
+      for (const [lang, list] of byLang) {
+        const m = t(lang);
+        const title = assignedMemberId ? m.todosAssignedTitle : m.todosTitle;
+        if (group.length <= INDIVIDUAL_THRESHOLD) {
+          for (const todo of group) {
+            const r = await send({
+              tokens: list,
+              title,
+              body: (todo.icerik as string | null) ?? m.todoFallback,
+              data: { type: 'clinic_todos', klinik_id: klinikId },
+            });
+            todoSent += r.sent;
+          }
+        } else {
           const r = await send({
             tokens: list,
             title,
-            body: (t.icerik as string | null) ?? 'Açık görev',
+            body: m.todosSummaryBody(group.length),
             data: { type: 'clinic_todos', klinik_id: klinikId },
           });
           todoSent += r.sent;
         }
-      } else {
-        const r = await send({
-          tokens: list,
-          title,
-          body: `${group.length} açık görev zamanı geldi`,
-          data: { type: 'clinic_todos', klinik_id: klinikId },
-        });
-        todoSent += r.sent;
       }
 
       await supabase

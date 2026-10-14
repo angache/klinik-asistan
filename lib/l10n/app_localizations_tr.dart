@@ -2129,4 +2129,105 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pdfTreatmentHistory => 'Tedavi geçmişi';
+
+  @override
+  String get errRequestNotFound => 'İstek bulunamadı';
+
+  @override
+  String get errRequestAlreadyAnswered => 'Bu istek zaten yanıtlanmış';
+
+  @override
+  String get errAssigneeOtherClinic =>
+      'Sorumlu üye görevle aynı klinikte olmalı';
+
+  @override
+  String get errPatientOtherClinic => 'Hasta görevle aynı klinikte olmalı';
+
+  @override
+  String get errNoReportPermission =>
+      'Bu kliniğin raporlarını görme yetkiniz yok';
+
+  @override
+  String get errInvalidDateRange => 'Geçersiz tarih aralığı';
+
+  @override
+  String get errNoListPermission => 'Bu kliniğin listesini görme yetkiniz yok';
+
+  @override
+  String get errNothingToSave => 'Kaydedilecek not yok';
+
+  @override
+  String get errNoteNotFound => 'Not bulunamadı';
+
+  @override
+  String get errNoPermission => 'Bu işlem için yetkiniz yok';
+
+  @override
+  String get errOffline => 'İnternet bağlantısı yok. Tekrar deneyin.';
+
+  @override
+  String get tplTreatmentPlanning => 'Tedavi Planlaması';
+
+  @override
+  String get tplInitialExam => 'İlk Muayene / Teşhis';
+
+  @override
+  String get tplCanalStart => 'Kanal Başlangıç';
+
+  @override
+  String get tplCanalFinish => 'Kanal Bitim';
+
+  @override
+  String get tplCanalRetreatment => 'Kanal Yenileme';
+
+  @override
+  String get tplCompositeFilling => 'Kompozit Dolgu';
+
+  @override
+  String get tplPulpCapping => 'Kuafaj';
+
+  @override
+  String get tplExtraction => 'Diş Çekimi';
+
+  @override
+  String get tplComplicatedExtraction => 'Komplikasyonlu Çekim';
+
+  @override
+  String get tplSurgicalExtraction => 'Cerrahi Çekim';
+
+  @override
+  String get tplAlveolitis => 'Alveolit Tedavisi (Pansuman)';
+
+  @override
+  String get tplCurettage => 'Küretaj';
+
+  @override
+  String get tplWhitening => 'Beyazlatma';
+
+  @override
+  String get tplToothPreparation => 'Diş Kesimi';
+
+  @override
+  String get tplImpression => 'Ölçü';
+
+  @override
+  String get tplFrameworkTryIn => 'Altyapı Prova';
+
+  @override
+  String get tplBisqueTryIn => 'Dentin Prova';
+
+  @override
+  String get tplTempCementation => 'Geçici Simantasyon';
+
+  @override
+  String get tplPermCementation => 'Daimi Simantasyon';
+
+  @override
+  String get tplNightGuardImpression => 'Gece Plağı Ölçüsü';
+
+  @override
+  String get tplScaling => 'Detertraj (Temizlik)';
+
+  @override
+  String get tplCheckup => 'Kontrol';
 }

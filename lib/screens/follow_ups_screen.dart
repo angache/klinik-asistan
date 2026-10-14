@@ -43,7 +43,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.actionFailed('$e'))),
+        SnackBar(content: Text(l10n.actionFailed(errorText(e)))),
       );
     }
   }
@@ -79,7 +79,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.deleteFailed('$e'))),
+        SnackBar(content: Text(l10n.deleteFailed(errorText(e)))),
       );
     }
   }
@@ -96,7 +96,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.patientOpenFailed('$e'))),
+        SnackBar(content: Text(context.l10n.patientOpenFailed(errorText(e)))),
       );
     }
   }
@@ -121,7 +121,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(l10n.loadFailed('${snap.error}')),
+                    Text(l10n.loadFailed(errorText(snap.error))),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: _reload,

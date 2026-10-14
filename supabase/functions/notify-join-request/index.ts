@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { sendFcmToTokens, unauthorizedResponse } from '../_shared/fcm.ts';
+import { groupByLang, type LangToken, t } from '../_shared/i18n.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +21,7 @@ Deno.serve(async (req) => {
     // Database Webhook: { type, table, record, ... }
     const record = payload.record ?? payload;
     const klinikId = record.klinik_id as string | undefined;
-    const adSoyad = (record.ad_soyad as string | undefined) ?? 'Bir kullanıcı';
+    const adSoyad = (record.ad_soyad as string | undefined)?.trim();
     const durum = (record.durum as string | undefined) ?? 'beklemede';
 
     if (!klinikId || durum !== 'beklemede') {
@@ -49,22 +50,29 @@ Deno.serve(async (req) => {
 
     const { data: tokens } = await supabase
       .from('device_tokens')
-      .select('token')
+      .select('token, dil')
       .in('user_id', adminIds);
 
-    const list = (tokens ?? []).map((t) => t.token as string);
-    if (list.length === 0) {
+    const byLang = groupByLang((tokens ?? []) as LangToken[]);
+    if (byLang.size === 0) {
       return new Response(JSON.stringify({ tokens: 0 }), {
         headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
-    const result = await sendFcmToTokens({
-      tokens: list,
-      title: 'Yeni katılım isteği',
-      body: `${adSoyad} kliniğe katılmak istiyor`,
-      data: { type: 'join_request', klinik_id: klinikId },
-    });
+    const result = { sent: 0, failed: 0, invalid: [] as string[] };
+    for (const [lang, list] of byLang) {
+      const m = t(lang);
+      const r = await sendFcmToTokens({
+        tokens: list,
+        title: m.joinRequestTitle,
+        body: m.joinRequestBody(adSoyad || m.someone),
+        data: { type: 'join_request', klinik_id: klinikId },
+      });
+      result.sent += r.sent;
+      result.failed += r.failed;
+      result.invalid.push(...r.invalid);
+    }
     if (result.invalid.length > 0) {
       await supabase.from('device_tokens').delete().in('token', result.invalid);
     }

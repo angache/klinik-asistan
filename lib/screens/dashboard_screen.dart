@@ -259,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.patientAddFailed('$e'))),
+        SnackBar(content: Text(l10n.patientAddFailed(errorText(e)))),
       );
     }
   }
@@ -902,7 +902,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '$_error',
+                errorText(_error),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

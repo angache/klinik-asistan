@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart' show Locale;
+
 import '../l10n/l10n.dart';
 
 class TreatmentTemplate {
@@ -205,6 +207,52 @@ const List<TreatmentTemplate> kDefaultTreatmentTemplates = [
 
 /// Geriye dönük alias — yeni kod kDefault kullanmalı.
 const List<TreatmentTemplate> kTreatmentTemplates = kDefaultTreatmentTemplates;
+
+/// Klinik dilindeki varsayılan şablonlar. Türkçe adlar sunucudaki
+/// seed_klinik_islemleri ile aynı kalmalı; yoksa kopyalar oluşur.
+List<TreatmentTemplate> defaultTreatmentTemplatesFor(String dil) {
+  final supported =
+      AppLocalizations.supportedLocales.any((l) => l.languageCode == dil);
+  final l = lookupAppLocalizations(Locale(supported ? dil : 'en'));
+  return [
+    for (final t in kDefaultTreatmentTemplates)
+      TreatmentTemplate(
+        kategori: t.kategori,
+        baslik: _defaultName(l, t.baslik),
+        isKanal: t.isKanal,
+        requiresTooth: t.requiresTooth,
+        labTakip: t.labTakip,
+        sira: t.sira,
+        kontrolAy: t.kontrolAy,
+      ),
+  ];
+}
+
+String _defaultName(AppLocalizations l, String tr) => switch (tr) {
+      'Tedavi Planlaması' => l.tplTreatmentPlanning,
+      'İlk Muayene / Teşhis' => l.tplInitialExam,
+      'Kanal Başlangıç' => l.tplCanalStart,
+      'Kanal Bitim' => l.tplCanalFinish,
+      'Kanal Yenileme' => l.tplCanalRetreatment,
+      'Kompozit Dolgu' => l.tplCompositeFilling,
+      'Kuafaj' => l.tplPulpCapping,
+      'Diş Çekimi' => l.tplExtraction,
+      'Komplikasyonlu Çekim' => l.tplComplicatedExtraction,
+      'Cerrahi Çekim' => l.tplSurgicalExtraction,
+      'Alveolit Tedavisi (Pansuman)' => l.tplAlveolitis,
+      'Küretaj' => l.tplCurettage,
+      'Beyazlatma' => l.tplWhitening,
+      'Diş Kesimi' => l.tplToothPreparation,
+      'Ölçü' => l.tplImpression,
+      'Altyapı Prova' => l.tplFrameworkTryIn,
+      'Dentin Prova' => l.tplBisqueTryIn,
+      'Geçici Simantasyon' => l.tplTempCementation,
+      'Daimi Simantasyon' => l.tplPermCementation,
+      'Gece Plağı Ölçüsü' => l.tplNightGuardImpression,
+      'Detertraj (Temizlik)' => l.tplScaling,
+      'Kontrol' => l.tplCheckup,
+      _ => tr,
+    };
 
 const List<String> kEgeSistemleri = [
   'Protaper',

@@ -129,7 +129,7 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.voiceUploadFailed('$e'))),
+        SnackBar(content: Text(context.l10n.voiceUploadFailed(errorText(e)))),
       );
     }
   }

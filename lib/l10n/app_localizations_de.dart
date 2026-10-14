@@ -2221,4 +2221,109 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pdfTreatmentHistory => 'Behandlungsverlauf';
+
+  @override
+  String get errRequestNotFound => 'Anfrage nicht gefunden';
+
+  @override
+  String get errRequestAlreadyAnswered =>
+      'Diese Anfrage wurde bereits beantwortet';
+
+  @override
+  String get errAssigneeOtherClinic =>
+      'Die zuständige Person muss zur selben Praxis gehören wie die Aufgabe';
+
+  @override
+  String get errPatientOtherClinic =>
+      'Der Patient muss zur selben Praxis gehören wie die Aufgabe';
+
+  @override
+  String get errNoReportPermission =>
+      'Sie sind nicht berechtigt, die Berichte dieser Praxis anzusehen';
+
+  @override
+  String get errInvalidDateRange => 'Ungültiger Zeitraum';
+
+  @override
+  String get errNoListPermission =>
+      'Sie sind nicht berechtigt, diese Liste der Praxis anzusehen';
+
+  @override
+  String get errNothingToSave => 'Nichts zu speichern';
+
+  @override
+  String get errNoteNotFound => 'Eintrag nicht gefunden';
+
+  @override
+  String get errNoPermission => 'Sie sind für diese Aktion nicht berechtigt';
+
+  @override
+  String get errOffline =>
+      'Keine Internetverbindung. Bitte versuchen Sie es erneut.';
+
+  @override
+  String get tplTreatmentPlanning => 'Behandlungsplanung';
+
+  @override
+  String get tplInitialExam => 'Erstuntersuchung / Diagnose';
+
+  @override
+  String get tplCanalStart => 'Wurzelkanalbehandlung – Beginn';
+
+  @override
+  String get tplCanalFinish => 'Wurzelkanalbehandlung – Abschluss';
+
+  @override
+  String get tplCanalRetreatment => 'Wurzelkanal-Revision';
+
+  @override
+  String get tplCompositeFilling => 'Kompositfüllung';
+
+  @override
+  String get tplPulpCapping => 'Überkappung';
+
+  @override
+  String get tplExtraction => 'Zahnextraktion';
+
+  @override
+  String get tplComplicatedExtraction => 'Komplizierte Extraktion';
+
+  @override
+  String get tplSurgicalExtraction => 'Operative Zahnentfernung';
+
+  @override
+  String get tplAlveolitis => 'Alveolitis-Behandlung (Einlage)';
+
+  @override
+  String get tplCurettage => 'Kürettage';
+
+  @override
+  String get tplWhitening => 'Bleaching';
+
+  @override
+  String get tplToothPreparation => 'Präparation';
+
+  @override
+  String get tplImpression => 'Abformung';
+
+  @override
+  String get tplFrameworkTryIn => 'Gerüstanprobe';
+
+  @override
+  String get tplBisqueTryIn => 'Rohbrandanprobe';
+
+  @override
+  String get tplTempCementation => 'Provisorische Zementierung';
+
+  @override
+  String get tplPermCementation => 'Definitive Zementierung';
+
+  @override
+  String get tplNightGuardImpression => 'Abformung Aufbissschiene';
+
+  @override
+  String get tplScaling => 'Zahnsteinentfernung (Reinigung)';
+
+  @override
+  String get tplCheckup => 'Kontrolle';
 }

@@ -79,6 +79,9 @@ class DatabaseService {
 
   String? get _userId => _session.user?.id;
 
+  /// Varsayılan işlem şablonları bu dilde eklenir.
+  String get clinicLanguage => _session.clinic?.dil ?? 'tr';
+
   // ── Raporlar ──────────────────────────────────────────────
 
   /// [stalledDays] gündür gelmeyen, planlanmış işlemi olan hastalar listelenir.
@@ -902,7 +905,7 @@ class DatabaseService {
       final list = await getTreatmentTemplates(onlyActive: true);
       if (list.isNotEmpty) return list;
     } catch (_) {}
-    return List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
+    return defaultTreatmentTemplatesFor(clinicLanguage);
   }
 
   Future<int> seedMissingTreatmentDefaults() async {
@@ -941,7 +944,7 @@ class DatabaseService {
     final klinikId = _requireKlinikId;
 
     final toInsert = <Map<String, dynamic>>[];
-    for (final d in kDefaultTreatmentTemplates) {
+    for (final d in defaultTreatmentTemplatesFor(clinicLanguage)) {
       final key = d.baslik.trim().toLowerCase();
       if (known.contains(key)) continue;
       nextSira += 1;

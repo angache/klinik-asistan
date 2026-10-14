@@ -99,7 +99,7 @@ class _CreateFormState extends State<_CreateForm> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.session.error ?? '$e')),
+        SnackBar(content: Text(widget.session.error ?? errorText(e))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -188,7 +188,7 @@ class _JoinFormState extends State<_JoinForm> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.session.error ?? '$e')),
+        SnackBar(content: Text(widget.session.error ?? errorText(e))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);

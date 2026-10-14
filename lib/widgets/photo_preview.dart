@@ -91,7 +91,7 @@ class SessionPhotosEditor extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.photoOpenFailed('$e'))),
+        SnackBar(content: Text(context.l10n.photoOpenFailed(errorText(e)))),
       );
     }
   }

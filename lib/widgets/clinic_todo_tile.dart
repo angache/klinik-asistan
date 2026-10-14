@@ -97,7 +97,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.playFailed('$e'))),
+        SnackBar(content: Text(context.l10n.playFailed(errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _loadingAudio = false);
@@ -116,7 +116,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.actionFailed('$e'))),
+        SnackBar(content: Text(l10n.actionFailed(errorText(e)))),
       );
     }
   }
@@ -160,7 +160,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.deleteFailed('$e'))),
+        SnackBar(content: Text(l10n.deleteFailed(errorText(e)))),
       );
     }
   }

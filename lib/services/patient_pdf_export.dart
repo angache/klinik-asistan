@@ -255,7 +255,8 @@ class PatientPdfExport {
     } catch (e) {
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.pdfCreateFailed('$e'))));
+        ..showSnackBar(
+            SnackBar(content: Text(l10n.pdfCreateFailed(errorText(e)))));
     }
   }
 }

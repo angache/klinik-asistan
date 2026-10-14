@@ -128,10 +128,14 @@ export function unauthorizedResponse(
 }
 
 /** "Ayşe Yılmaz" → "A.Y." — push metni Google sunucularından geçer. */
-export function initials(name: string | null | undefined): string {
+export function initials(
+  name: string | null | undefined,
+  lang: string,
+  fallback: string,
+): string {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return 'Hasta';
-  return parts.map((p) => `${p[0].toLocaleUpperCase('tr-TR')}.`).join('');
+  if (parts.length === 0) return fallback;
+  return parts.map((p) => `${p[0].toLocaleUpperCase(lang)}.`).join('');
 }
 
 // Uygulama silinmiş / token yenilenmiş: bu token'a bir daha gönderilmemeli.

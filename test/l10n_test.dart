@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:klinik_asistan/data/treatment_templates.dart';
 import 'package:klinik_asistan/l10n/l10n.dart';
 import 'package:klinik_asistan/models/clinic.dart';
 
@@ -94,6 +95,51 @@ void main() {
     expect(ClinicRole.asistan.label, 'Asistan');
     setActiveLocale(const Locale('de'));
     expect(ClinicRole.asistan.label, 'Assistenz');
+    setActiveLocale(const Locale('tr'));
+  });
+
+  group('varsayılan işlem şablonları', () {
+    test('Türkçe adlar sunucu yüklemesiyle (028) birebir aynı', () {
+      final sql = File('supabase/sql/028_coklu_dil.sql').readAsStringSync();
+      final seeded = RegExp(r"\(\d+,\s*'[^']+',\s*'([^']+)'")
+          .allMatches(sql)
+          .map((m) => m[1])
+          .toList();
+      expect(
+        defaultTreatmentTemplatesFor('tr').map((t) => t.baslik).toList(),
+        seeded,
+      );
+    });
+
+    for (final code in kLanguageNames.keys) {
+      test('$code: tüm adlar çevrilmiş ve benzersiz', () {
+        final list = defaultTreatmentTemplatesFor(code);
+        final names = list.map((t) => t.baslik.toLowerCase()).toSet();
+        expect(names.length, kDefaultTreatmentTemplates.length);
+        for (var i = 0; i < list.length; i++) {
+          expect(list[i].kategori, kDefaultTreatmentTemplates[i].kategori);
+          expect(list[i].isKanal, kDefaultTreatmentTemplates[i].isKanal);
+          expect(list[i].kontrolAy, kDefaultTreatmentTemplates[i].kontrolAy);
+        }
+      });
+    }
+
+    test('desteklenmeyen klinik dilinde İngilizce', () {
+      expect(
+        defaultTreatmentTemplatesFor('ja').first.baslik,
+        'Treatment Planning',
+      );
+    });
+  });
+
+  test('veritabanının Türkçe hata metni etkin dile çevrilir', () {
+    setActiveLocale(const Locale('en'));
+    expect(
+      errorText(Exception('PostgrestException(message: Bu kliniğe üye '
+          'değilsiniz, code: P0001, details: null, hint: null)')),
+      'You are not a member of this clinic',
+    );
+    expect(errorText(Exception('başka hata')), 'Exception: başka hata');
     setActiveLocale(const Locale('tr'));
   });
 }

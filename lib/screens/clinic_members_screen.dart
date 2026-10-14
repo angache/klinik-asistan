@@ -74,7 +74,7 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.roleUpdateFailed('$e'))),
+        SnackBar(content: Text(l10n.roleUpdateFailed(errorText(e)))),
       );
     }
   }
@@ -122,7 +122,7 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.removeFailed('$e'))),
+        SnackBar(content: Text(l10n.removeFailed(errorText(e)))),
       );
     }
   }
@@ -141,7 +141,7 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError) {
-            return Center(child: Text(l10n.loadFailed('${snap.error}')));
+            return Center(child: Text(l10n.loadFailed(errorText(snap.error))));
           }
           final items = snap.data ?? [];
           return RefreshIndicator(

@@ -42,7 +42,7 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.approveFailed('$e'))),
+        SnackBar(content: Text(context.l10n.approveFailed(errorText(e)))),
       );
     }
   }
@@ -78,7 +78,7 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.rejectFailed('$e'))),
+        SnackBar(content: Text(l10n.rejectFailed(errorText(e)))),
       );
     }
   }
@@ -105,7 +105,7 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(l10n.loadFailed('${snap.error}')),
+                    Text(l10n.loadFailed(errorText(snap.error))),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: _reload,

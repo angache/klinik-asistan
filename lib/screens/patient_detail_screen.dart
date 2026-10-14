@@ -202,7 +202,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.patientDeleteFailed('$e'))),
+        SnackBar(content: Text(context.l10n.patientDeleteFailed(errorText(e)))),
       );
     }
   }
@@ -260,7 +260,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.completeFailed('$e'))),
+        SnackBar(content: Text(context.l10n.completeFailed(errorText(e)))),
       );
     }
   }
@@ -273,7 +273,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.followUpCompleteFailed('$e'))),
+        SnackBar(
+            content: Text(context.l10n.followUpCompleteFailed(errorText(e)))),
       );
     }
   }
@@ -304,7 +305,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.followUpDeleteFailed('$e'))),
+        SnackBar(
+            content: Text(context.l10n.followUpDeleteFailed(errorText(e)))),
       );
     }
   }
@@ -540,7 +542,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                l10n.dataLoadFailed('$_error'),
+                l10n.dataLoadFailed(errorText(_error)),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: scheme.error),
               ),

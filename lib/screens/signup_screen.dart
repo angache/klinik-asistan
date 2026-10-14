@@ -105,7 +105,7 @@ class _CreateClinicFormState extends State<_CreateClinicForm> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.session.error ?? '$e')),
+        SnackBar(content: Text(widget.session.error ?? errorText(e))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -246,7 +246,7 @@ class _JoinClinicFormState extends State<_JoinClinicForm> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.session.error ?? '$e')),
+        SnackBar(content: Text(widget.session.error ?? errorText(e))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);

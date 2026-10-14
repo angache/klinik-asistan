@@ -69,8 +69,8 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
   String _uploadMessage = '';
   late DateTime _sessionDate;
   String? _validationError;
-  List<TreatmentTemplate> _templates =
-      List<TreatmentTemplate>.from(kDefaultTreatmentTemplates);
+  late List<TreatmentTemplate> _templates =
+      defaultTreatmentTemplatesFor(widget.db.clinicLanguage);
 
   bool get _showKanal {
     return looksLikeCanalTitle(_titleController.text) ||
@@ -308,8 +308,9 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _validationError =
-            e is NoteConflictException ? e.toString() : l10n.saveFailed('$e');
+        _validationError = e is NoteConflictException
+            ? e.toString()
+            : l10n.saveFailed(errorText(e));
       });
     }
   }

@@ -400,6 +400,7 @@ class SessionController extends ChangeNotifier {
         'p_ad': klinikAd.trim(),
         'p_kod': kod,
         'p_ad_soyad': adSoyad.trim(),
+        'p_dil': activeLocale.languageCode,
       },
     );
 
