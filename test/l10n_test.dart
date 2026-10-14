@@ -124,6 +124,35 @@ void main() {
       });
     }
 
+    test('aynı ad farklı dillerde farklı işleme karşılık gelmez', () {
+      final owner = <String, String>{};
+      for (final code in kLanguageNames.keys) {
+        final list = defaultTreatmentTemplatesFor(code);
+        for (var i = 0; i < list.length; i++) {
+          final name = list[i].baslik.toLowerCase();
+          final tr = kDefaultTreatmentTemplates[i].baslik;
+          expect(owner.putIfAbsent(name, () => tr), tr, reason: name);
+        }
+      }
+    });
+
+    test('hazır adlar etkin dilde gösterilir, klinik adları aynen kalır', () {
+      setActiveLocale(const Locale('ru'));
+      final ru = defaultTreatmentTemplatesFor('ru');
+      for (final code in kLanguageNames.keys) {
+        final list = defaultTreatmentTemplatesFor(code);
+        for (var i = 0; i < list.length; i++) {
+          expect(procedureLabel(list[i].baslik), ru[i].baslik);
+        }
+      }
+      expect(procedureLabel('Zirkon Kuron'), 'Zirkon Kuron');
+
+      final clinic = defaultTreatmentTemplatesFor('tr');
+      expect(storedProcedureName(ru[2].baslik, clinic), 'Kanal Başlangıç');
+      expect(storedProcedureName(' Zirkon Kuron ', clinic), 'Zirkon Kuron');
+      setActiveLocale(const Locale('tr'));
+    });
+
     test('desteklenmeyen klinik dilinde İngilizce', () {
       expect(
         defaultTreatmentTemplatesFor('ja').first.baslik,

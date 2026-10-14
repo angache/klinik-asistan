@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../data/treatment_templates.dart';
 import '../l10n/l10n.dart';
 import '../models/clinic_report.dart';
 import '../services/database_service.dart';
@@ -181,7 +182,7 @@ class _RecallScreenState extends State<RecallScreen> {
         baslik: l10n.periodicCheckup,
         planlananTarih: date,
         aciklama: l10n.checkupReason(
-          p.kontrolIslem,
+          procedureLabel(p.kontrolIslem),
           DateFormat.yMMMd().format(p.kontrolIslemTarihi),
         ),
       );
@@ -391,7 +392,10 @@ class _RecallTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${p.kontrolIslem} · ${fmt.format(p.kontrolIslemTarihi)}'),
+          Text(
+            '${procedureLabel(p.kontrolIslem)} · '
+            '${fmt.format(p.kontrolIslemTarihi)}',
+          ),
           Text(
             dueText,
             style: TextStyle(

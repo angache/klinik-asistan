@@ -10,6 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 import '../data/tooth_canals.dart';
+import '../data/treatment_templates.dart';
 import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
@@ -170,7 +171,7 @@ class PatientPdfExport {
         for (final n in notes)
           [
             _date.format(showDate ? n.tarih.toLocal() : n.olusturmaTarihi),
-            n.islemBaslik,
+            procedureLabel(n.islemBaslik),
             _scope(n),
             _details(n),
           ],

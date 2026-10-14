@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
+import '../data/treatment_templates.dart';
 import '../l10n/l10n.dart';
 import '../models/treatment_note.dart';
 import '../services/database_service.dart';
@@ -61,7 +62,7 @@ class _NoteHistorySheetState extends State<_NoteHistorySheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              widget.note.islemBaslik,
+              procedureLabel(widget.note.islemBaslik),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -191,7 +192,7 @@ class _VersionCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            note.islemBaslik,
+            procedureLabel(note.islemBaslik),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           Text(

@@ -106,7 +106,8 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
     final n = widget.note;
     _kapsam = n.kapsam;
     _selectedTeeth = parseToothSelection(n.disNo);
-    _titleController = TextEditingController(text: n.islemBaslik);
+    _titleController =
+        TextEditingController(text: procedureLabel(n.islemBaslik));
     _noteController = TextEditingController(text: n.notIcerik);
     _egeSistemi = n.egeSistemi;
     _kanalIlaci = n.kanalIlaci;
@@ -228,7 +229,10 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
 
   Future<void> _save() async {
     final l10n = context.l10n;
-    final title = _titleController.text.trim();
+    final typed = _titleController.text.trim();
+    final title = typed == procedureLabel(widget.note.islemBaslik)
+        ? widget.note.islemBaslik
+        : storedProcedureName(typed, _templates);
     if (title.isEmpty) {
       setState(() => _validationError = l10n.errTitleRequired);
       return;

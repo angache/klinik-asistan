@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../data/treatment_templates.dart';
 import '../l10n/l10n.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
@@ -490,7 +491,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                '• ${note.islemBaslik} ($scope)',
+                                '• ${procedureLabel(note.islemBaslik)} ($scope)',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium

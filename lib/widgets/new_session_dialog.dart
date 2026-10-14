@@ -382,7 +382,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
     setState(() {
       _validationError = null;
       _selectedTemplate = template;
-      _titleController.text = template.baslik;
+      _titleController.text = procedureLabel(template.baslik);
       _showKanal = template.isKanal;
       if (template.requiresTooth || template.isKanal) {
         _kapsam = TreatmentScope.tekDis;
@@ -483,7 +483,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
 
   Future<void> _save() async {
     final l10n = context.l10n;
-    final title = _titleController.text.trim();
+    final title = storedProcedureName(_titleController.text, _templates);
     if (title.isEmpty) {
       _showFormError(l10n.errSelectOrTypeProcedure);
       return;
@@ -618,7 +618,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
         ].join('\n');
         final kontrolFollowUp = await widget.db.createFollowUp(
           hastaId: widget.patient.id,
-          baslik: l10n.followUpTitle(title),
+          baslik: l10n.followUpTitle(procedureLabel(title)),
           planlananTarih: kontrolDate,
           aciklama: aciklama,
           seansNotuId: savedNote.id,
@@ -867,13 +867,13 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: items.map((t) {
-                                        final selected =
-                                            _selectedTemplate == t ||
-                                                (_selectedTemplate == null &&
-                                                    _titleController.text ==
-                                                        t.baslik);
+                                        final selected = _selectedTemplate ==
+                                                t ||
+                                            (_selectedTemplate == null &&
+                                                _titleController.text ==
+                                                    procedureLabel(t.baslik));
                                         return FilterChip(
-                                          label: Text(t.baslik),
+                                          label: Text(procedureLabel(t.baslik)),
                                           selected: selected,
                                           onSelected: (_) => _applyTemplate(t),
                                           showCheckmark: false,

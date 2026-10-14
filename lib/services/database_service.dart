@@ -792,7 +792,7 @@ class DatabaseService {
 
     return createFollowUp(
       hastaId: hastaId,
-      baslik: currentL10n.labFollowUpTitle(islemBaslik),
+      baslik: currentL10n.labFollowUpTitle(procedureLabel(islemBaslik)),
       planlananTarih: remind,
       aciklama: who == null
           ? currentL10n.labExpectedReturnOn(fmt)

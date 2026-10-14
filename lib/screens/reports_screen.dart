@@ -217,7 +217,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
         icon: Icons.leaderboard_outlined,
         child: r.topProcedures.isEmpty
             ? _EmptyText(l10n.noProceduresInPeriod)
-            : _BarList(items: r.topProcedures),
+            : _BarList(
+                items: [
+                  for (final p in r.topProcedures)
+                    ReportCount(procedureLabel(p.label), p.count),
+                ],
+              ),
       ),
       if (r.categories.length > 1) ...[
         const SizedBox(height: 16),
@@ -915,7 +920,7 @@ class _StalledPatients extends StatelessWidget {
                     )
                   else
                     l10n.noProceduresYet,
-                  l10n.plannedList(p.planlanan.join(', ')),
+                  l10n.plannedList(p.planlanan.map(procedureLabel).join(', ')),
                 ].join('\n'),
               ),
               isThreeLine: true,

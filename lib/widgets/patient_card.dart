@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../data/treatment_templates.dart';
 import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../screens/patient_detail_screen.dart';
@@ -78,8 +79,8 @@ class PatientCard extends StatelessWidget {
               '→ ${patient.planlananBasliklar.join(', ')}',
             if (patient.sonIslemBaslik?.trim().isNotEmpty == true)
               patient.sonIslemTarih != null
-                  ? '${DateFormat.yMd().add_Hm().format(patient.sonIslemTarih!.toLocal())} · ${patient.sonIslemBaslik!.trim()}'
-                  : patient.sonIslemBaslik!.trim(),
+                  ? '${DateFormat.yMd().add_Hm().format(patient.sonIslemTarih!.toLocal())} · ${procedureLabel(patient.sonIslemBaslik!.trim())}'
+                  : procedureLabel(patient.sonIslemBaslik!.trim()),
           ].join('\n'),
         ),
         trailing: Row(

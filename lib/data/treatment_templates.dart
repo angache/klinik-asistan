@@ -68,7 +68,34 @@ TreatmentTemplate? findTreatmentTemplate(
   for (final t in source) {
     if (t.baslik.toLowerCase() == q) return t;
   }
+  for (final t in source) {
+    if (procedureLabel(t.baslik).toLowerCase() == q) return t;
+  }
   return null;
+}
+
+/// Ekranda yazılan adı kayıtta kullanılacak ada çevirir: şablonun çevrilmiş
+/// adı yazıldıysa şablonun kliniğe kayıtlı adı döner.
+String storedProcedureName(String typed, List<TreatmentTemplate> inList) =>
+    findTreatmentTemplate(typed, inList: inList)?.baslik ?? typed.trim();
+
+Map<String, String>? _defaultNameIndex;
+
+/// Hazır işlem adı (herhangi bir dilde) etkin dilde gösterilir; kliniğin
+/// kendi yazdığı ya da değiştirdiği adlar olduğu gibi kalır.
+String procedureLabel(String stored) {
+  final index = _defaultNameIndex ??= () {
+    final m = <String, String>{};
+    for (final locale in AppLocalizations.supportedLocales) {
+      final l = lookupAppLocalizations(locale);
+      for (final t in kDefaultTreatmentTemplates) {
+        m[_defaultName(l, t.baslik).toLowerCase()] = t.baslik;
+      }
+    }
+    return m;
+  }();
+  final tr = index[stored.trim().toLowerCase()];
+  return tr == null ? stored : _defaultName(currentL10n, tr);
 }
 
 /// Uygulama çekirdek listesi — klinikler buna kopyalanır / eksikler buradan gelir.

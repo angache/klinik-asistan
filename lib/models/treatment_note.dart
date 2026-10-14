@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
+import '../data/treatment_templates.dart';
 import '../l10n/l10n.dart';
 
 enum TreatmentScope {
@@ -231,7 +232,11 @@ List<String> diffTreatmentNotes(TreatmentNote onceki, TreatmentNote yeni) {
     );
   }
   add(l10n.fieldTooth, onceki.disNo, yeni.disNo);
-  add(l10n.fieldTitle, onceki.islemBaslik, yeni.islemBaslik);
+  add(
+    l10n.fieldTitle,
+    procedureLabel(onceki.islemBaslik),
+    procedureLabel(yeni.islemBaslik),
+  );
   add(l10n.fieldNote, onceki.notIcerik, yeni.notIcerik);
   add(
     l10n.fieldCanalLength,

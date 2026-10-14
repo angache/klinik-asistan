@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../data/tooth_canals.dart';
+import '../data/treatment_templates.dart';
 import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
@@ -28,7 +29,7 @@ class TreatmentNoteTile extends StatelessWidget {
   final bool showDate;
 
   String get _shareCaption => [
-        note.islemBaslik,
+        procedureLabel(note.islemBaslik),
         note.kapsam.badgeLabel(disNo: note.disNo),
         DateFormat.yMd().format(note.tarih.toLocal()),
       ].join(' · ');
@@ -161,7 +162,7 @@ class TreatmentNoteTile extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            note.islemBaslik,
+            procedureLabel(note.islemBaslik),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),

@@ -156,7 +156,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(ctx.l10n.deleteProcedureTitle),
-        content: Text(ctx.l10n.deleteTemplateConfirm(t.baslik)),
+        content: Text(ctx.l10n.deleteTemplateConfirm(procedureLabel(t.baslik))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -273,7 +273,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               title: Text(
-                                t.baslik,
+                                procedureLabel(t.baslik),
                                 style: TextStyle(
                                   decoration: t.aktif
                                       ? null
@@ -390,7 +390,9 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    _baslik = TextEditingController(text: e?.baslik ?? '');
+    _baslik = TextEditingController(
+      text: e == null ? '' : procedureLabel(e.baslik),
+    );
     _kategori = e?.kategori ?? kIslemKategorileri.first;
     if (!kIslemKategorileri.contains(_kategori)) {
       _kategori = kIslemKategorileri.first;
@@ -507,7 +509,11 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
               context,
               _TemplateEditResult(
                 kategori: _kategori,
-                baslik: _baslik.text.trim(),
+                baslik: widget.existing != null &&
+                        _baslik.text.trim() ==
+                            procedureLabel(widget.existing!.baslik)
+                    ? widget.existing!.baslik
+                    : _baslik.text.trim(),
                 isKanal: _isKanal,
                 requiresTooth: _isKanal ? true : _requiresTooth,
                 labTakip: _labTakip,
