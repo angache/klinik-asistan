@@ -2326,4 +2326,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tplCheckup => 'Kontrolle';
+
+  @override
+  String get errClinicInfoMissing => 'Praxisdaten fehlen';
 }

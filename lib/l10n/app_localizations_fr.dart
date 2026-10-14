@@ -2325,4 +2325,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tplCheckup => 'Contrôle';
+
+  @override
+  String get errClinicInfoMissing => 'Informations du cabinet manquantes';
 }

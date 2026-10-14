@@ -2305,4 +2305,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tplCheckup => 'Check-up';
+
+  @override
+  String get errClinicInfoMissing => 'Clinic information is missing';
 }

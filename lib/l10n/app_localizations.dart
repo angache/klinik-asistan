@@ -3921,6 +3921,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check-up'**
   String get tplCheckup;
+
+  /// No description provided for @errClinicInfoMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic information is missing'**
+  String get errClinicInfoMissing;
 }
 
 class _AppLocalizationsDelegate

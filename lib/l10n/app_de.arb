@@ -667,5 +667,6 @@
   "tplPermCementation": "Definitive Zementierung",
   "tplNightGuardImpression": "Abformung Aufbissschiene",
   "tplScaling": "Zahnsteinentfernung (Reinigung)",
-  "tplCheckup": "Kontrolle"
+  "tplCheckup": "Kontrolle",
+  "errClinicInfoMissing": "Praxisdaten fehlen"
 }

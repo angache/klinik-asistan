@@ -667,5 +667,6 @@
   "tplPermCementation": "Daimi Simantasyon",
   "tplNightGuardImpression": "Gece Plağı Ölçüsü",
   "tplScaling": "Detertraj (Temizlik)",
-  "tplCheckup": "Kontrol"
+  "tplCheckup": "Kontrol",
+  "errClinicInfoMissing": "Klinik bilgisi eksik"
 }

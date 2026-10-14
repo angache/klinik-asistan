@@ -26,11 +26,6 @@ class NotificationService {
       return;
     }
     tzdata.initializeTimeZones();
-    try {
-      tz.setLocalLocation(tz.getLocation('Europe/Istanbul'));
-    } catch (_) {
-      tz.setLocalLocation(tz.UTC);
-    }
 
     const android = AndroidInitializationSettings('ic_stat_notification');
     const ios = DarwinInitializationSettings();
@@ -69,12 +64,15 @@ class NotificationService {
   }) async {
     if (!_ready || f.tamamlandi) return;
 
-    final when = tz.TZDateTime(
-      tz.local,
-      f.reminderDateOnly.year,
-      f.reminderDateOnly.month,
-      f.reminderDateOnly.day,
-      9,
+    // Telefonun saat diliminde 09:00; zamanlama mutlak an (UTC) olarak kurulur.
+    final when = tz.TZDateTime.from(
+      DateTime(
+        f.reminderDateOnly.year,
+        f.reminderDateOnly.month,
+        f.reminderDateOnly.day,
+        9,
+      ),
+      tz.UTC,
     );
     final l10n = currentL10n;
     final date = DateFormat.yMd().format(f.planDateOnly);
@@ -83,7 +81,7 @@ class NotificationService {
         : f.baslik;
     final title =
         l10n.notifFollowUpTitle(f.hastaAdSoyad ?? l10n.patientFallback);
-    final isPast = when.isBefore(tz.TZDateTime.now(tz.local));
+    final isPast = when.isBefore(tz.TZDateTime.now(tz.UTC));
     if (!isPast && _serverPushActive) return;
     if (isPast) {
       if (!notifyIfPast) return;

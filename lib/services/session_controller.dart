@@ -141,7 +141,7 @@ class SessionController extends ChangeNotifier {
         final member = ClinicMember.fromJson(map);
         final klinikJson = map['klinikler'];
         if (klinikJson is! Map) {
-          throw StateError('Klinik bilgisi eksik');
+          throw StateError(currentL10n.errClinicInfoMissing);
         }
         final clinic = Clinic.fromJson(Map<String, dynamic>.from(klinikJson));
         return ClinicMembership(member: member, clinic: clinic);

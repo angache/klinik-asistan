@@ -849,7 +849,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    cat,
+                                    categoryLabel(cat),
                                     style: Theme.of(context)
                                         .textTheme
                                         .labelLarge

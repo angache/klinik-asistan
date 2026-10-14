@@ -667,5 +667,6 @@
   "tplPermCementation": "Постоянная фиксация",
   "tplNightGuardImpression": "Слепок для ночной каппы",
   "tplScaling": "Снятие зубного камня (чистка)",
-  "tplCheckup": "Контрольный осмотр"
+  "tplCheckup": "Контрольный осмотр",
+  "errClinicInfoMissing": "Нет данных о клинике"
 }

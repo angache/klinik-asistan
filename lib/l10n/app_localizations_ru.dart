@@ -2316,4 +2316,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tplCheckup => 'Контрольный осмотр';
+
+  @override
+  String get errClinicInfoMissing => 'Нет данных о клинике';
 }

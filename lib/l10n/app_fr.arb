@@ -667,5 +667,6 @@
   "tplPermCementation": "Scellement définitif",
   "tplNightGuardImpression": "Empreinte gouttière nocturne",
   "tplScaling": "Détartrage (nettoyage)",
-  "tplCheckup": "Contrôle"
+  "tplCheckup": "Contrôle",
+  "errClinicInfoMissing": "Informations du cabinet manquantes"
 }

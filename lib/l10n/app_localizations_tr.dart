@@ -2230,4 +2230,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tplCheckup => 'Kontrol';
+
+  @override
+  String get errClinicInfoMissing => 'Klinik bilgisi eksik';
 }

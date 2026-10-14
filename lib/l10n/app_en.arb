@@ -791,5 +791,6 @@
   "tplPermCementation": "Permanent Cementation",
   "tplNightGuardImpression": "Night Guard Impression",
   "tplScaling": "Scaling (Cleaning)",
-  "tplCheckup": "Check-up"
+  "tplCheckup": "Check-up",
+  "errClinicInfoMissing": "Clinic information is missing"
 }
