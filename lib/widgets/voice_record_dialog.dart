@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
+import '../services/device_permissions.dart';
 import '../theme/app_theme.dart';
 
 Future<bool?> showVoiceRecordDialog({
@@ -53,8 +53,7 @@ class _VoiceRecordDialogState extends State<VoiceRecordDialog> {
   }
 
   Future<bool> _ensureMic() async {
-    final status = await Permission.microphone.request();
-    if (status.isGranted) return true;
+    if (await requestMicrophone()) return true;
     if (!mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.micPermissionRequired)),

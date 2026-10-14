@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../l10n/l10n.dart';
@@ -14,6 +13,7 @@ import '../models/clinic_todo.dart';
 import '../models/clinic.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
+import '../services/device_permissions.dart';
 import '../theme/app_theme.dart';
 import 'photo_preview.dart' show kPhotoMaxSide, kPhotoQuality;
 
@@ -189,8 +189,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
   Future<void> _pickImages(ImageSource source) async {
     try {
       if (source == ImageSource.camera) {
-        final cam = await Permission.camera.request();
-        if (!cam.isGranted) {
+        if (!await requestCamera()) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(context.l10n.cameraPermissionRequired)),
@@ -231,8 +230,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
   }
 
   Future<bool> _ensureMic() async {
-    final status = await Permission.microphone.request();
-    if (status.isGranted) return true;
+    if (await requestMicrophone()) return true;
     if (!mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.micPermissionRequired)),
@@ -750,12 +748,13 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
               Wrap(
                 spacing: 8,
                 children: [
-                  OutlinedButton.icon(
-                    onPressed:
-                        busy ? null : () => _pickImages(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt_outlined),
-                    label: Text(l10n.camera),
-                  ),
+                  if (canTakePhoto)
+                    OutlinedButton.icon(
+                      onPressed:
+                          busy ? null : () => _pickImages(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      label: Text(l10n.camera),
+                    ),
                   OutlinedButton.icon(
                     onPressed:
                         busy ? null : () => _pickImages(ImageSource.gallery),

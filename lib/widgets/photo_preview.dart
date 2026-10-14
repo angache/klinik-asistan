@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../l10n/l10n.dart';
+import '../services/device_permissions.dart';
 import '../services/storage_media.dart';
 import 'full_screen_image.dart';
 
@@ -148,15 +149,18 @@ class SessionPhotosEditor extends StatelessWidget {
         if (_remaining > 0)
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed:
-                      enabled ? () => _pick(context, ImageSource.camera) : null,
-                  icon: const Icon(Icons.photo_camera),
-                  label: Text(context.l10n.takePhoto),
+              if (canTakePhoto) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: enabled
+                        ? () => _pick(context, ImageSource.camera)
+                        : null,
+                    icon: const Icon(Icons.photo_camera),
+                    label: Text(context.l10n.takePhoto),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: enabled

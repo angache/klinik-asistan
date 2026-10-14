@@ -4,11 +4,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../l10n/l10n.dart';
 import '../models/clinic_todo.dart';
 import '../services/database_service.dart';
+import '../services/device_permissions.dart';
 import '../services/storage_media.dart';
 import '../widgets/photo_preview.dart' show kPhotoMaxSide, kPhotoQuality;
 
@@ -100,34 +100,35 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
 
   Future<void> _addImages() async {
     final l10n = context.l10n;
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: Text(l10n.camera),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+    final source = !canTakePhoto
+        ? ImageSource.gallery
+        : await showModalBottomSheet<ImageSource>(
+            context: context,
+            showDragHandle: true,
+            builder: (ctx) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.camera_alt_outlined),
+                    title: Text(l10n.camera),
+                    onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.photo_library_outlined),
+                    title: Text(l10n.gallery),
+                    onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                  ),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(l10n.gallery),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
+          );
     if (source == null || !mounted) return;
 
     try {
       final files = <XFile>[];
       if (source == ImageSource.camera) {
-        final cam = await Permission.camera.request();
-        if (!cam.isGranted) {
+        if (!await requestCamera()) {
           _showError(l10n.cameraPermissionRequired);
           return;
         }
