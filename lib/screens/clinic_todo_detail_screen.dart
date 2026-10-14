@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic_todo.dart';
 import '../services/database_service.dart';
 import '../services/storage_media.dart';
@@ -83,6 +84,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
   Future<void> _addComment() async {
     final text = _comment.text.trim();
     if (text.isEmpty || _busy) return;
+    final l10n = context.l10n;
     setState(() => _busy = true);
     try {
       await widget.db.addClinicTodoComment(todoId: widget.todoId, text: text);
@@ -90,13 +92,14 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
       _changed = true;
       await _load();
     } catch (e) {
-      _showError('Yorum eklenemedi: $e');
+      _showError(l10n.commentAddFailed('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _addImages() async {
+    final l10n = context.l10n;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
@@ -106,12 +109,12 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Kamera'),
+              title: Text(l10n.camera),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Galeri'),
+              title: Text(l10n.gallery),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
           ],
@@ -125,7 +128,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
       if (source == ImageSource.camera) {
         final cam = await Permission.camera.request();
         if (!cam.isGranted) {
-          _showError('Kamera izni gerekli');
+          _showError(l10n.cameraPermissionRequired);
           return;
         }
         final image = await _picker.pickImage(
@@ -158,8 +161,8 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
     } catch (e) {
       _showError(
         source == ImageSource.camera
-            ? 'Kamera açılamadı: $e'
-            : 'Görsel eklenemedi: $e',
+            ? l10n.cameraOpenFailed('$e')
+            : l10n.imageAddFailed('$e'),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -169,13 +172,14 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
   Future<void> _complete() async {
     final todo = _todo;
     if (todo == null || _busy) return;
+    final l10n = context.l10n;
     setState(() => _busy = true);
     try {
       await widget.db.completeClinicTodo(todo);
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
-      _showError('Tamamlanamadı: $e');
+      _showError(l10n.completeFailed('$e'));
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -188,6 +192,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
   }
 
   Future<void> _openImage(TodoImage image) async {
+    final l10n = context.l10n;
     try {
       final bytes = await StorageMedia.downloadBytes(image.path);
       if (!mounted) return;
@@ -218,24 +223,25 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
         ),
       );
     } catch (e) {
-      _showError('Görsel açılamadı: $e');
+      _showError(l10n.imageOpenFailed('$e'));
     }
   }
 
   Future<void> _deleteImage(TodoImage image) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Görseli sil'),
-        content: const Text('Bu görsel görevden kaldırılsın mı?'),
+        title: Text(l10n.deleteImageTitle),
+        content: Text(l10n.deleteImageConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -247,7 +253,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
       _changed = true;
       await _load();
     } catch (e) {
-      _showError('Görsel silinemedi: $e');
+      _showError(l10n.imageDeleteFailed('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -255,15 +261,16 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yapılacak ayrıntısı'),
+        title: Text(l10n.todoDetailTitle),
         leading: BackButton(
           onPressed: () => Navigator.pop(context, _changed),
         ),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: l10n.refresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -278,7 +285,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
                 child: FilledButton.icon(
                   onPressed: _busy ? null : _complete,
                   icon: const Icon(Icons.check),
-                  label: const Text('Tamamlandı olarak işaretle'),
+                  label: Text(l10n.markAsCompleted),
                 ),
               ),
             ),
@@ -286,6 +293,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
   }
 
   Widget _body() {
+    final l10n = context.l10n;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -296,9 +304,9 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Yüklenemedi: $_error', textAlign: TextAlign.center),
+              Text(l10n.loadFailed('$_error'), textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              FilledButton(onPressed: _load, child: const Text('Tekrar dene')),
+              FilledButton(onPressed: _load, child: Text(l10n.retry)),
             ],
           ),
         ),
@@ -329,7 +337,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
             _infoChip(Icons.event_outlined, todo.scheduleLabel),
             _infoChip(
               Icons.person_outline,
-              todo.sorumluAdSoyad ?? 'Tüm klinik',
+              todo.sorumluAdSoyad ?? l10n.wholeClinic,
             ),
             if (todo.hastaAdSoyad != null)
               _infoChip(Icons.badge_outlined, todo.hastaAdSoyad!),
@@ -341,23 +349,25 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          '${todo.olusturanAdSoyad ?? 'Klinik üyesi'} tarafından '
-          '${DateFormat('dd.MM.yyyy HH:mm').format(todo.olusturmaTarihi)} tarihinde oluşturuldu',
+          l10n.createdByOn(
+            todo.olusturanAdSoyad ?? l10n.clinicMemberFallback,
+            DateFormat.yMd().add_Hm().format(todo.olusturmaTarihi),
+          ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
         ),
         const Divider(height: 32),
         _sectionHeader(
-          'Görseller',
+          l10n.images,
           action: TextButton.icon(
             onPressed: _busy ? null : _addImages,
             icon: const Icon(Icons.add_photo_alternate_outlined),
-            label: const Text('Ekle'),
+            label: Text(l10n.add),
           ),
         ),
         if (_images.isEmpty)
-          const Text('Görsel eklenmemiş')
+          Text(l10n.noImages)
         else
           SizedBox(
             height: 112,
@@ -373,11 +383,11 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
             ),
           ),
         const Divider(height: 32),
-        _sectionHeader('Yorumlar (${_comments.length})'),
+        _sectionHeader(l10n.commentsCount(_comments.length)),
         if (_comments.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text('Henüz yorum yok'),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(l10n.noCommentsYet),
           ),
         ..._comments.map(
           (c) => ListTile(
@@ -386,7 +396,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
             title: Text(c.authorName),
             subtitle: Text(c.text),
             trailing: Text(
-              DateFormat('dd.MM HH:mm').format(c.createdAt),
+              DateFormat.Md().add_Hm().format(c.createdAt),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -399,8 +409,8 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
                 controller: _comment,
                 minLines: 1,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Yorum ekle…',
+                decoration: InputDecoration(
+                  hintText: l10n.addCommentHint,
                 ),
               ),
             ),
@@ -411,9 +421,9 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
           ],
         ),
         const Divider(height: 32),
-        _sectionHeader('Geçmiş'),
+        _sectionHeader(l10n.history),
         if (_history.isEmpty)
-          const Text('Geçmiş kaydı yok')
+          Text(l10n.noHistory)
         else
           ..._history.map(
             (e) => ListTile(
@@ -423,7 +433,7 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
               title: Text(_eventLabel(e.type)),
               subtitle: Text(
                 '${e.actorName} · '
-                '${DateFormat('dd.MM.yyyy HH:mm').format(e.createdAt)}',
+                '${DateFormat.yMd().add_Hm().format(e.createdAt)}',
               ),
             ),
           ),
@@ -460,11 +470,11 @@ class _ClinicTodoDetailScreenState extends State<ClinicTodoDetailScreen> {
       };
 
   String _eventLabel(String type) => switch (type) {
-        'olusturuldu' => 'Görev oluşturuldu',
-        'tamamlandi' => 'Görev tamamlandı',
-        'yorum_eklendi' => 'Yorum eklendi',
-        'gorsel_eklendi' => 'Görsel eklendi',
-        'gorsel_silindi' => 'Görsel silindi',
+        'olusturuldu' => context.l10n.eventCreated,
+        'tamamlandi' => context.l10n.eventCompleted,
+        'yorum_eklendi' => context.l10n.eventCommentAdded,
+        'gorsel_eklendi' => context.l10n.eventImageAdded,
+        'gorsel_silindi' => context.l10n.eventImageDeleted,
         _ => type,
       };
 }

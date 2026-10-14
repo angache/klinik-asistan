@@ -1399,4 +1399,323 @@ class AppLocalizationsRu extends AppLocalizations {
   String shareFailed(String error) {
     return 'Не удалось поделиться: $error';
   }
+
+  @override
+  String completedItem(String title) {
+    return 'Выполнено: $title';
+  }
+
+  @override
+  String actionFailed(String error) {
+    return 'Не удалось выполнить действие: $error';
+  }
+
+  @override
+  String deletedItem(String title) {
+    return 'Удалено: $title';
+  }
+
+  @override
+  String patientOpenFailed(String error) {
+    return 'Не удалось открыть пациента: $error';
+  }
+
+  @override
+  String get noOpenFollowUps => 'Нет открытых напоминаний.';
+
+  @override
+  String get sectionOverdue => 'Просрочено';
+
+  @override
+  String get sectionReminderDue => 'Скоро (время напоминания)';
+
+  @override
+  String get sectionUpcoming => 'Предстоящие';
+
+  @override
+  String get patientFallback => 'Пациент';
+
+  @override
+  String reminderOn(String date) {
+    return 'Напоминание: $date';
+  }
+
+  @override
+  String get goToPatient => 'К пациенту';
+
+  @override
+  String get errFollowUpTitleRequired => 'Введите название напоминания';
+
+  @override
+  String get followUpWhatLabel => 'Что нужно проконтролировать?';
+
+  @override
+  String get followUpWhatHint => 'напр. Осмотр, снятие швов, контроль боли…';
+
+  @override
+  String get whenLabel => 'Когда?';
+
+  @override
+  String notifFollowUpTitle(String name) {
+    return 'Напоминание: $name';
+  }
+
+  @override
+  String notifCheckupBody(String title, String date) {
+    return '$title · Осмотр: $date';
+  }
+
+  @override
+  String get notifChannelFollowUps => 'Напоминания';
+
+  @override
+  String get notifChannelFollowUpsDesc => 'Напоминания об осмотрах и контролях';
+
+  @override
+  String get notifChannelClinic => 'Уведомления клиники';
+
+  @override
+  String get notifChannelClinicDesc =>
+      'Напоминания о заявках, контролях и задачах';
+
+  @override
+  String get todoAdded => 'Задача добавлена';
+
+  @override
+  String get noOpenTodos =>
+      'Нет открытых задач.\nНажмите «Добавить», чтобы создать текстовую или голосовую заметку.';
+
+  @override
+  String get todosIntro =>
+      'Общие заметки клиники — записи, обратные звонки, напоминания…';
+
+  @override
+  String get sectionUndated => 'Без даты';
+
+  @override
+  String get filterAll => 'Все';
+
+  @override
+  String get filterMine => 'Назначенные мне';
+
+  @override
+  String get filterTodayOverdue => 'Сегодня/просрочено';
+
+  @override
+  String get filterCompleted => 'Выполненные';
+
+  @override
+  String commentAddFailed(String error) {
+    return 'Не удалось добавить комментарий: $error';
+  }
+
+  @override
+  String get camera => 'Камера';
+
+  @override
+  String get gallery => 'Галерея';
+
+  @override
+  String get cameraPermissionRequired => 'Требуется доступ к камере';
+
+  @override
+  String cameraOpenFailed(String error) {
+    return 'Не удалось открыть камеру: $error';
+  }
+
+  @override
+  String galleryOpenFailed(String error) {
+    return 'Не удалось открыть галерею: $error';
+  }
+
+  @override
+  String imageAddFailed(String error) {
+    return 'Не удалось добавить изображение: $error';
+  }
+
+  @override
+  String imageOpenFailed(String error) {
+    return 'Не удалось открыть изображение: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Удалить изображение';
+
+  @override
+  String get deleteImageConfirm => 'Убрать это изображение из задачи?';
+
+  @override
+  String imageDeleteFailed(String error) {
+    return 'Не удалось удалить изображение: $error';
+  }
+
+  @override
+  String get todoDetailTitle => 'Подробности задачи';
+
+  @override
+  String get refresh => 'Обновить';
+
+  @override
+  String get markAsCompleted => 'Отметить как выполненную';
+
+  @override
+  String get wholeClinic => 'Вся клиника';
+
+  @override
+  String get clinicMemberFallback => 'Сотрудник клиники';
+
+  @override
+  String createdByOn(String name, String date) {
+    return 'Создано: $name, $date';
+  }
+
+  @override
+  String get images => 'Изображения';
+
+  @override
+  String get noImages => 'Изображения не добавлены';
+
+  @override
+  String commentsCount(int count) {
+    return 'Комментарии ($count)';
+  }
+
+  @override
+  String get noCommentsYet => 'Комментариев пока нет';
+
+  @override
+  String get addCommentHint => 'Добавить комментарий…';
+
+  @override
+  String get noHistory => 'История пуста';
+
+  @override
+  String get eventCreated => 'Задача создана';
+
+  @override
+  String get eventCompleted => 'Задача выполнена';
+
+  @override
+  String get eventCommentAdded => 'Комментарий добавлен';
+
+  @override
+  String get eventImageAdded => 'Изображение добавлено';
+
+  @override
+  String get eventImageDeleted => 'Изображение удалено';
+
+  @override
+  String get completedMessage => 'Выполнено';
+
+  @override
+  String get deleteTodoConfirm => 'Удалить эту задачу?';
+
+  @override
+  String get priorityNormal => 'Обычный';
+
+  @override
+  String get priorityImportant => 'Важный';
+
+  @override
+  String get priorityUrgent => 'Срочный';
+
+  @override
+  String get recurrenceNone => 'Не повторяется';
+
+  @override
+  String get recurrenceDaily => 'Каждый день';
+
+  @override
+  String get recurrenceWeekly => 'Каждую неделю';
+
+  @override
+  String get recurrenceMonthly => 'Каждый месяц';
+
+  @override
+  String get voiceTodo => 'Голосовая задача';
+
+  @override
+  String get todoFallback => 'Задача';
+
+  @override
+  String previewPlayFailed(String error) {
+    return 'Не удалось воспроизвести: $error';
+  }
+
+  @override
+  String get taskTime => 'Время задачи';
+
+  @override
+  String get errTextOrVoiceRequired => 'Напишите заметку или запишите аудио';
+
+  @override
+  String get errFinishRecordingFirst => 'Сначала завершите запись';
+
+  @override
+  String get addTodo => 'Добавить задачу';
+
+  @override
+  String get todoNoteHint =>
+      'напр. Записать Ивана Петровича на завтра, перезвонить пациенту…';
+
+  @override
+  String get voiceOptional => 'Аудио (необязательно)';
+
+  @override
+  String get finish => 'Завершить';
+
+  @override
+  String voiceRecorded(String duration) {
+    return 'Аудио записано · $duration';
+  }
+
+  @override
+  String get reRecord => 'Записать заново';
+
+  @override
+  String get recordVoice => 'Записать аудио';
+
+  @override
+  String get tomorrow => 'Завтра';
+
+  @override
+  String targetDate(String date) {
+    return 'Срок: $date';
+  }
+
+  @override
+  String get priority => 'Приоритет';
+
+  @override
+  String get addTime => 'Добавить время';
+
+  @override
+  String get assignee => 'Ответственный';
+
+  @override
+  String get patientLinkOptional => 'Связанный пациент (необязательно)';
+
+  @override
+  String get noPatientSelected => 'Пациент не выбран';
+
+  @override
+  String get recurrence => 'Повтор';
+
+  @override
+  String get reminder => 'Напоминание';
+
+  @override
+  String get remindOnTime => 'Вовремя';
+
+  @override
+  String get remindOneHourBefore => 'За 1 час';
+
+  @override
+  String get errCommentEmpty => 'Комментарий не может быть пустым';
+
+  @override
+  String get recurringTask => 'Повторяющаяся задача';
+
+  @override
+  String get errInvalidFilePath => 'Недопустимый путь к файлу';
 }

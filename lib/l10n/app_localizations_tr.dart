@@ -1361,4 +1361,322 @@ class AppLocalizationsTr extends AppLocalizations {
   String shareFailed(String error) {
     return 'Paylaşılamadı: $error';
   }
+
+  @override
+  String completedItem(String title) {
+    return 'Tamamlandı: $title';
+  }
+
+  @override
+  String actionFailed(String error) {
+    return 'İşlem başarısız: $error';
+  }
+
+  @override
+  String deletedItem(String title) {
+    return 'Silindi: $title';
+  }
+
+  @override
+  String patientOpenFailed(String error) {
+    return 'Hasta açılamadı: $error';
+  }
+
+  @override
+  String get noOpenFollowUps => 'Açık takip yok.';
+
+  @override
+  String get sectionOverdue => 'Geciken';
+
+  @override
+  String get sectionReminderDue => 'Yaklaşan (uyarı zamanı geldi)';
+
+  @override
+  String get sectionUpcoming => 'Yaklaşan';
+
+  @override
+  String get patientFallback => 'Hasta';
+
+  @override
+  String reminderOn(String date) {
+    return 'Hatırlatma: $date';
+  }
+
+  @override
+  String get goToPatient => 'Hastaya git';
+
+  @override
+  String get errFollowUpTitleRequired => 'Takip başlığı yazın';
+
+  @override
+  String get followUpWhatLabel => 'Ne takip edilecek?';
+
+  @override
+  String get followUpWhatHint => 'örn. Kontrol, dikiş alma, ağrı kontrolü…';
+
+  @override
+  String get whenLabel => 'Ne zaman?';
+
+  @override
+  String notifFollowUpTitle(String name) {
+    return 'Takip: $name';
+  }
+
+  @override
+  String notifCheckupBody(String title, String date) {
+    return '$title · Kontrol: $date';
+  }
+
+  @override
+  String get notifChannelFollowUps => 'Takipler';
+
+  @override
+  String get notifChannelFollowUpsDesc => 'Kontrol ve takip hatırlatmaları';
+
+  @override
+  String get notifChannelClinic => 'Klinik bildirimleri';
+
+  @override
+  String get notifChannelClinicDesc =>
+      'Katılım, takip ve yapılacak hatırlatmaları';
+
+  @override
+  String get todoAdded => 'Yapılacak eklendi';
+
+  @override
+  String get noOpenTodos =>
+      'Açık yapılacak yok.\nEkle ile yazı veya sesli not ekleyin.';
+
+  @override
+  String get todosIntro => 'Klinik genel notlar — randevu, dönüş, hatırlatma…';
+
+  @override
+  String get sectionUndated => 'Tarihsiz';
+
+  @override
+  String get filterAll => 'Tümü';
+
+  @override
+  String get filterMine => 'Bana atanan';
+
+  @override
+  String get filterTodayOverdue => 'Bugün/geciken';
+
+  @override
+  String get filterCompleted => 'Tamamlanan';
+
+  @override
+  String commentAddFailed(String error) {
+    return 'Yorum eklenemedi: $error';
+  }
+
+  @override
+  String get camera => 'Kamera';
+
+  @override
+  String get gallery => 'Galeri';
+
+  @override
+  String get cameraPermissionRequired => 'Kamera izni gerekli';
+
+  @override
+  String cameraOpenFailed(String error) {
+    return 'Kamera açılamadı: $error';
+  }
+
+  @override
+  String galleryOpenFailed(String error) {
+    return 'Galeri açılamadı: $error';
+  }
+
+  @override
+  String imageAddFailed(String error) {
+    return 'Görsel eklenemedi: $error';
+  }
+
+  @override
+  String imageOpenFailed(String error) {
+    return 'Görsel açılamadı: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Görseli sil';
+
+  @override
+  String get deleteImageConfirm => 'Bu görsel görevden kaldırılsın mı?';
+
+  @override
+  String imageDeleteFailed(String error) {
+    return 'Görsel silinemedi: $error';
+  }
+
+  @override
+  String get todoDetailTitle => 'Yapılacak ayrıntısı';
+
+  @override
+  String get refresh => 'Yenile';
+
+  @override
+  String get markAsCompleted => 'Tamamlandı olarak işaretle';
+
+  @override
+  String get wholeClinic => 'Tüm klinik';
+
+  @override
+  String get clinicMemberFallback => 'Klinik üyesi';
+
+  @override
+  String createdByOn(String name, String date) {
+    return '$name tarafından $date tarihinde oluşturuldu';
+  }
+
+  @override
+  String get images => 'Görseller';
+
+  @override
+  String get noImages => 'Görsel eklenmemiş';
+
+  @override
+  String commentsCount(int count) {
+    return 'Yorumlar ($count)';
+  }
+
+  @override
+  String get noCommentsYet => 'Henüz yorum yok';
+
+  @override
+  String get addCommentHint => 'Yorum ekle…';
+
+  @override
+  String get noHistory => 'Geçmiş kaydı yok';
+
+  @override
+  String get eventCreated => 'Görev oluşturuldu';
+
+  @override
+  String get eventCompleted => 'Görev tamamlandı';
+
+  @override
+  String get eventCommentAdded => 'Yorum eklendi';
+
+  @override
+  String get eventImageAdded => 'Görsel eklendi';
+
+  @override
+  String get eventImageDeleted => 'Görsel silindi';
+
+  @override
+  String get completedMessage => 'Tamamlandı';
+
+  @override
+  String get deleteTodoConfirm => 'Bu yapılacak silinsin mi?';
+
+  @override
+  String get priorityNormal => 'Normal';
+
+  @override
+  String get priorityImportant => 'Önemli';
+
+  @override
+  String get priorityUrgent => 'Acil';
+
+  @override
+  String get recurrenceNone => 'Tekrarlanmaz';
+
+  @override
+  String get recurrenceDaily => 'Her gün';
+
+  @override
+  String get recurrenceWeekly => 'Her hafta';
+
+  @override
+  String get recurrenceMonthly => 'Her ay';
+
+  @override
+  String get voiceTodo => 'Sesli yapılacak';
+
+  @override
+  String get todoFallback => 'Yapılacak';
+
+  @override
+  String previewPlayFailed(String error) {
+    return 'Önizleme çalınamadı: $error';
+  }
+
+  @override
+  String get taskTime => 'Görev saati';
+
+  @override
+  String get errTextOrVoiceRequired => 'Not yazın veya ses kaydedin';
+
+  @override
+  String get errFinishRecordingFirst => 'Önce ses kaydını bitirin';
+
+  @override
+  String get addTodo => 'Yapılacak ekle';
+
+  @override
+  String get todoNoteHint =>
+      'örn. Yarın Fatih Bey’e randevu ver, hastaya dönüş yap…';
+
+  @override
+  String get voiceOptional => 'Ses (isteğe bağlı)';
+
+  @override
+  String get finish => 'Bitir';
+
+  @override
+  String voiceRecorded(String duration) {
+    return 'Ses kaydedildi · $duration';
+  }
+
+  @override
+  String get reRecord => 'Yeniden kaydet';
+
+  @override
+  String get recordVoice => 'Ses kaydet';
+
+  @override
+  String get tomorrow => 'Yarın';
+
+  @override
+  String targetDate(String date) {
+    return 'Hedef: $date';
+  }
+
+  @override
+  String get priority => 'Öncelik';
+
+  @override
+  String get addTime => 'Saat ekle';
+
+  @override
+  String get assignee => 'Sorumlu';
+
+  @override
+  String get patientLinkOptional => 'Hasta bağlantısı (isteğe bağlı)';
+
+  @override
+  String get noPatientSelected => 'Hasta seçilmedi';
+
+  @override
+  String get recurrence => 'Tekrar';
+
+  @override
+  String get reminder => 'Hatırlatma';
+
+  @override
+  String get remindOnTime => 'Zamanında';
+
+  @override
+  String get remindOneHourBefore => '1 saat önce';
+
+  @override
+  String get errCommentEmpty => 'Yorum boş olamaz';
+
+  @override
+  String get recurringTask => 'Tekrarlanan görev';
+
+  @override
+  String get errInvalidFilePath => 'Geçersiz dosya yolu';
 }

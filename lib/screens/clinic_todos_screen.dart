@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic_todo.dart';
 import '../services/database_service.dart';
 import '../widgets/add_clinic_todo_dialog.dart';
@@ -39,7 +40,7 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
     );
     if (created == null || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Yapılacak eklendi')),
+      SnackBar(content: Text(context.l10n.todoAdded)),
     );
     await _reload();
   }
@@ -47,13 +48,14 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Yapılacaklar')),
+      appBar: AppBar(title: Text(l10n.todos)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
         icon: const Icon(Icons.add),
-        label: const Text('Ekle'),
+        label: Text(l10n.add),
       ),
       body: FutureBuilder<List<ClinicTodo>>(
         future: _future,
@@ -69,14 +71,14 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Yüklenemedi.\n\n${snap.error}',
+                      l10n.loadFailed('${snap.error}'),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: scheme.error),
                     ),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: _reload,
-                      child: const Text('Tekrar dene'),
+                      child: Text(l10n.retry),
                     ),
                   ],
                 ),
@@ -114,8 +116,7 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Açık yapılacak yok.\n'
-                            'Ekle ile yazı veya sesli not ekleyin.',
+                            l10n.noOpenTodos,
                             textAlign: TextAlign.center,
                             style: TextStyle(color: scheme.onSurfaceVariant),
                           ),
@@ -164,14 +165,14 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                 _filters(),
                 const SizedBox(height: 12),
                 Text(
-                  'Klinik genel notlar — randevu, dönüş, hatırlatma…',
+                  l10n.todosIntro,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
                 ),
                 const SizedBox(height: 16),
                 if (overdue.isNotEmpty) ...[
-                  _sectionTitle(context, 'Geciken', scheme.error),
+                  _sectionTitle(context, l10n.sectionOverdue, scheme.error),
                   ...overdue.map(
                     (t) => ClinicTodoTile(
                       todo: t,
@@ -182,7 +183,7 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                   const SizedBox(height: 12),
                 ],
                 if (today.isNotEmpty) ...[
-                  _sectionTitle(context, 'Bugün', scheme.primary),
+                  _sectionTitle(context, l10n.today, scheme.primary),
                   ...today.map(
                     (t) => ClinicTodoTile(
                       todo: t,
@@ -193,7 +194,7 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                   const SizedBox(height: 12),
                 ],
                 if (upcoming.isNotEmpty) ...[
-                  _sectionTitle(context, 'Yaklaşan', null),
+                  _sectionTitle(context, l10n.sectionUpcoming, null),
                   ...upcoming.map(
                     (t) => ClinicTodoTile(
                       todo: t,
@@ -204,7 +205,7 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
                   const SizedBox(height: 12),
                 ],
                 if (undated.isNotEmpty) ...[
-                  _sectionTitle(context, 'Tarihsiz', null),
+                  _sectionTitle(context, l10n.sectionUndated, null),
                   ...undated.map(
                     (t) => ClinicTodoTile(
                       todo: t,
@@ -235,12 +236,13 @@ class _ClinicTodosScreenState extends State<ClinicTodosScreen> {
   }
 
   Widget _filters() {
-    const options = [
-      ('all', 'Tümü'),
-      ('mine', 'Bana atanan'),
-      ('today', 'Bugün/geciken'),
-      ('urgent', 'Acil'),
-      ('completed', 'Tamamlanan'),
+    final l10n = context.l10n;
+    final options = [
+      ('all', l10n.filterAll),
+      ('mine', l10n.filterMine),
+      ('today', l10n.filterTodayOverdue),
+      ('urgent', l10n.priorityUrgent),
+      ('completed', l10n.filterCompleted),
     ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase_config.dart';
+import '../l10n/l10n.dart';
 
 /// Supabase Storage URL / path yardımcıları.
 /// Bucket private; görüntüleme imzalı URL veya Storage download ile yapılır.
@@ -86,7 +87,7 @@ class StorageMedia {
   static Future<Uint8List> downloadBytes(String storedUrl) {
     final path = pathFromUrl(storedUrl);
     if (path == null || path.isEmpty) {
-      return Future.error(Exception('Geçersiz dosya yolu'));
+      return Future.error(Exception(currentL10n.errInvalidFilePath));
     }
     return _load(path);
   }
@@ -94,7 +95,9 @@ class StorageMedia {
   /// Liste küçük resmi: küçük kopya varsa o, yoksa (eski kayıtlar) asıl dosya.
   static Future<Uint8List> thumbnailBytes(String storedUrl) async {
     final path = pathFromUrl(storedUrl);
-    if (path == null || path.isEmpty) throw Exception('Geçersiz dosya yolu');
+    if (path == null || path.isEmpty) {
+      throw Exception(currentL10n.errInvalidFilePath);
+    }
     final thumb = thumbnailPathFor(path);
     if (thumb != null && !_missingThumbs.contains(path)) {
       final hit = await _cached(thumb) ?? await _cached(path);

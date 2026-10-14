@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/l10n.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../services/database_service.dart';
@@ -63,7 +64,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
       initialDate: _customDate ?? today.add(const Duration(days: 7)),
       firstDate: today,
       lastDate: today.add(const Duration(days: 365 * 3)),
-      helpText: 'Takip tarihi',
+      helpText: context.l10n.followUpDate,
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -76,7 +77,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
     final title = _baslik.text.trim();
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Takip başlığı yazın')),
+        SnackBar(content: Text(context.l10n.errFollowUpTitleRequired)),
       );
       return;
     }
@@ -97,16 +98,17 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kaydedilemedi: $e')),
+        SnackBar(content: Text(context.l10n.saveFailed('$e'))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('dd.MM.yyyy');
+    final l10n = context.l10n;
+    final fmt = DateFormat.yMd();
     return AlertDialog(
-      title: const Text('Takip ekle'),
+      title: Text(l10n.addFollowUp),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -118,9 +120,9 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                 controller: _baslik,
                 textCapitalization: TextCapitalization.sentences,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Ne takip edilecek?',
-                  hintText: 'örn. Kontrol, dikiş alma, ağrı kontrolü…',
+                decoration: InputDecoration(
+                  labelText: l10n.followUpWhatLabel,
+                  hintText: l10n.followUpWhatHint,
                 ),
                 onSubmitted: (_) => _saving ? null : _save(),
               ),
@@ -130,13 +132,13 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                 textCapitalization: TextCapitalization.sentences,
                 minLines: 1,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Not (isteğe bağlı)',
+                decoration: InputDecoration(
+                  labelText: l10n.noteOptionalLabel,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                'Ne zaman?',
+                l10n.whenLabel,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 8),
@@ -145,7 +147,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                 runSpacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('Bugün'),
+                    label: Text(l10n.today),
                     selected: _presetDays == 0,
                     onSelected: (_) => setState(() {
                       _presetDays = 0;
@@ -153,7 +155,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                     }),
                   ),
                   ChoiceChip(
-                    label: const Text('1 hafta'),
+                    label: Text(l10n.presetOneWeek),
                     selected: _presetDays == 7,
                     onSelected: (_) => setState(() {
                       _presetDays = 7;
@@ -161,7 +163,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                     }),
                   ),
                   ChoiceChip(
-                    label: const Text('1 ay'),
+                    label: Text(l10n.presetOneMonth),
                     selected: _presetDays == 30,
                     onSelected: (_) => setState(() {
                       _presetDays = 30;
@@ -169,7 +171,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                     }),
                   ),
                   ChoiceChip(
-                    label: const Text('3 ay'),
+                    label: Text(l10n.presetThreeMonths),
                     selected: _presetDays == 90,
                     onSelected: (_) => setState(() {
                       _presetDays = 90;
@@ -181,7 +183,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                     label: Text(
                       _customDate != null && _presetDays == null
                           ? fmt.format(_customDate!)
-                          : 'Tarih seç',
+                          : l10n.pickDate,
                     ),
                     onPressed: _pickDate,
                   ),
@@ -189,7 +191,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Hatırlatma: ${fmt.format(_effectiveDate)}',
+                l10n.reminderOn(fmt.format(_effectiveDate)),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -201,7 +203,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child: const Text('İptal'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: _saving ? null : _save,
@@ -211,7 +213,7 @@ class _AddFollowUpDialogState extends State<_AddFollowUpDialog> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Kaydet'),
+              : Text(l10n.save),
         ),
       ],
     );

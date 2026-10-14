@@ -1413,4 +1413,325 @@ class AppLocalizationsDe extends AppLocalizations {
   String shareFailed(String error) {
     return 'Teilen fehlgeschlagen: $error';
   }
+
+  @override
+  String completedItem(String title) {
+    return 'Erledigt: $title';
+  }
+
+  @override
+  String actionFailed(String error) {
+    return 'Aktion fehlgeschlagen: $error';
+  }
+
+  @override
+  String deletedItem(String title) {
+    return 'Gelöscht: $title';
+  }
+
+  @override
+  String patientOpenFailed(String error) {
+    return 'Patient konnte nicht geöffnet werden: $error';
+  }
+
+  @override
+  String get noOpenFollowUps => 'Keine offenen Wiedervorlagen.';
+
+  @override
+  String get sectionOverdue => 'Überfällig';
+
+  @override
+  String get sectionReminderDue => 'Demnächst (Erinnerung fällig)';
+
+  @override
+  String get sectionUpcoming => 'Demnächst';
+
+  @override
+  String get patientFallback => 'Patient';
+
+  @override
+  String reminderOn(String date) {
+    return 'Erinnerung: $date';
+  }
+
+  @override
+  String get goToPatient => 'Zum Patienten';
+
+  @override
+  String get errFollowUpTitleRequired => 'Titel der Wiedervorlage eingeben';
+
+  @override
+  String get followUpWhatLabel => 'Was soll nachverfolgt werden?';
+
+  @override
+  String get followUpWhatHint =>
+      'z. B. Kontrolle, Fadenentfernung, Schmerzkontrolle…';
+
+  @override
+  String get whenLabel => 'Wann?';
+
+  @override
+  String notifFollowUpTitle(String name) {
+    return 'Wiedervorlage: $name';
+  }
+
+  @override
+  String notifCheckupBody(String title, String date) {
+    return '$title · Kontrolle: $date';
+  }
+
+  @override
+  String get notifChannelFollowUps => 'Wiedervorlagen';
+
+  @override
+  String get notifChannelFollowUpsDesc =>
+      'Erinnerungen an Kontrollen und Wiedervorlagen';
+
+  @override
+  String get notifChannelClinic => 'Praxisbenachrichtigungen';
+
+  @override
+  String get notifChannelClinicDesc =>
+      'Erinnerungen zu Beitritten, Wiedervorlagen und Aufgaben';
+
+  @override
+  String get todoAdded => 'Aufgabe hinzugefügt';
+
+  @override
+  String get noOpenTodos =>
+      'Keine offenen Aufgaben.\nMit Hinzufügen eine Text- oder Sprachnotiz anlegen.';
+
+  @override
+  String get todosIntro =>
+      'Allgemeine Praxisnotizen — Termine, Rückrufe, Erinnerungen…';
+
+  @override
+  String get sectionUndated => 'Ohne Datum';
+
+  @override
+  String get filterAll => 'Alle';
+
+  @override
+  String get filterMine => 'Mir zugewiesen';
+
+  @override
+  String get filterTodayOverdue => 'Heute/überfällig';
+
+  @override
+  String get filterCompleted => 'Erledigt';
+
+  @override
+  String commentAddFailed(String error) {
+    return 'Kommentar konnte nicht hinzugefügt werden: $error';
+  }
+
+  @override
+  String get camera => 'Kamera';
+
+  @override
+  String get gallery => 'Galerie';
+
+  @override
+  String get cameraPermissionRequired => 'Kameraberechtigung erforderlich';
+
+  @override
+  String cameraOpenFailed(String error) {
+    return 'Kamera konnte nicht geöffnet werden: $error';
+  }
+
+  @override
+  String galleryOpenFailed(String error) {
+    return 'Galerie konnte nicht geöffnet werden: $error';
+  }
+
+  @override
+  String imageAddFailed(String error) {
+    return 'Bild konnte nicht hinzugefügt werden: $error';
+  }
+
+  @override
+  String imageOpenFailed(String error) {
+    return 'Bild konnte nicht geöffnet werden: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Bild löschen';
+
+  @override
+  String get deleteImageConfirm => 'Dieses Bild aus der Aufgabe entfernen?';
+
+  @override
+  String imageDeleteFailed(String error) {
+    return 'Bild konnte nicht gelöscht werden: $error';
+  }
+
+  @override
+  String get todoDetailTitle => 'Aufgabendetails';
+
+  @override
+  String get refresh => 'Aktualisieren';
+
+  @override
+  String get markAsCompleted => 'Als erledigt markieren';
+
+  @override
+  String get wholeClinic => 'Ganze Praxis';
+
+  @override
+  String get clinicMemberFallback => 'Praxismitglied';
+
+  @override
+  String createdByOn(String name, String date) {
+    return 'Erstellt von $name am $date';
+  }
+
+  @override
+  String get images => 'Bilder';
+
+  @override
+  String get noImages => 'Keine Bilder hinzugefügt';
+
+  @override
+  String commentsCount(int count) {
+    return 'Kommentare ($count)';
+  }
+
+  @override
+  String get noCommentsYet => 'Noch keine Kommentare';
+
+  @override
+  String get addCommentHint => 'Kommentar hinzufügen…';
+
+  @override
+  String get noHistory => 'Kein Verlauf vorhanden';
+
+  @override
+  String get eventCreated => 'Aufgabe erstellt';
+
+  @override
+  String get eventCompleted => 'Aufgabe erledigt';
+
+  @override
+  String get eventCommentAdded => 'Kommentar hinzugefügt';
+
+  @override
+  String get eventImageAdded => 'Bild hinzugefügt';
+
+  @override
+  String get eventImageDeleted => 'Bild entfernt';
+
+  @override
+  String get completedMessage => 'Erledigt';
+
+  @override
+  String get deleteTodoConfirm => 'Diese Aufgabe löschen?';
+
+  @override
+  String get priorityNormal => 'Normal';
+
+  @override
+  String get priorityImportant => 'Wichtig';
+
+  @override
+  String get priorityUrgent => 'Dringend';
+
+  @override
+  String get recurrenceNone => 'Keine Wiederholung';
+
+  @override
+  String get recurrenceDaily => 'Täglich';
+
+  @override
+  String get recurrenceWeekly => 'Wöchentlich';
+
+  @override
+  String get recurrenceMonthly => 'Monatlich';
+
+  @override
+  String get voiceTodo => 'Sprachaufgabe';
+
+  @override
+  String get todoFallback => 'Aufgabe';
+
+  @override
+  String previewPlayFailed(String error) {
+    return 'Vorschau konnte nicht abgespielt werden: $error';
+  }
+
+  @override
+  String get taskTime => 'Uhrzeit der Aufgabe';
+
+  @override
+  String get errTextOrVoiceRequired => 'Notiz schreiben oder Audio aufnehmen';
+
+  @override
+  String get errFinishRecordingFirst => 'Beenden Sie zuerst die Aufnahme';
+
+  @override
+  String get addTodo => 'Aufgabe hinzufügen';
+
+  @override
+  String get todoNoteHint =>
+      'z. B. Herrn Müller morgen einen Termin geben, Patienten zurückrufen…';
+
+  @override
+  String get voiceOptional => 'Audio (optional)';
+
+  @override
+  String get finish => 'Beenden';
+
+  @override
+  String voiceRecorded(String duration) {
+    return 'Audio aufgenommen · $duration';
+  }
+
+  @override
+  String get reRecord => 'Neu aufnehmen';
+
+  @override
+  String get recordVoice => 'Audio aufnehmen';
+
+  @override
+  String get tomorrow => 'Morgen';
+
+  @override
+  String targetDate(String date) {
+    return 'Ziel: $date';
+  }
+
+  @override
+  String get priority => 'Priorität';
+
+  @override
+  String get addTime => 'Uhrzeit hinzufügen';
+
+  @override
+  String get assignee => 'Zuständig';
+
+  @override
+  String get patientLinkOptional => 'Verknüpfter Patient (optional)';
+
+  @override
+  String get noPatientSelected => 'Kein Patient ausgewählt';
+
+  @override
+  String get recurrence => 'Wiederholung';
+
+  @override
+  String get reminder => 'Erinnerung';
+
+  @override
+  String get remindOnTime => 'Pünktlich';
+
+  @override
+  String get remindOneHourBefore => '1 Stunde vorher';
+
+  @override
+  String get errCommentEmpty => 'Kommentar darf nicht leer sein';
+
+  @override
+  String get recurringTask => 'Wiederkehrende Aufgabe';
+
+  @override
+  String get errInvalidFilePath => 'Ungültiger Dateipfad';
 }

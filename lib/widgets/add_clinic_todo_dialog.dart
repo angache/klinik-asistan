@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic_todo.dart';
 import '../models/clinic.dart';
 import '../models/patient.dart';
@@ -154,7 +155,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Önizleme çalınamadı: $e')),
+        SnackBar(content: Text(context.l10n.previewPlayFailed('$e'))),
       );
     }
   }
@@ -167,7 +168,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
       initialDate: _customDate ?? today.add(const Duration(days: 1)),
       firstDate: today,
       lastDate: today.add(const Duration(days: 365 * 3)),
-      helpText: 'Ne zaman?',
+      helpText: context.l10n.whenLabel,
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -180,7 +181,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
     final picked = await showTimePicker(
       context: context,
       initialTime: _time ?? const TimeOfDay(hour: 9, minute: 0),
-      helpText: 'Görev saati',
+      helpText: context.l10n.taskTime,
     );
     if (picked != null && mounted) setState(() => _time = picked);
   }
@@ -192,7 +193,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
         if (!cam.isGranted) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kamera izni gerekli')),
+            SnackBar(content: Text(context.l10n.cameraPermissionRequired)),
           );
           return;
         }
@@ -221,8 +222,8 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
         SnackBar(
           content: Text(
             source == ImageSource.camera
-                ? 'Kamera açılamadı: $e'
-                : 'Galeri açılamadı: $e',
+                ? context.l10n.cameraOpenFailed('$e')
+                : context.l10n.galleryOpenFailed('$e'),
           ),
         ),
       );
@@ -234,7 +235,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
     if (status.isGranted) return true;
     if (!mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Mikrofon izni gerekli')),
+      SnackBar(content: Text(context.l10n.micPermissionRequired)),
     );
     return false;
   }
@@ -248,7 +249,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
     if (!await _recorder.hasPermission()) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mikrofon izni yok')),
+        SnackBar(content: Text(context.l10n.micPermissionMissing)),
       );
       return;
     }
@@ -294,7 +295,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
       if (!mounted) return;
       setState(() => _recording = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kayıt boş veya oluşturulamadı')),
+        SnackBar(content: Text(context.l10n.recordingEmpty)),
       );
       return;
     }
@@ -327,13 +328,13 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
     final text = _icerik.text.trim();
     if (text.isEmpty && !_hasVoice) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not yazın veya ses kaydedin')),
+        SnackBar(content: Text(context.l10n.errTextOrVoiceRequired)),
       );
       return;
     }
     if (_recording) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Önce ses kaydını bitirin')),
+        SnackBar(content: Text(context.l10n.errFinishRecordingFirst)),
       );
       return;
     }
@@ -382,7 +383,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kaydedilemedi: $e')),
+        SnackBar(content: Text(context.l10n.saveFailed('$e'))),
       );
     }
   }
@@ -390,11 +391,12 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fmt = DateFormat('dd.MM.yyyy');
+    final l10n = context.l10n;
+    final fmt = DateFormat.yMd();
     final busy = _saving || _recording;
 
     return AlertDialog(
-      title: const Text('Yapılacak ekle'),
+      title: Text(l10n.addTodo),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -409,15 +411,14 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                 textCapitalization: TextCapitalization.sentences,
                 minLines: 2,
                 maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Not (isteğe bağlı)',
-                  hintText:
-                      'örn. Yarın Fatih Bey’e randevu ver, hastaya dönüş yap…',
+                decoration: InputDecoration(
+                  labelText: l10n.noteOptionalLabel,
+                  hintText: l10n.todoNoteHint,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                'Ses (isteğe bağlı)',
+                l10n.voiceOptional,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 8),
@@ -440,14 +441,14 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Kayıt sürüyor…',
+                        l10n.recordingInProgress,
                         style: TextStyle(color: scheme.error),
                       ),
                       const SizedBox(height: 10),
                       FilledButton.icon(
                         onPressed: _stopRecording,
                         icon: const Icon(Icons.stop),
-                        label: const Text('Bitir'),
+                        label: Text(l10n.finish),
                       ),
                     ] else if (_hasVoice) ...[
                       Row(
@@ -456,7 +457,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                           const SizedBox(width: 8),
                           Expanded(
                             child:
-                                Text('Ses kaydedildi · $_voiceDurationLabel'),
+                                Text(l10n.voiceRecorded(_voiceDurationLabel)),
                           ),
                         ],
                       ),
@@ -467,7 +468,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                             onPressed: _saving ? null : _togglePreview,
                             icon:
                                 Icon(_playing ? Icons.stop : Icons.play_arrow),
-                            label: Text(_playing ? 'Durdur' : 'Dinle'),
+                            label: Text(_playing ? l10n.stop : l10n.listen),
                           ),
                           const SizedBox(width: 8),
                           TextButton(
@@ -476,7 +477,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                                 : () async {
                                     await _clearVoice();
                                   },
-                            child: const Text('Sil'),
+                            child: Text(l10n.delete),
                           ),
                           TextButton(
                             onPressed: _saving
@@ -485,7 +486,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                                     await _clearVoice();
                                     await _startRecording();
                                   },
-                            child: const Text('Yeniden kaydet'),
+                            child: Text(l10n.reRecord),
                           ),
                         ],
                       ),
@@ -493,7 +494,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                       OutlinedButton.icon(
                         onPressed: busy ? null : _startRecording,
                         icon: const Icon(Icons.mic_outlined),
-                        label: const Text('Ses kaydet'),
+                        label: Text(l10n.recordVoice),
                       ),
                     ],
                   ],
@@ -501,7 +502,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Ne zaman?',
+                l10n.whenLabel,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 8),
@@ -510,7 +511,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                 runSpacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('Bugün'),
+                    label: Text(l10n.today),
                     selected: _presetDays == 0,
                     onSelected: busy
                         ? null
@@ -520,7 +521,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                             }),
                   ),
                   ChoiceChip(
-                    label: const Text('Yarın'),
+                    label: Text(l10n.tomorrow),
                     selected: _presetDays == 1,
                     onSelected: busy
                         ? null
@@ -530,7 +531,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                             }),
                   ),
                   ChoiceChip(
-                    label: const Text('1 hafta'),
+                    label: Text(l10n.presetOneWeek),
                     selected: _presetDays == 7,
                     onSelected: busy
                         ? null
@@ -540,7 +541,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                             }),
                   ),
                   ChoiceChip(
-                    label: const Text('Tarihsiz'),
+                    label: Text(l10n.sectionUndated),
                     selected: _presetDays == null && _customDate == null,
                     onSelected: busy
                         ? null
@@ -554,7 +555,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                     label: Text(
                       _customDate != null && _presetDays == null
                           ? fmt.format(_customDate!)
-                          : 'Tarih seç',
+                          : l10n.pickDate,
                     ),
                     onPressed: busy ? null : _pickDate,
                   ),
@@ -563,7 +564,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
               if (_effectiveDate != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Hedef: ${fmt.format(_effectiveDate!)}',
+                  l10n.targetDate(fmt.format(_effectiveDate!)),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -575,7 +576,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                   Expanded(
                     child: DropdownButtonFormField<TodoPriority>(
                       initialValue: _priority,
-                      decoration: const InputDecoration(labelText: 'Öncelik'),
+                      decoration: InputDecoration(labelText: l10n.priority),
                       items: TodoPriority.values
                           .map(
                             (e) => DropdownMenuItem(
@@ -598,7 +599,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                           busy || _effectiveDate == null ? null : _pickTime,
                       icon: const Icon(Icons.schedule),
                       label: Text(
-                        _time == null ? 'Saat ekle' : _time!.format(context),
+                        _time == null ? l10n.addTime : _time!.format(context),
                       ),
                     ),
                   ),
@@ -607,14 +608,14 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String?>(
                 initialValue: _assignedMemberId,
-                decoration: const InputDecoration(
-                  labelText: 'Sorumlu',
-                  prefixIcon: Icon(Icons.person_outline),
+                decoration: InputDecoration(
+                  labelText: l10n.assignee,
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
                 items: [
-                  const DropdownMenuItem<String?>(
+                  DropdownMenuItem<String?>(
                     value: null,
-                    child: Text('Tüm klinik'),
+                    child: Text(l10n.wholeClinic),
                   ),
                   ..._members.map(
                     (m) => DropdownMenuItem<String?>(
@@ -629,14 +630,14 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String?>(
                 initialValue: _patientId,
-                decoration: const InputDecoration(
-                  labelText: 'Hasta bağlantısı (isteğe bağlı)',
-                  prefixIcon: Icon(Icons.badge_outlined),
+                decoration: InputDecoration(
+                  labelText: l10n.patientLinkOptional,
+                  prefixIcon: const Icon(Icons.badge_outlined),
                 ),
                 items: [
-                  const DropdownMenuItem<String?>(
+                  DropdownMenuItem<String?>(
                     value: null,
-                    child: Text('Hasta seçilmedi'),
+                    child: Text(l10n.noPatientSelected),
                   ),
                   ..._patients.map(
                     (p) => DropdownMenuItem<String?>(
@@ -656,7 +657,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                   Expanded(
                     child: DropdownButtonFormField<TodoRecurrence>(
                       initialValue: _recurrence,
-                      decoration: const InputDecoration(labelText: 'Tekrar'),
+                      decoration: InputDecoration(labelText: l10n.recurrence),
                       items: TodoRecurrence.values
                           .map(
                             (e) => DropdownMenuItem(
@@ -677,17 +678,19 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                     Expanded(
                       child: DropdownButtonFormField<int>(
                         initialValue: _reminderMinutes,
-                        decoration:
-                            const InputDecoration(labelText: 'Hatırlatma'),
-                        items: const [
-                          DropdownMenuItem(value: 0, child: Text('Zamanında')),
+                        decoration: InputDecoration(labelText: l10n.reminder),
+                        items: [
+                          DropdownMenuItem(
+                            value: 0,
+                            child: Text(l10n.remindOnTime),
+                          ),
                           DropdownMenuItem(
                             value: 60,
-                            child: Text('1 saat önce'),
+                            child: Text(l10n.remindOneHourBefore),
                           ),
                           DropdownMenuItem(
                             value: 1440,
-                            child: Text('1 gün önce'),
+                            child: Text(l10n.remindOneDayBefore),
                           ),
                         ],
                         onChanged: busy
@@ -702,7 +705,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Görseller',
+                l10n.images,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 8),
@@ -751,13 +754,13 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                     onPressed:
                         busy ? null : () => _pickImages(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt_outlined),
-                    label: const Text('Kamera'),
+                    label: Text(l10n.camera),
                   ),
                   OutlinedButton.icon(
                     onPressed:
                         busy ? null : () => _pickImages(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Galeri'),
+                    label: Text(l10n.gallery),
                   ),
                 ],
               ),
@@ -768,7 +771,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
       actions: [
         TextButton(
           onPressed: _saving ? null : _cancel,
-          child: const Text('İptal'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: busy ? null : _save,
@@ -778,7 +781,7 @@ class _AddClinicTodoDialogState extends State<_AddClinicTodoDialog> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Kaydet'),
+              : Text(l10n.save),
         ),
       ],
     );

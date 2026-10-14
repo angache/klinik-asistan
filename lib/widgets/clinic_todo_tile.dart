@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic_todo.dart';
 import '../screens/clinic_todo_detail_screen.dart';
 import '../services/database_service.dart';
@@ -64,7 +65,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
     if (await file.exists() && await file.length() > 0) return file;
 
     final bytes = await StorageMedia.downloadBytes(url);
-    if (bytes.isEmpty) throw Exception('Ses dosyası boş');
+    if (bytes.isEmpty) throw Exception(currentL10n.audioFileEmpty);
     await file.writeAsBytes(bytes, flush: true);
     return file;
   }
@@ -96,7 +97,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ses çalınamadı: $e')),
+        SnackBar(content: Text(context.l10n.playFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _loadingAudio = false);
@@ -104,17 +105,18 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
   }
 
   Future<void> _complete() async {
+    final l10n = context.l10n;
     try {
       await widget.db.completeClinicTodo(widget.todo);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tamamlandı')),
+        SnackBar(content: Text(l10n.completedMessage)),
       );
       await widget.onChanged?.call();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('İşlem başarısız: $e')),
+        SnackBar(content: Text(l10n.actionFailed('$e'))),
       );
     }
   }
@@ -132,19 +134,20 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
   }
 
   Future<void> _delete() async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sil'),
-        content: const Text('Bu yapılacak silinsin mi?'),
+        title: Text(l10n.delete),
+        content: Text(l10n.deleteTodoConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -157,7 +160,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silinemedi: $e')),
+        SnackBar(content: Text(l10n.deleteFailed('$e'))),
       );
     }
   }
@@ -165,6 +168,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final todo = widget.todo;
     final accent = todo.isOverdue
         ? scheme.error
@@ -255,7 +259,7 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
               Row(
                 children: [
                   Text(
-                    DateFormat('dd.MM.yyyy HH:mm').format(todo.olusturmaTarihi),
+                    DateFormat.yMd().add_Hm().format(todo.olusturmaTarihi),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -284,19 +288,19 @@ class _ClinicTodoTileState extends State<ClinicTodoTile> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Icon(_playing ? Icons.stop : Icons.play_arrow),
-                      label: Text(_playing ? 'Durdur' : 'Dinle'),
+                      label: Text(_playing ? l10n.stop : l10n.listen),
                     ),
                   const Spacer(),
                   if (!todo.tamamlandi)
                     IconButton(
-                      tooltip: 'Tamamla',
+                      tooltip: l10n.complete,
                       onPressed: () {
                         _complete();
                       },
                       icon: const Icon(Icons.check_circle_outline),
                     ),
                   IconButton(
-                    tooltip: 'Sil',
+                    tooltip: l10n.delete,
                     onPressed: () {
                       _delete();
                     },

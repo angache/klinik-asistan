@@ -1410,4 +1410,326 @@ class AppLocalizationsEs extends AppLocalizations {
   String shareFailed(String error) {
     return 'No se pudo compartir: $error';
   }
+
+  @override
+  String completedItem(String title) {
+    return 'Completado: $title';
+  }
+
+  @override
+  String actionFailed(String error) {
+    return 'La acción falló: $error';
+  }
+
+  @override
+  String deletedItem(String title) {
+    return 'Eliminado: $title';
+  }
+
+  @override
+  String patientOpenFailed(String error) {
+    return 'No se pudo abrir el paciente: $error';
+  }
+
+  @override
+  String get noOpenFollowUps => 'No hay seguimientos abiertos.';
+
+  @override
+  String get sectionOverdue => 'Atrasados';
+
+  @override
+  String get sectionReminderDue => 'Próximos (aviso pendiente)';
+
+  @override
+  String get sectionUpcoming => 'Próximos';
+
+  @override
+  String get patientFallback => 'Paciente';
+
+  @override
+  String reminderOn(String date) {
+    return 'Recordatorio: $date';
+  }
+
+  @override
+  String get goToPatient => 'Ir al paciente';
+
+  @override
+  String get errFollowUpTitleRequired =>
+      'Escriba un título para el seguimiento';
+
+  @override
+  String get followUpWhatLabel => '¿Qué hay que seguir?';
+
+  @override
+  String get followUpWhatHint =>
+      'p. ej. Control, retirada de puntos, control del dolor…';
+
+  @override
+  String get whenLabel => '¿Cuándo?';
+
+  @override
+  String notifFollowUpTitle(String name) {
+    return 'Seguimiento: $name';
+  }
+
+  @override
+  String notifCheckupBody(String title, String date) {
+    return '$title · Control: $date';
+  }
+
+  @override
+  String get notifChannelFollowUps => 'Seguimientos';
+
+  @override
+  String get notifChannelFollowUpsDesc =>
+      'Recordatorios de controles y seguimientos';
+
+  @override
+  String get notifChannelClinic => 'Notificaciones de la clínica';
+
+  @override
+  String get notifChannelClinicDesc =>
+      'Recordatorios de solicitudes, seguimientos y tareas';
+
+  @override
+  String get todoAdded => 'Tarea añadida';
+
+  @override
+  String get noOpenTodos =>
+      'No hay tareas abiertas.\nPulse Añadir para crear una nota de texto o de voz.';
+
+  @override
+  String get todosIntro =>
+      'Notas generales de la clínica — citas, llamadas pendientes, recordatorios…';
+
+  @override
+  String get sectionUndated => 'Sin fecha';
+
+  @override
+  String get filterAll => 'Todas';
+
+  @override
+  String get filterMine => 'Asignadas a mí';
+
+  @override
+  String get filterTodayOverdue => 'Hoy/atrasadas';
+
+  @override
+  String get filterCompleted => 'Completadas';
+
+  @override
+  String commentAddFailed(String error) {
+    return 'No se pudo añadir el comentario: $error';
+  }
+
+  @override
+  String get camera => 'Cámara';
+
+  @override
+  String get gallery => 'Galería';
+
+  @override
+  String get cameraPermissionRequired => 'Se necesita permiso de cámara';
+
+  @override
+  String cameraOpenFailed(String error) {
+    return 'No se pudo abrir la cámara: $error';
+  }
+
+  @override
+  String galleryOpenFailed(String error) {
+    return 'No se pudo abrir la galería: $error';
+  }
+
+  @override
+  String imageAddFailed(String error) {
+    return 'No se pudo añadir la imagen: $error';
+  }
+
+  @override
+  String imageOpenFailed(String error) {
+    return 'No se pudo abrir la imagen: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Eliminar imagen';
+
+  @override
+  String get deleteImageConfirm => '¿Quitar esta imagen de la tarea?';
+
+  @override
+  String imageDeleteFailed(String error) {
+    return 'No se pudo eliminar la imagen: $error';
+  }
+
+  @override
+  String get todoDetailTitle => 'Detalles de la tarea';
+
+  @override
+  String get refresh => 'Actualizar';
+
+  @override
+  String get markAsCompleted => 'Marcar como completada';
+
+  @override
+  String get wholeClinic => 'Toda la clínica';
+
+  @override
+  String get clinicMemberFallback => 'Miembro de la clínica';
+
+  @override
+  String createdByOn(String name, String date) {
+    return 'Creada por $name el $date';
+  }
+
+  @override
+  String get images => 'Imágenes';
+
+  @override
+  String get noImages => 'No se han añadido imágenes';
+
+  @override
+  String commentsCount(int count) {
+    return 'Comentarios ($count)';
+  }
+
+  @override
+  String get noCommentsYet => 'Aún no hay comentarios';
+
+  @override
+  String get addCommentHint => 'Añadir un comentario…';
+
+  @override
+  String get noHistory => 'Sin historial';
+
+  @override
+  String get eventCreated => 'Tarea creada';
+
+  @override
+  String get eventCompleted => 'Tarea completada';
+
+  @override
+  String get eventCommentAdded => 'Comentario añadido';
+
+  @override
+  String get eventImageAdded => 'Imagen añadida';
+
+  @override
+  String get eventImageDeleted => 'Imagen eliminada';
+
+  @override
+  String get completedMessage => 'Completado';
+
+  @override
+  String get deleteTodoConfirm => '¿Eliminar esta tarea?';
+
+  @override
+  String get priorityNormal => 'Normal';
+
+  @override
+  String get priorityImportant => 'Importante';
+
+  @override
+  String get priorityUrgent => 'Urgente';
+
+  @override
+  String get recurrenceNone => 'No se repite';
+
+  @override
+  String get recurrenceDaily => 'Cada día';
+
+  @override
+  String get recurrenceWeekly => 'Cada semana';
+
+  @override
+  String get recurrenceMonthly => 'Cada mes';
+
+  @override
+  String get voiceTodo => 'Tarea de voz';
+
+  @override
+  String get todoFallback => 'Tarea';
+
+  @override
+  String previewPlayFailed(String error) {
+    return 'No se pudo reproducir la vista previa: $error';
+  }
+
+  @override
+  String get taskTime => 'Hora de la tarea';
+
+  @override
+  String get errTextOrVoiceRequired => 'Escriba una nota o grabe audio';
+
+  @override
+  String get errFinishRecordingFirst => 'Termine primero la grabación';
+
+  @override
+  String get addTodo => 'Añadir tarea';
+
+  @override
+  String get todoNoteHint =>
+      'p. ej. Dar cita mañana al Sr. García, devolver la llamada al paciente…';
+
+  @override
+  String get voiceOptional => 'Audio (opcional)';
+
+  @override
+  String get finish => 'Terminar';
+
+  @override
+  String voiceRecorded(String duration) {
+    return 'Audio grabado · $duration';
+  }
+
+  @override
+  String get reRecord => 'Volver a grabar';
+
+  @override
+  String get recordVoice => 'Grabar audio';
+
+  @override
+  String get tomorrow => 'Mañana';
+
+  @override
+  String targetDate(String date) {
+    return 'Objetivo: $date';
+  }
+
+  @override
+  String get priority => 'Prioridad';
+
+  @override
+  String get addTime => 'Añadir hora';
+
+  @override
+  String get assignee => 'Responsable';
+
+  @override
+  String get patientLinkOptional => 'Paciente vinculado (opcional)';
+
+  @override
+  String get noPatientSelected => 'Ningún paciente seleccionado';
+
+  @override
+  String get recurrence => 'Repetición';
+
+  @override
+  String get reminder => 'Recordatorio';
+
+  @override
+  String get remindOnTime => 'A la hora';
+
+  @override
+  String get remindOneHourBefore => '1 hora antes';
+
+  @override
+  String get errCommentEmpty => 'El comentario no puede estar vacío';
+
+  @override
+  String get recurringTask => 'Tarea recurrente';
+
+  @override
+  String get errInvalidFilePath => 'Ruta de archivo no válida';
 }

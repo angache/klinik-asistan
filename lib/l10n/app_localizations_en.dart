@@ -1401,4 +1401,322 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareFailed(String error) {
     return 'Could not share: $error';
   }
+
+  @override
+  String completedItem(String title) {
+    return 'Completed: $title';
+  }
+
+  @override
+  String actionFailed(String error) {
+    return 'Action failed: $error';
+  }
+
+  @override
+  String deletedItem(String title) {
+    return 'Deleted: $title';
+  }
+
+  @override
+  String patientOpenFailed(String error) {
+    return 'Could not open patient: $error';
+  }
+
+  @override
+  String get noOpenFollowUps => 'No open follow-ups.';
+
+  @override
+  String get sectionOverdue => 'Overdue';
+
+  @override
+  String get sectionReminderDue => 'Upcoming (reminder due)';
+
+  @override
+  String get sectionUpcoming => 'Upcoming';
+
+  @override
+  String get patientFallback => 'Patient';
+
+  @override
+  String reminderOn(String date) {
+    return 'Reminder: $date';
+  }
+
+  @override
+  String get goToPatient => 'Go to patient';
+
+  @override
+  String get errFollowUpTitleRequired => 'Enter a follow-up title';
+
+  @override
+  String get followUpWhatLabel => 'What needs follow-up?';
+
+  @override
+  String get followUpWhatHint => 'e.g. Check-up, suture removal, pain check…';
+
+  @override
+  String get whenLabel => 'When?';
+
+  @override
+  String notifFollowUpTitle(String name) {
+    return 'Follow-up: $name';
+  }
+
+  @override
+  String notifCheckupBody(String title, String date) {
+    return '$title · Check-up: $date';
+  }
+
+  @override
+  String get notifChannelFollowUps => 'Follow-ups';
+
+  @override
+  String get notifChannelFollowUpsDesc => 'Check-up and follow-up reminders';
+
+  @override
+  String get notifChannelClinic => 'Clinic notifications';
+
+  @override
+  String get notifChannelClinicDesc => 'Join, follow-up and to-do reminders';
+
+  @override
+  String get todoAdded => 'To-do added';
+
+  @override
+  String get noOpenTodos =>
+      'No open to-dos.\nTap Add to create a text or voice note.';
+
+  @override
+  String get todosIntro =>
+      'General clinic notes — appointments, callbacks, reminders…';
+
+  @override
+  String get sectionUndated => 'No date';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filterMine => 'Assigned to me';
+
+  @override
+  String get filterTodayOverdue => 'Today/overdue';
+
+  @override
+  String get filterCompleted => 'Completed';
+
+  @override
+  String commentAddFailed(String error) {
+    return 'Could not add comment: $error';
+  }
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
+  String get cameraPermissionRequired => 'Camera permission is required';
+
+  @override
+  String cameraOpenFailed(String error) {
+    return 'Could not open camera: $error';
+  }
+
+  @override
+  String galleryOpenFailed(String error) {
+    return 'Could not open gallery: $error';
+  }
+
+  @override
+  String imageAddFailed(String error) {
+    return 'Could not add image: $error';
+  }
+
+  @override
+  String imageOpenFailed(String error) {
+    return 'Could not open image: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Delete image';
+
+  @override
+  String get deleteImageConfirm => 'Remove this image from the task?';
+
+  @override
+  String imageDeleteFailed(String error) {
+    return 'Could not delete image: $error';
+  }
+
+  @override
+  String get todoDetailTitle => 'To-do details';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get markAsCompleted => 'Mark as completed';
+
+  @override
+  String get wholeClinic => 'Whole clinic';
+
+  @override
+  String get clinicMemberFallback => 'Clinic member';
+
+  @override
+  String createdByOn(String name, String date) {
+    return 'Created by $name on $date';
+  }
+
+  @override
+  String get images => 'Images';
+
+  @override
+  String get noImages => 'No images added';
+
+  @override
+  String commentsCount(int count) {
+    return 'Comments ($count)';
+  }
+
+  @override
+  String get noCommentsYet => 'No comments yet';
+
+  @override
+  String get addCommentHint => 'Add a comment…';
+
+  @override
+  String get noHistory => 'No history yet';
+
+  @override
+  String get eventCreated => 'Task created';
+
+  @override
+  String get eventCompleted => 'Task completed';
+
+  @override
+  String get eventCommentAdded => 'Comment added';
+
+  @override
+  String get eventImageAdded => 'Image added';
+
+  @override
+  String get eventImageDeleted => 'Image removed';
+
+  @override
+  String get completedMessage => 'Completed';
+
+  @override
+  String get deleteTodoConfirm => 'Delete this to-do?';
+
+  @override
+  String get priorityNormal => 'Normal';
+
+  @override
+  String get priorityImportant => 'Important';
+
+  @override
+  String get priorityUrgent => 'Urgent';
+
+  @override
+  String get recurrenceNone => 'Does not repeat';
+
+  @override
+  String get recurrenceDaily => 'Every day';
+
+  @override
+  String get recurrenceWeekly => 'Every week';
+
+  @override
+  String get recurrenceMonthly => 'Every month';
+
+  @override
+  String get voiceTodo => 'Voice to-do';
+
+  @override
+  String get todoFallback => 'To-do';
+
+  @override
+  String previewPlayFailed(String error) {
+    return 'Could not play preview: $error';
+  }
+
+  @override
+  String get taskTime => 'Task time';
+
+  @override
+  String get errTextOrVoiceRequired => 'Write a note or record audio';
+
+  @override
+  String get errFinishRecordingFirst => 'Finish the recording first';
+
+  @override
+  String get addTodo => 'Add to-do';
+
+  @override
+  String get todoNoteHint =>
+      'e.g. Book Mr. Smith an appointment tomorrow, call the patient back…';
+
+  @override
+  String get voiceOptional => 'Audio (optional)';
+
+  @override
+  String get finish => 'Finish';
+
+  @override
+  String voiceRecorded(String duration) {
+    return 'Audio recorded · $duration';
+  }
+
+  @override
+  String get reRecord => 'Record again';
+
+  @override
+  String get recordVoice => 'Record audio';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String targetDate(String date) {
+    return 'Target: $date';
+  }
+
+  @override
+  String get priority => 'Priority';
+
+  @override
+  String get addTime => 'Add time';
+
+  @override
+  String get assignee => 'Assignee';
+
+  @override
+  String get patientLinkOptional => 'Linked patient (optional)';
+
+  @override
+  String get noPatientSelected => 'No patient selected';
+
+  @override
+  String get recurrence => 'Repeat';
+
+  @override
+  String get reminder => 'Reminder';
+
+  @override
+  String get remindOnTime => 'On time';
+
+  @override
+  String get remindOneHourBefore => '1 hour before';
+
+  @override
+  String get errCommentEmpty => 'Comment cannot be empty';
+
+  @override
+  String get recurringTask => 'Recurring task';
+
+  @override
+  String get errInvalidFilePath => 'Invalid file path';
 }

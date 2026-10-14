@@ -2,9 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../l10n/l10n.dart';
 import '../models/follow_up.dart';
 
 /// Yerel takip bildirimleri (Android / iOS). Windows'ta no-op.
@@ -47,6 +49,18 @@ class NotificationService {
 
   int _notifId(String followUpId) => followUpId.hashCode & 0x7fffffff;
 
+  NotificationDetails get _followUpDetails => NotificationDetails(
+        android: AndroidNotificationDetails(
+          'takipler',
+          currentL10n.notifChannelFollowUps,
+          channelDescription: currentL10n.notifChannelFollowUpsDesc,
+          importance: Importance.high,
+          priority: Priority.high,
+          visibility: NotificationVisibility.private,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      );
+
   /// [notifyIfPast]: true ise uyarı saati geçmiş takiplerde anında bildir.
   /// Sync sırasında false olmalı — yoksa her dashboard açılışında tekrar basılır.
   Future<void> scheduleFollowUp(
@@ -62,11 +76,13 @@ class NotificationService {
       f.reminderDateOnly.day,
       9,
     );
-    final date = '${f.planDateOnly.day.toString().padLeft(2, '0')}.'
-        '${f.planDateOnly.month.toString().padLeft(2, '0')}.'
-        '${f.planDateOnly.year}';
-    final body =
-        f.hatirlatmaGunOnce > 0 ? '${f.baslik} · Kontrol: $date' : f.baslik;
+    final l10n = currentL10n;
+    final date = DateFormat.yMd().format(f.planDateOnly);
+    final body = f.hatirlatmaGunOnce > 0
+        ? l10n.notifCheckupBody(f.baslik, date)
+        : f.baslik;
+    final title =
+        l10n.notifFollowUpTitle(f.hastaAdSoyad ?? l10n.patientFallback);
     final isPast = when.isBefore(tz.TZDateTime.now(tz.local));
     if (!isPast && _serverPushActive) return;
     if (isPast) {
@@ -74,39 +90,19 @@ class NotificationService {
       // Yeni oluştururken: gecikmiş / bugün için tek seferlik bilgi
       await _plugin.show(
         id: _notifId(f.id),
-        title: 'Takip: ${f.hastaAdSoyad ?? 'Hasta'}',
+        title: title,
         body: body,
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'takipler',
-            'Takipler',
-            channelDescription: 'Kontrol ve takip hatırlatmaları',
-            importance: Importance.high,
-            priority: Priority.high,
-            visibility: NotificationVisibility.private,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
+        notificationDetails: _followUpDetails,
       );
       return;
     }
 
     await _plugin.zonedSchedule(
       id: _notifId(f.id),
-      title: 'Takip: ${f.hastaAdSoyad ?? 'Hasta'}',
+      title: title,
       body: body,
       scheduledDate: when,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'takipler',
-          'Takipler',
-          channelDescription: 'Kontrol ve takip hatırlatmaları',
-          importance: Importance.high,
-          priority: Priority.high,
-          visibility: NotificationVisibility.private,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      notificationDetails: _followUpDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
   }
@@ -152,16 +148,16 @@ class NotificationService {
       id: DateTime.now().millisecondsSinceEpoch & 0x7fffffff,
       title: title,
       body: body,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'klinik_push',
-          'Klinik bildirimleri',
-          channelDescription: 'Katılım, takip ve yapılacak hatırlatmaları',
+          currentL10n.notifChannelClinic,
+          channelDescription: currentL10n.notifChannelClinicDesc,
           importance: Importance.high,
           priority: Priority.high,
           visibility: NotificationVisibility.private,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
     );
   }

@@ -2445,6 +2445,564 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not share: {error}'**
   String shareFailed(String error);
+
+  /// No description provided for @completedItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: {title}'**
+  String completedItem(String title);
+
+  /// No description provided for @actionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Action failed: {error}'**
+  String actionFailed(String error);
+
+  /// No description provided for @deletedItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted: {title}'**
+  String deletedItem(String title);
+
+  /// No description provided for @patientOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open patient: {error}'**
+  String patientOpenFailed(String error);
+
+  /// No description provided for @noOpenFollowUps.
+  ///
+  /// In en, this message translates to:
+  /// **'No open follow-ups.'**
+  String get noOpenFollowUps;
+
+  /// No description provided for @sectionOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get sectionOverdue;
+
+  /// No description provided for @sectionReminderDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming (reminder due)'**
+  String get sectionReminderDue;
+
+  /// No description provided for @sectionUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get sectionUpcoming;
+
+  /// No description provided for @patientFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient'**
+  String get patientFallback;
+
+  /// No description provided for @reminderOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder: {date}'**
+  String reminderOn(String date);
+
+  /// No description provided for @goToPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to patient'**
+  String get goToPatient;
+
+  /// No description provided for @errFollowUpTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a follow-up title'**
+  String get errFollowUpTitleRequired;
+
+  /// No description provided for @followUpWhatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What needs follow-up?'**
+  String get followUpWhatLabel;
+
+  /// No description provided for @followUpWhatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Check-up, suture removal, pain check…'**
+  String get followUpWhatHint;
+
+  /// No description provided for @whenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'When?'**
+  String get whenLabel;
+
+  /// No description provided for @notifFollowUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up: {name}'**
+  String notifFollowUpTitle(String name);
+
+  /// No description provided for @notifCheckupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} · Check-up: {date}'**
+  String notifCheckupBody(String title, String date);
+
+  /// No description provided for @notifChannelFollowUps.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-ups'**
+  String get notifChannelFollowUps;
+
+  /// No description provided for @notifChannelFollowUpsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up and follow-up reminders'**
+  String get notifChannelFollowUpsDesc;
+
+  /// No description provided for @notifChannelClinic.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic notifications'**
+  String get notifChannelClinic;
+
+  /// No description provided for @notifChannelClinicDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Join, follow-up and to-do reminders'**
+  String get notifChannelClinicDesc;
+
+  /// No description provided for @todoAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'To-do added'**
+  String get todoAdded;
+
+  /// No description provided for @noOpenTodos.
+  ///
+  /// In en, this message translates to:
+  /// **'No open to-dos.\nTap Add to create a text or voice note.'**
+  String get noOpenTodos;
+
+  /// No description provided for @todosIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'General clinic notes — appointments, callbacks, reminders…'**
+  String get todosIntro;
+
+  /// No description provided for @sectionUndated.
+  ///
+  /// In en, this message translates to:
+  /// **'No date'**
+  String get sectionUndated;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// No description provided for @filterMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to me'**
+  String get filterMine;
+
+  /// No description provided for @filterTodayOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Today/overdue'**
+  String get filterTodayOverdue;
+
+  /// No description provided for @filterCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get filterCompleted;
+
+  /// No description provided for @commentAddFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add comment: {error}'**
+  String commentAddFailed(String error);
+
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// No description provided for @cameraPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission is required'**
+  String get cameraPermissionRequired;
+
+  /// No description provided for @cameraOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open camera: {error}'**
+  String cameraOpenFailed(String error);
+
+  /// No description provided for @galleryOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open gallery: {error}'**
+  String galleryOpenFailed(String error);
+
+  /// No description provided for @imageAddFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add image: {error}'**
+  String imageAddFailed(String error);
+
+  /// No description provided for @imageOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open image: {error}'**
+  String imageOpenFailed(String error);
+
+  /// No description provided for @deleteImageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete image'**
+  String get deleteImageTitle;
+
+  /// No description provided for @deleteImageConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this image from the task?'**
+  String get deleteImageConfirm;
+
+  /// No description provided for @imageDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete image: {error}'**
+  String imageDeleteFailed(String error);
+
+  /// No description provided for @todoDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To-do details'**
+  String get todoDetailTitle;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @markAsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as completed'**
+  String get markAsCompleted;
+
+  /// No description provided for @wholeClinic.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole clinic'**
+  String get wholeClinic;
+
+  /// No description provided for @clinicMemberFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic member'**
+  String get clinicMemberFallback;
+
+  /// No description provided for @createdByOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Created by {name} on {date}'**
+  String createdByOn(String name, String date);
+
+  /// No description provided for @images.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get images;
+
+  /// No description provided for @noImages.
+  ///
+  /// In en, this message translates to:
+  /// **'No images added'**
+  String get noImages;
+
+  /// No description provided for @commentsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments ({count})'**
+  String commentsCount(int count);
+
+  /// No description provided for @noCommentsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet'**
+  String get noCommentsYet;
+
+  /// No description provided for @addCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment…'**
+  String get addCommentHint;
+
+  /// No description provided for @noHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet'**
+  String get noHistory;
+
+  /// No description provided for @eventCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Task created'**
+  String get eventCreated;
+
+  /// No description provided for @eventCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task completed'**
+  String get eventCompleted;
+
+  /// No description provided for @eventCommentAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment added'**
+  String get eventCommentAdded;
+
+  /// No description provided for @eventImageAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Image added'**
+  String get eventImageAdded;
+
+  /// No description provided for @eventImageDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Image removed'**
+  String get eventImageDeleted;
+
+  /// No description provided for @completedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completedMessage;
+
+  /// No description provided for @deleteTodoConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this to-do?'**
+  String get deleteTodoConfirm;
+
+  /// No description provided for @priorityNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get priorityNormal;
+
+  /// No description provided for @priorityImportant.
+  ///
+  /// In en, this message translates to:
+  /// **'Important'**
+  String get priorityImportant;
+
+  /// No description provided for @priorityUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get priorityUrgent;
+
+  /// No description provided for @recurrenceNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Does not repeat'**
+  String get recurrenceNone;
+
+  /// No description provided for @recurrenceDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get recurrenceDaily;
+
+  /// No description provided for @recurrenceWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every week'**
+  String get recurrenceWeekly;
+
+  /// No description provided for @recurrenceMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every month'**
+  String get recurrenceMonthly;
+
+  /// No description provided for @voiceTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice to-do'**
+  String get voiceTodo;
+
+  /// No description provided for @todoFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'To-do'**
+  String get todoFallback;
+
+  /// No description provided for @previewPlayFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not play preview: {error}'**
+  String previewPlayFailed(String error);
+
+  /// No description provided for @taskTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Task time'**
+  String get taskTime;
+
+  /// No description provided for @errTextOrVoiceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a note or record audio'**
+  String get errTextOrVoiceRequired;
+
+  /// No description provided for @errFinishRecordingFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the recording first'**
+  String get errFinishRecordingFirst;
+
+  /// No description provided for @addTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to-do'**
+  String get addTodo;
+
+  /// No description provided for @todoNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Book Mr. Smith an appointment tomorrow, call the patient back…'**
+  String get todoNoteHint;
+
+  /// No description provided for @voiceOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio (optional)'**
+  String get voiceOptional;
+
+  /// No description provided for @finish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get finish;
+
+  /// No description provided for @voiceRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio recorded · {duration}'**
+  String voiceRecorded(String duration);
+
+  /// No description provided for @reRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record again'**
+  String get reRecord;
+
+  /// No description provided for @recordVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Record audio'**
+  String get recordVoice;
+
+  /// No description provided for @tomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get tomorrow;
+
+  /// No description provided for @targetDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Target: {date}'**
+  String targetDate(String date);
+
+  /// No description provided for @priority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get priority;
+
+  /// No description provided for @addTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add time'**
+  String get addTime;
+
+  /// No description provided for @assignee.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignee'**
+  String get assignee;
+
+  /// No description provided for @patientLinkOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked patient (optional)'**
+  String get patientLinkOptional;
+
+  /// No description provided for @noPatientSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No patient selected'**
+  String get noPatientSelected;
+
+  /// No description provided for @recurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get recurrence;
+
+  /// No description provided for @reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get reminder;
+
+  /// No description provided for @remindOnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'On time'**
+  String get remindOnTime;
+
+  /// No description provided for @remindOneHourBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour before'**
+  String get remindOneHourBefore;
+
+  /// No description provided for @errCommentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment cannot be empty'**
+  String get errCommentEmpty;
+
+  /// No description provided for @recurringTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring task'**
+  String get recurringTask;
+
+  /// No description provided for @errInvalidFilePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid file path'**
+  String get errInvalidFilePath;
 }
 
 class _AppLocalizationsDelegate

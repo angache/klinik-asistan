@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/l10n.dart';
 import '../models/follow_up.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
@@ -30,36 +31,38 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
   }
 
   Future<void> _complete(FollowUp f) async {
+    final l10n = context.l10n;
     try {
       await widget.db.completeFollowUp(f.id);
       await NotificationService.instance.cancelFollowUp(f.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tamamlandı: ${f.baslik}')),
+        SnackBar(content: Text(l10n.completedItem(f.baslik))),
       );
       await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('İşlem başarısız: $e')),
+        SnackBar(content: Text(l10n.actionFailed('$e'))),
       );
     }
   }
 
   Future<void> _delete(FollowUp f) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Takibi sil'),
-        content: Text('${f.baslik} silinsin mi?'),
+        title: Text(l10n.deleteFollowUpTitle),
+        content: Text(l10n.deleteItemConfirm(f.baslik)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -70,13 +73,13 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
       await NotificationService.instance.cancelFollowUp(f.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silindi: ${f.baslik}')),
+        SnackBar(content: Text(l10n.deletedItem(f.baslik))),
       );
       await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silinemedi: $e')),
+        SnackBar(content: Text(l10n.deleteFailed('$e'))),
       );
     }
   }
@@ -93,17 +96,18 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hasta açılamadı: $e')),
+        SnackBar(content: Text(context.l10n.patientOpenFailed('$e'))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('dd.MM.yyyy');
+    final l10n = context.l10n;
+    final fmt = DateFormat.yMd();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Takipler')),
+      appBar: AppBar(title: Text(l10n.followUps)),
       body: FutureBuilder<List<FollowUp>>(
         future: _future,
         builder: (context, snap) {
@@ -117,11 +121,11 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Yüklenemedi: ${snap.error}'),
+                    Text(l10n.loadFailed('${snap.error}')),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: _reload,
-                      child: const Text('Tekrar dene'),
+                      child: Text(l10n.retry),
                     ),
                   ],
                 ),
@@ -135,9 +139,9 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
               onRefresh: _reload,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('Açık takip yok.')),
+                children: [
+                  const SizedBox(height: 120),
+                  Center(child: Text(l10n.noOpenFollowUps)),
                 ],
               ),
             );
@@ -154,14 +158,14 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               children: [
                 if (overdue.isNotEmpty) ...[
-                  _sectionTitle(context, 'Geciken', Colors.red),
+                  _sectionTitle(context, l10n.sectionOverdue, Colors.red),
                   ...overdue.map((f) => _tile(context, f, fmt)),
                   const SizedBox(height: 12),
                 ],
                 if (today.isNotEmpty) ...[
                   _sectionTitle(
                     context,
-                    'Bugün',
+                    l10n.today,
                     Theme.of(context).colorScheme.primary,
                   ),
                   ...today.map((f) => _tile(context, f, fmt)),
@@ -170,14 +174,14 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
                 if (reminded.isNotEmpty) ...[
                   _sectionTitle(
                     context,
-                    'Yaklaşan (uyarı zamanı geldi)',
+                    l10n.sectionReminderDue,
                     Colors.orange.shade800,
                   ),
                   ...reminded.map((f) => _tile(context, f, fmt)),
                   const SizedBox(height: 12),
                 ],
                 if (upcoming.isNotEmpty) ...[
-                  _sectionTitle(context, 'Yaklaşan', null),
+                  _sectionTitle(context, l10n.sectionUpcoming, null),
                   ...upcoming.map((f) => _tile(context, f, fmt)),
                 ],
               ],
@@ -202,6 +206,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
   }
 
   Widget _tile(BuildContext context, FollowUp f, DateFormat fmt) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final accent = f.isOverdue
         ? scheme.error
@@ -219,7 +224,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
             ? Icon(Icons.science_outlined, color: accent)
             : Icon(Icons.event_note_outlined, color: accent),
         title: Text(
-          f.hastaAdSoyad ?? 'Hasta',
+          f.hastaAdSoyad ?? l10n.patientFallback,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Column(
@@ -235,10 +240,12 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
             const SizedBox(height: 4),
             Text(
               f.isLab
-                  ? 'Hatırlatma: ${fmt.format(f.planDateOnly)}'
+                  ? l10n.reminderOn(fmt.format(f.planDateOnly))
                   : f.hatirlatmaGunOnce > 0
-                      ? 'Kontrol: ${fmt.format(f.planDateOnly)} · '
-                          'Uyarı: ${fmt.format(f.reminderDateOnly)}'
+                      ? l10n.followUpSummary(
+                          fmt.format(f.planDateOnly),
+                          fmt.format(f.reminderDateOnly),
+                        )
                       : fmt.format(f.planDateOnly),
               style: TextStyle(
                 color: accent,
@@ -252,17 +259,17 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
           spacing: 0,
           children: [
             IconButton(
-              tooltip: 'Tamamla',
+              tooltip: l10n.complete,
               onPressed: () => _complete(f),
               icon: const Icon(Icons.check_circle_outline),
             ),
             IconButton(
-              tooltip: 'Sil',
+              tooltip: l10n.delete,
               onPressed: () => _delete(f),
               icon: const Icon(Icons.delete_outline),
             ),
             IconButton(
-              tooltip: 'Hastaya git',
+              tooltip: l10n.goToPatient,
               onPressed: () => _openPatient(f),
               icon: const Icon(Icons.person_outline),
             ),

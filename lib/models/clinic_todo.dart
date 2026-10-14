@@ -1,11 +1,20 @@
-enum TodoPriority {
-  normal('normal', 'Normal'),
-  important('onemli', 'Önemli'),
-  urgent('acil', 'Acil');
+import 'package:intl/intl.dart';
 
-  const TodoPriority(this.value, this.label);
+import '../l10n/l10n.dart';
+
+enum TodoPriority {
+  normal('normal'),
+  important('onemli'),
+  urgent('acil');
+
+  const TodoPriority(this.value);
   final String value;
-  final String label;
+
+  String get label => switch (this) {
+        TodoPriority.normal => currentL10n.priorityNormal,
+        TodoPriority.important => currentL10n.priorityImportant,
+        TodoPriority.urgent => currentL10n.priorityUrgent,
+      };
 
   static TodoPriority fromValue(String? value) {
     final key = value?.trim().toLowerCase();
@@ -18,14 +27,20 @@ enum TodoPriority {
 }
 
 enum TodoRecurrence {
-  none('yok', 'Tekrarlanmaz'),
-  daily('gunluk', 'Her gün'),
-  weekly('haftalik', 'Her hafta'),
-  monthly('aylik', 'Her ay');
+  none('yok'),
+  daily('gunluk'),
+  weekly('haftalik'),
+  monthly('aylik');
 
-  const TodoRecurrence(this.value, this.label);
+  const TodoRecurrence(this.value);
   final String value;
-  final String label;
+
+  String get label => switch (this) {
+        TodoRecurrence.none => currentL10n.recurrenceNone,
+        TodoRecurrence.daily => currentL10n.recurrenceDaily,
+        TodoRecurrence.weekly => currentL10n.recurrenceWeekly,
+        TodoRecurrence.monthly => currentL10n.recurrenceMonthly,
+      };
 
   static TodoRecurrence fromValue(String? value) {
     final key = value?.trim().toLowerCase();
@@ -105,7 +120,8 @@ class TodoComment {
         id: json['id'] as String,
         todoId: json['todo_id'] as String,
         text: json['icerik'] as String,
-        authorName: json['yazan_ad_soyad'] as String? ?? 'Klinik üyesi',
+        authorName: json['yazan_ad_soyad'] as String? ??
+            currentL10n.clinicMemberFallback,
         createdAt: DateTime.parse(json['olusturma_tarihi'] as String).toLocal(),
       );
 }
@@ -131,7 +147,8 @@ class TodoEvent {
         id: json['id'] as String,
         todoId: json['todo_id'] as String,
         type: json['olay_turu'] as String,
-        actorName: json['yapan_ad_soyad'] as String? ?? 'Klinik üyesi',
+        actorName: json['yapan_ad_soyad'] as String? ??
+            currentL10n.clinicMemberFallback,
         description: json['aciklama'] as String?,
         createdAt: DateTime.parse(json['olusturma_tarihi'] as String).toLocal(),
       );
@@ -237,8 +254,8 @@ class ClinicTodo {
   String get displayText {
     final t = icerik?.trim();
     if (t != null && t.isNotEmpty) return t;
-    if (hasVoice) return 'Sesli yapılacak';
-    return 'Yapılacak';
+    if (hasVoice) return currentL10n.voiceTodo;
+    return currentL10n.todoFallback;
   }
 
   String get durationLabel {
@@ -272,10 +289,8 @@ class ClinicTodo {
 
   String get scheduleLabel {
     final value = planlananZaman ?? planlananTarih;
-    if (value == null) return 'Tarihsiz';
-    final date =
-        '${value.day.toString().padLeft(2, '0')}.${value.month.toString().padLeft(2, '0')}.${value.year}';
-    if (planlananZaman == null) return date;
-    return '$date ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+    if (value == null) return currentL10n.sectionUndated;
+    if (planlananZaman == null) return DateFormat.yMd().format(value);
+    return DateFormat.yMd().add_Hm().format(value);
   }
 }

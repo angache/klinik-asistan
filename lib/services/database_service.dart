@@ -1144,7 +1144,7 @@ class DatabaseService {
     final text = icerik?.trim();
     final voice = sesUrl?.trim();
     if ((text == null || text.isEmpty) && (voice == null || voice.isEmpty)) {
-      throw ArgumentError('Yazı veya ses gerekli');
+      throw ArgumentError(currentL10n.errTextOrVoiceRequired);
     }
 
     final row = await _client
@@ -1277,7 +1277,7 @@ class DatabaseService {
     required String text,
   }) async {
     final value = text.trim();
-    if (value.isEmpty) throw ArgumentError('Yorum boş olamaz');
+    if (value.isEmpty) throw ArgumentError(currentL10n.errCommentEmpty);
     final row = await _client
         .from('klinik_todo_yorumlari')
         .insert({
@@ -1340,7 +1340,7 @@ class DatabaseService {
               .toLocal();
       final next = nextRecurrenceDate(base, todo.tekrar);
       await createClinicTodo(
-        icerik: todo.icerik ?? 'Tekrarlanan görev',
+        icerik: todo.icerik ?? currentL10n.recurringTask,
         planlananTarih: next,
         planlananZaman: todo.planlananZaman == null ? null : next,
         oncelik: todo.oncelik,
