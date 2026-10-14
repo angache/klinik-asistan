@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../services/database_service.dart';
 import '../services/session_controller.dart';
 import 'dashboard_screen.dart';
@@ -54,10 +55,10 @@ class AuthGate extends StatelessWidget {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Klinik gerekli'),
+              title: Text(context.l10n.clinicRequiredTitle),
               actions: [
                 IconButton(
-                  tooltip: 'Ayarlar ve hesap',
+                  tooltip: context.l10n.settingsAndAccount,
                   icon: const Icon(Icons.settings_outlined),
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
@@ -67,7 +68,7 @@ class AuthGate extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () => session.signOut(),
-                  child: const Text('Çıkış'),
+                  child: Text(context.l10n.signOut),
                 ),
               ],
             ),
@@ -96,13 +97,14 @@ class _ConnectionErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Klinik Asistan'),
         actions: [
           TextButton(
             onPressed: () => session.signOut(),
-            child: const Text('Çıkış'),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -115,12 +117,12 @@ class _ConnectionErrorScreen extends StatelessWidget {
               Icon(Icons.cloud_off, size: 56, color: scheme.error),
               const SizedBox(height: 16),
               Text(
-                'Sunucuya bağlanılamadı',
+                l10n.serverUnreachableTitle,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               Text(
-                'İnternet bağlantınızı kontrol edip tekrar deneyin.',
+                l10n.serverUnreachableBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: scheme.onSurfaceVariant),
               ),
@@ -128,7 +130,7 @@ class _ConnectionErrorScreen extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () => session.refreshMembership(),
                 icon: const Icon(Icons.refresh),
-                label: const Text('Tekrar dene'),
+                label: Text(l10n.retry),
               ),
             ],
           ),
@@ -143,6 +145,6 @@ Future<void> copyClinicCode(BuildContext context, String kod) async {
   await Clipboard.setData(ClipboardData(text: kod));
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Klinik kodu kopyalandı: $kod')),
+    SnackBar(content: Text(context.l10n.clinicCodeCopied(kod))),
   );
 }

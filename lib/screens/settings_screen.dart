@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/legal_config.dart';
+import '../l10n/l10n.dart';
+import '../main.dart';
 import '../services/session_controller.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -13,39 +15,33 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final links = <(String, IconData, String)>[
       if (LegalConfig.kvkkNoticeUrl.isNotEmpty)
-        (
-          'KVKK aydınlatma metni',
-          Icons.policy_outlined,
-          LegalConfig.kvkkNoticeUrl
-        ),
+        (l10n.privacyNotice, Icons.policy_outlined, LegalConfig.kvkkNoticeUrl),
       if (LegalConfig.privacyPolicyUrl.isNotEmpty)
         (
-          'Gizlilik politikası',
+          l10n.privacyPolicy,
           Icons.privacy_tip_outlined,
           LegalConfig.privacyPolicyUrl
         ),
       if (LegalConfig.termsUrl.isNotEmpty)
-        (
-          'Kullanım koşulları',
-          Icons.description_outlined,
-          LegalConfig.termsUrl
-        ),
+        (l10n.termsOfUse, Icons.description_outlined, LegalConfig.termsUrl),
       if (LegalConfig.supportEmail.isNotEmpty)
         (
-          'Destek: ${LegalConfig.supportEmail}',
+          l10n.supportEmail(LegalConfig.supportEmail),
           Icons.mail_outline,
           'mailto:${LegalConfig.supportEmail}'
         ),
     ];
+    final selectedLocale = KlinikAsistanApp.of(context)?.locale;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ayarlar')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          const _Section('Hesap'),
+          _Section(l10n.settingsAccountSection),
           ListTile(
             leading: const Icon(Icons.person_outline),
             title: Text(session.displayName),
@@ -57,9 +53,20 @@ class SettingsScreen extends StatelessWidget {
               title: Text(session.clinic!.ad),
               subtitle: Text(session.member?.rol.label ?? ''),
             ),
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(l10n.languageLabel),
+            subtitle: Text(
+              selectedLocale == null
+                  ? l10n.languageSystem
+                  : kLanguageNames[selectedLocale.languageCode] ??
+                      selectedLocale.languageCode,
+            ),
+            onTap: () => _pickLanguage(context, selectedLocale),
+          ),
           if (links.isNotEmpty) ...[
             const Divider(),
-            const _Section('Yasal'),
+            _Section(l10n.settingsLegalSection),
             for (final (title, icon, url) in links)
               ListTile(
                 leading: Icon(icon),
@@ -69,14 +76,14 @@ class SettingsScreen extends StatelessWidget {
               ),
           ],
           const Divider(),
-          _Section('Tehlikeli bölge', color: scheme.error),
+          _Section(l10n.settingsDangerZone, color: scheme.error),
           ListTile(
             leading: Icon(Icons.delete_forever_outlined, color: scheme.error),
             title: Text(
-              'Hesabımı sil',
+              l10n.deleteMyAccount,
               style: TextStyle(color: scheme.error),
             ),
-            subtitle: const Text('Hesabınız kalıcı olarak silinir'),
+            subtitle: Text(l10n.deleteMyAccountSubtitle),
             onTap: () => _deleteAccount(context),
           ),
         ],
@@ -84,16 +91,47 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _pickLanguage(BuildContext context, Locale? current) async {
+    final app = KlinikAsistanApp.of(context);
+    if (app == null) return;
+    // '' = telefonun dili.
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(ctx.l10n.languageLabel),
+        children: [
+          for (final (code, name) in [
+            ('', ctx.l10n.languageSystem),
+            ...kLanguageNames.entries.map((e) => (e.key, e.value)),
+          ])
+            ListTile(
+              leading: Icon(
+                code == (current?.languageCode ?? '')
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                color: Theme.of(ctx).colorScheme.primary,
+              ),
+              title: Text(name),
+              onTap: () => Navigator.pop(ctx, code),
+            ),
+        ],
+      ),
+    );
+    if (picked == null) return;
+    await app.setLocale(picked.isEmpty ? null : Locale(picked));
+  }
+
   Future<void> _deleteAccount(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l10n = context.l10n;
 
     final AccountDeletionPreview preview;
     try {
       preview = await _withProgress(context, session.previewAccountDeletion());
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Hesap bilgisi alınamadı: ${_message(e)}')),
+        SnackBar(content: Text(l10n.accountInfoFailed(_message(e)))),
       );
       return;
     }
@@ -103,17 +141,16 @@ class SettingsScreen extends StatelessWidget {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Önce yöneticiyi devredin'),
+          title: Text(l10n.transferAdminTitle),
           content: Text(
-            'Şu kliniklerin tek yöneticisisiniz ve başka üyeleri var:\n\n'
-            '${preview.blockingClinics.map((e) => '• $e').join('\n')}\n\n'
-            'Üyeler ekranından başka bir üyeyi yönetici yapın, '
-            'sonra tekrar deneyin.',
+            l10n.transferAdminBody(
+              preview.blockingClinics.map((e) => '• $e').join('\n'),
+            ),
           ),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Tamam'),
+              child: Text(l10n.ok),
             ),
           ],
         ),
@@ -131,11 +168,11 @@ class SettingsScreen extends StatelessWidget {
       await _withProgress(context, session.deleteAccount());
       navigator.popUntil((r) => r.isFirst);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Hesabınız silindi')),
+        SnackBar(content: Text(l10n.accountDeleted)),
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Hesap silinemedi: ${_message(e)}')),
+        SnackBar(content: Text(l10n.accountDeleteFailed(_message(e)))),
       );
     }
   }
@@ -160,7 +197,7 @@ class SettingsScreen extends StatelessWidget {
       if (details is Map && details['error'] != null) {
         return details['error'].toString();
       }
-      return 'Sunucu hatası (${e.status})';
+      return currentL10n.serverError(e.status);
     }
     return e.toString();
   }
@@ -173,7 +210,7 @@ Future<void> openExternalUrl(BuildContext context, String url) async {
   );
   if (!ok && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Bağlantı açılamadı: $url')),
+      SnackBar(content: Text(context.l10n.linkOpenFailed(url))),
     );
   }
 }
@@ -209,7 +246,6 @@ class _DeleteConfirmDialog extends StatefulWidget {
 }
 
 class _DeleteConfirmDialogState extends State<_DeleteConfirmDialog> {
-  static const _confirmWord = 'SİL';
   final _controller = TextEditingController();
 
   @override
@@ -218,30 +254,30 @@ class _DeleteConfirmDialogState extends State<_DeleteConfirmDialog> {
     super.dispose();
   }
 
+  // Dart'ın toUpperCase'i Türkçe İ'yi bilmez: "sil", "SIL", "SİL" hepsi kabul.
+  static String _normalize(String s) =>
+      s.trim().toUpperCase().replaceAll('İ', 'I');
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final clinics = widget.preview.clinicsToDelete;
-    // "sil", "SIL", "SİL" hepsi kabul (Dart toUpperCase Türkçe İ bilmez).
-    final matches =
-        _controller.text.trim().toUpperCase().replaceAll('İ', 'I') == 'SIL';
+    final confirmWord = l10n.deleteAccountConfirmWord;
+    final matches = _normalize(_controller.text) == _normalize(confirmWord);
 
     return AlertDialog(
-      title: const Text('Hesabı kalıcı olarak sil'),
+      title: Text(l10n.deleteAccountTitle),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Hesabınız ve giriş bilgileriniz silinir. Bu işlem geri alınamaz.',
-            ),
+            Text(l10n.deleteAccountWarning),
             if (clinics.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
-                'Aşağıdaki kliniklerin tek üyesisiniz. Bu klinikler tüm '
-                'hasta kayıtları, işlemler, fotoğraflar ve ses kayıtlarıyla '
-                'birlikte silinecek:',
+                l10n.deleteAccountClinicsWarning,
                 style: TextStyle(
                   color: scheme.error,
                   fontWeight: FontWeight.w600,
@@ -251,13 +287,10 @@ class _DeleteConfirmDialogState extends State<_DeleteConfirmDialog> {
               Text(clinics.map((e) => '• $e').join('\n')),
             ] else ...[
               const SizedBox(height: 12),
-              const Text(
-                'Üyesi olduğunuz kliniklerdeki kayıtlar klinikte kalır; '
-                'yalnızca üyeliğiniz sonlanır.',
-              ),
+              Text(l10n.deleteAccountMembershipOnly),
             ],
             const SizedBox(height: 16),
-            const Text('Onaylamak için "$_confirmWord" yazın:'),
+            Text(l10n.deleteAccountTypeToConfirm(confirmWord)),
             const SizedBox(height: 8),
             TextField(
               controller: _controller,
@@ -271,12 +304,12 @@ class _DeleteConfirmDialogState extends State<_DeleteConfirmDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Vazgeç'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: scheme.error),
           onPressed: matches ? () => Navigator.pop(context, true) : null,
-          child: const Text('Hesabı sil'),
+          child: Text(l10n.deleteAccountButton),
         ),
       ],
     );

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic.dart';
 import 'notification_service.dart';
 import 'push_service.dart';
@@ -100,7 +101,7 @@ class SessionController extends ChangeNotifier {
     if (fromMember != null && fromMember.isNotEmpty) return fromMember;
     final meta = _user?.userMetadata?['ad_soyad'];
     if (meta is String && meta.trim().isNotEmpty) return meta.trim();
-    return _user?.email ?? 'Kullanıcı';
+    return _user?.email ?? currentL10n.userFallback;
   }
 
   void _clearClinicState() {
@@ -239,7 +240,7 @@ class SessionController extends ChangeNotifier {
       }
     }
     if (found == null) {
-      throw Exception('Bu kliniğe üye değilsiniz');
+      throw Exception(currentL10n.errNotMember);
     }
     _clinic = found.clinic;
     _member = found.member;
@@ -301,9 +302,7 @@ class SessionController extends ChangeNotifier {
       );
       final uid = auth.user?.id ?? _client.auth.currentUser?.id;
       if (uid == null) {
-        throw Exception(
-          'Kayıt tamamlanamadı. Supabase Auth → Confirm email kapalı olsun veya e-postayı doğrulayın.',
-        );
+        throw Exception(currentL10n.errSignupIncomplete);
       }
 
       final created = await _createClinicRpc(
@@ -337,9 +336,7 @@ class SessionController extends ChangeNotifier {
       );
       final uid = auth.user?.id ?? _client.auth.currentUser?.id;
       if (uid == null) {
-        throw Exception(
-          'Kayıt tamamlanamadı. E-posta doğrulamasını kontrol edin.',
-        );
+        throw Exception(currentL10n.errSignupIncomplete);
       }
 
       await _requestClinicJoin(
@@ -362,7 +359,7 @@ class SessionController extends ChangeNotifier {
     String? adSoyad,
   }) async {
     final uid = _client.auth.currentUser?.id;
-    if (uid == null) throw Exception('Oturum gerekli');
+    if (uid == null) throw Exception(currentL10n.errSessionRequired);
 
     final name = (adSoyad ?? displayName).trim();
     final created = await _createClinicRpc(
@@ -380,7 +377,7 @@ class SessionController extends ChangeNotifier {
     String? adSoyad,
   }) async {
     final uid = _client.auth.currentUser?.id;
-    if (uid == null) throw Exception('Oturum gerekli');
+    if (uid == null) throw Exception(currentL10n.errSessionRequired);
 
     final name = (adSoyad ?? displayName).trim();
     final request = await _requestClinicJoin(
@@ -407,7 +404,7 @@ class SessionController extends ChangeNotifier {
     );
 
     if (klinikRow == null) {
-      throw Exception('Klinik oluşturulamadı');
+      throw Exception(currentL10n.errClinicCreateFailed);
     }
     return Clinic.fromJson(Map<String, dynamic>.from(klinikRow as Map));
   }
@@ -419,7 +416,7 @@ class SessionController extends ChangeNotifier {
   }) async {
     final joinRole = rol == ClinicRole.admin ? ClinicRole.doktor : rol;
     if (joinRole != ClinicRole.doktor && joinRole != ClinicRole.asistan) {
-      throw Exception('Rol doktor veya asistan olmalı');
+      throw Exception(currentL10n.errRoleInvalid);
     }
 
     final row = await _client.rpc(
@@ -432,7 +429,7 @@ class SessionController extends ChangeNotifier {
     );
 
     if (row == null) {
-      throw Exception('Katılım isteği oluşturulamadı');
+      throw Exception(currentL10n.errJoinRequestFailed);
     }
     return ClinicJoinRequest.fromJson(Map<String, dynamic>.from(row as Map));
   }
@@ -550,39 +547,41 @@ class SessionController extends ChangeNotifier {
 
   String _friendlyAuthError(Object e) {
     final s = e.toString();
+    final l = currentL10n;
     if (s.contains('Invalid login credentials')) {
-      return 'E-posta veya şifre hatalı';
+      return l.errInvalidCredentials;
     }
     if (s.contains('User already registered')) {
-      return 'Bu e-posta zaten kayıtlı. Giriş yapın.';
+      return l.errAlreadyRegistered;
     }
     if (s.contains('Password should be')) {
-      return 'Şifre en az 6 karakter olmalı';
+      return l.errPasswordTooShort;
     }
     if (s.contains('over_email_send_rate_limit') || s.contains('429')) {
-      return 'Çok sık deneme. Biraz bekleyip tekrar deneyin.';
+      return l.errTooManyAttempts;
     }
     if (s.contains('duplicate') || s.contains('unique')) {
-      return 'Bu kliniğe zaten üyesiniz';
+      return l.errAlreadyMember;
     }
+    // Aşağıdakiler veritabanı fonksiyonlarının Türkçe hata metinleridir.
     if (s.contains('Klinik kodu bulunamadı')) {
-      return 'Klinik kodu bulunamadı';
+      return l.errClinicCodeNotFound;
     }
     if (s.contains('zaten üyesiniz')) {
-      return 'Bu kliniğe zaten üyesiniz';
+      return l.errAlreadyMember;
     }
     if (s.contains('Sadece klinik yöneticisi')) {
-      return 'Sadece klinik yöneticisi onaylayabilir';
+      return l.errOnlyAdminCanApprove;
     }
     if (s.contains('otp_expired') ||
         s.contains('Token has expired or is invalid')) {
-      return 'Kod hatalı veya süresi dolmuş. Yeni kod isteyin.';
+      return l.errResetCodeInvalid;
     }
     if (s.contains('same_password') ||
         s.contains('should be different from the old password')) {
-      return 'Yeni şifre eskisinden farklı olmalı';
+      return l.errSamePassword;
     }
-    return s;
+    return s.replaceFirst('Exception: ', '');
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../services/session_controller.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
@@ -38,7 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.session.error ?? 'Giriş başarısız')),
+        SnackBar(
+          content: Text(widget.session.error ?? context.l10n.loginFailed),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -48,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -71,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Giriş yapın',
+                    l10n.loginSubtitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
@@ -82,12 +86,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(labelText: 'E-posta'),
+                    decoration: InputDecoration(labelText: l10n.emailLabel),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'E-posta gerekli';
+                        return l10n.emailRequired;
                       }
-                      if (!v.contains('@')) return 'Geçerli e-posta girin';
+                      if (!v.contains('@')) return l10n.emailInvalid;
                       return null;
                     },
                   ),
@@ -97,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: _obscure,
                     autofillHints: const [AutofillHints.password],
                     decoration: InputDecoration(
-                      labelText: 'Şifre',
+                      labelText: l10n.passwordLabel,
                       suffixIcon: IconButton(
                         onPressed: () => setState(() => _obscure = !_obscure),
                         icon: Icon(
@@ -107,14 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (v) {
                       if (v == null || v.length < 6) {
-                        return 'En az 6 karakter';
+                        return l10n.passwordMinLength;
                       }
                       return null;
                     },
                     onFieldSubmitted: (_) => _submit(),
                   ),
                   Align(
-                    alignment: Alignment.centerRight,
+                    alignment: AlignmentDirectional.centerEnd,
                     child: TextButton(
                       onPressed: _busy
                           ? null
@@ -126,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
-                      child: const Text('Şifremi unuttum'),
+                      child: Text(l10n.forgotPassword),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -138,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 22,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Giriş yap'),
+                        : Text(l10n.loginButton),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
@@ -152,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                    child: const Text('Hesap oluştur / Kliniğe katıl'),
+                    child: Text(l10n.loginCreateAccount),
                   ),
                 ],
               ),

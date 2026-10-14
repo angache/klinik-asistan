@@ -1,11 +1,18 @@
-enum ClinicRole {
-  admin('admin', 'Yönetici'),
-  doktor('doktor', 'Doktor'),
-  asistan('asistan', 'Asistan');
+import '../l10n/l10n.dart';
 
-  const ClinicRole(this.value, this.label);
+enum ClinicRole {
+  admin('admin'),
+  doktor('doktor'),
+  asistan('asistan');
+
+  const ClinicRole(this.value);
   final String value;
-  final String label;
+
+  String get label => switch (this) {
+        ClinicRole.admin => currentL10n.roleAdmin,
+        ClinicRole.doktor => currentL10n.roleDoctor,
+        ClinicRole.asistan => currentL10n.roleAssistant,
+      };
 
   static ClinicRole fromValue(String value) {
     return ClinicRole.values.firstWhere(
@@ -84,13 +91,18 @@ class ClinicMembership {
 }
 
 enum JoinRequestStatus {
-  beklemede('beklemede', 'Onay bekliyor'),
-  onaylandi('onaylandi', 'Onaylandı'),
-  reddedildi('reddedildi', 'Reddedildi');
+  beklemede('beklemede'),
+  onaylandi('onaylandi'),
+  reddedildi('reddedildi');
 
-  const JoinRequestStatus(this.value, this.label);
+  const JoinRequestStatus(this.value);
   final String value;
-  final String label;
+
+  String get label => switch (this) {
+        JoinRequestStatus.beklemede => currentL10n.joinStatusPending,
+        JoinRequestStatus.onaylandi => currentL10n.joinStatusApproved,
+        JoinRequestStatus.reddedildi => currentL10n.joinStatusRejected,
+      };
 
   static JoinRequestStatus fromValue(String value) {
     return JoinRequestStatus.values.firstWhere(

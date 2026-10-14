@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/l10n.dart';
 import '../main.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
@@ -124,8 +125,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final friendly = msg.contains('SocketException') ||
               msg.contains('Failed host lookup') ||
               msg.contains('ClientException')
-          ? 'İnternet bağlantısı yok veya sunucuya ulaşılamıyor. Takip listesi yüklenemedi.'
-          : 'Takipler yüklenemedi.\n$msg';
+          ? context.l10n.followUpsOffline
+          : context.l10n.followUpsLoadFailed(msg);
       setState(() => _followUpError = friendly);
     }
   }
@@ -205,10 +206,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
 
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Yeni Hasta'),
+        title: Text(l10n.newPatient),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -216,28 +218,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               controller: nameCtrl,
               autofocus: true,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Ad Soyad'),
+              decoration: InputDecoration(labelText: l10n.fullNameLabel),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phoneCtrl,
               keyboardType: TextInputType.phone,
-              decoration:
-                  const InputDecoration(labelText: 'Telefon (opsiyonel)'),
+              decoration: InputDecoration(labelText: l10n.phoneOptionalLabel),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
               if (nameCtrl.text.trim().isEmpty) return;
               Navigator.pop(ctx, true);
             },
-            child: const Text('Ekle'),
+            child: Text(l10n.add),
           ),
         ],
       ),
@@ -252,31 +253,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hasta eklendi')),
+        SnackBar(content: Text(l10n.patientAdded)),
       );
       await _load(reset: true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hasta eklenemedi: $e')),
+        SnackBar(content: Text(l10n.patientAddFailed('$e'))),
       );
     }
   }
 
   Future<void> _confirmSignOut() async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Çıkış yap'),
-        content: const Text('Hesabınızdan çıkmak istiyor musunuz?'),
+        title: Text(l10n.signOutTitle),
+        content: Text(l10n.signOutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Çıkış'),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -338,6 +340,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final member = widget.session.member;
     if (clinic == null || member == null) return;
     final memberships = widget.session.memberships;
+    final l10n = context.l10n;
+    final pendingJoins = widget.session.pendingJoinCountForActiveClinic;
 
     showModalBottomSheet<void>(
       context: context,
@@ -353,7 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Kliniklerim',
+                    l10n.myClinics,
                     style: Theme.of(ctx).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 4),
@@ -379,7 +383,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       subtitle: Text('${m.member.rol.label} · ${m.clinic.kod}'),
                       trailing: selected
                           ? IconButton(
-                              tooltip: 'Kodu kopyala',
+                              tooltip: l10n.copyCode,
                               onPressed: () =>
                                   copyClinicCode(ctx, m.clinic.kod),
                               icon: const Icon(Icons.copy),
@@ -397,7 +401,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.vpn_key_outlined),
-                    title: const Text('Aktif klinik kodu'),
+                    title: Text(l10n.activeClinicCode),
                     subtitle: Text(
                       clinic.kod,
                       style: const TextStyle(
@@ -406,14 +410,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     trailing: IconButton(
-                      tooltip: 'Kopyala',
+                      tooltip: l10n.copy,
                       onPressed: () => copyClinicCode(ctx, clinic.kod),
                       icon: const Icon(Icons.copy),
                     ),
                   ),
                   Text(
-                    'Kodu paylaşın; katılan kişi onayınızı bekler. '
-                    'Anında üye olmaz.',
+                    l10n.clinicCodeShareHint,
                     style: Theme.of(ctx).textTheme.bodySmall,
                   ),
                   if (widget.session.isActiveClinicAdmin) ...[
@@ -424,17 +427,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _openJoinRequests();
                       },
                       icon: Badge(
-                        isLabelVisible:
-                            widget.session.pendingJoinCountForActiveClinic > 0,
-                        label: Text(
-                          '${widget.session.pendingJoinCountForActiveClinic}',
-                        ),
+                        isLabelVisible: pendingJoins > 0,
+                        label: Text('$pendingJoins'),
                         child: const Icon(Icons.person_add_alt_1),
                       ),
                       label: Text(
-                        widget.session.pendingJoinCountForActiveClinic > 0
-                            ? 'Katılım istekleri (${widget.session.pendingJoinCountForActiveClinic})'
-                            : 'Katılım istekleri',
+                        pendingJoins > 0
+                            ? l10n.joinRequestsCount(pendingJoins)
+                            : l10n.joinRequests,
                       ),
                     ),
                   ],
@@ -445,7 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _openClinicMembers();
                     },
                     icon: const Icon(Icons.group_outlined),
-                    label: const Text('Üyeler'),
+                    label: Text(l10n.members),
                   ),
                   const SizedBox(height: 8),
                   FilledButton.tonalIcon(
@@ -454,7 +454,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _openReports();
                     },
                     icon: const Icon(Icons.insights_outlined),
-                    label: const Text('Raporlar'),
+                    label: Text(l10n.reports),
                   ),
                   const SizedBox(height: 8),
                   FilledButton.tonalIcon(
@@ -463,7 +463,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _showAppearanceSheet(context);
                     },
                     icon: Icon(_themeIcon(context)),
-                    label: const Text('Görünüm'),
+                    label: Text(l10n.appearance),
                   ),
                   const SizedBox(height: 8),
                   FilledButton.tonalIcon(
@@ -472,7 +472,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _openTreatmentTemplates();
                     },
                     icon: const Icon(Icons.medical_services_outlined),
-                    label: const Text('İşlem şablonları'),
+                    label: Text(l10n.treatmentTemplates),
                   ),
                   const SizedBox(height: 16),
                   FilledButton.tonalIcon(
@@ -481,7 +481,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _openManageClinics();
                     },
                     icon: const Icon(Icons.add_business_outlined),
-                    label: const Text('Başka klinik ekle / katıl'),
+                    label: Text(l10n.addOrJoinClinic),
                   ),
                   const SizedBox(height: 8),
                   FilledButton.tonalIcon(
@@ -495,7 +495,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     },
                     icon: const Icon(Icons.settings_outlined),
-                    label: const Text('Ayarlar ve hesap'),
+                    label: Text(l10n.settingsAndAccount),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
@@ -504,7 +504,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _confirmSignOut();
                     },
                     icon: const Icon(Icons.logout),
-                    label: const Text('Çıkış yap'),
+                    label: Text(l10n.signOutTitle),
                   ),
                 ],
               ),
@@ -518,6 +518,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final clinicName = widget.session.clinic?.ad ?? 'Klinik Asistan';
 
     return Scaffold(
@@ -550,7 +551,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Kontrol çağrıları',
+            tooltip: l10n.recalls,
             onPressed: _openRecalls,
             icon: Badge(
               isLabelVisible: _recallCount > 0,
@@ -559,7 +560,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Yapılacaklar',
+            tooltip: l10n.todos,
             onPressed: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(
@@ -575,7 +576,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Takipler',
+            tooltip: l10n.followUps,
             onPressed: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(
@@ -591,12 +592,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Raporlar',
+            tooltip: l10n.reports,
             onPressed: _openReports,
             icon: const Icon(Icons.insights_outlined),
           ),
           IconButton(
-            tooltip: 'Klinikler',
+            tooltip: l10n.clinics,
             onPressed: _showClinicInfo,
             icon: Badge(
               isLabelVisible:
@@ -611,7 +612,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Yeni Hasta',
+            tooltip: l10n.newPatient,
             onPressed: _showAddPatient,
             icon: const Icon(Icons.person_add_alt_1),
           ),
@@ -624,9 +625,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               if (_followUpAttention > 0)
                 MaterialBanner(
-                  content: Text(
-                    '$_followUpAttention takip için uyarı zamanı geldi',
-                  ),
+                  content: Text(l10n.followUpsDue(_followUpAttention)),
                   leading:
                       Icon(Icons.notification_important, color: scheme.error),
                   actions: [
@@ -639,18 +638,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                         await _loadFollowUpBadge();
                       },
-                      child: const Text('Gör'),
+                      child: Text(l10n.view),
                     ),
                   ],
                 ),
               if (_followUpError != null)
                 MaterialBanner(
-                  content: Text('Takipler yüklenemedi: $_followUpError'),
+                  content: Text(_followUpError!),
                   leading: Icon(Icons.error_outline, color: scheme.error),
                   actions: [
                     TextButton(
                       onPressed: _loadFollowUpBadge,
-                      child: const Text('Tekrar dene'),
+                      child: Text(l10n.retry),
                     ),
                   ],
                 ),
@@ -664,7 +663,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       SearchBar(
                         controller: _searchController,
-                        hintText: 'Hasta ara (ad veya telefon)…',
+                        hintText: l10n.searchPatientsHint,
                         leading: const Icon(Icons.search),
                         trailing: [
                           if (_searchController.text.isNotEmpty)
@@ -681,16 +680,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 10),
                       SegmentedButton<PatientListSort>(
-                        segments: const [
+                        segments: [
                           ButtonSegment(
                             value: PatientListSort.name,
-                            label: Text('A–Z'),
-                            icon: Icon(Icons.sort_by_alpha, size: 18),
+                            label: Text(l10n.sortByName),
+                            icon: const Icon(Icons.sort_by_alpha, size: 18),
                           ),
                           ButtonSegment(
                             value: PatientListSort.lastVisit,
-                            label: Text('Son işlem'),
-                            icon: Icon(Icons.schedule, size: 18),
+                            label: Text(l10n.sortByLastVisit),
+                            icon: const Icon(Icons.schedule, size: 18),
                           ),
                         ],
                         selected: {_sort},
@@ -741,7 +740,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Detay için bir hasta seçin',
+                              l10n.selectPatientHint,
                               style: TextStyle(color: scheme.onSurfaceVariant),
                             ),
                           ],
@@ -766,7 +765,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddPatient,
         icon: const Icon(Icons.person_add),
-        label: const Text('Hasta Ekle'),
+        label: Text(l10n.addPatient),
       ),
     );
   }
@@ -783,6 +782,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _showAppearanceSheet(BuildContext context) async {
     final app = KlinikAsistanApp.of(context);
     if (app == null) return;
+    final l10n = context.l10n;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -796,33 +796,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Görünüm',
+                  l10n.appearance,
                   style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Tema',
+                  l10n.themeLabel,
                   style: Theme.of(ctx).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 8),
                 SegmentedButton<ThemeMode>(
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: ThemeMode.light,
-                      label: Text('Açık'),
-                      icon: Icon(Icons.light_mode_outlined, size: 18),
+                      label: Text(l10n.themeLight),
+                      icon: const Icon(Icons.light_mode_outlined, size: 18),
                     ),
                     ButtonSegment(
                       value: ThemeMode.dark,
-                      label: Text('Koyu'),
-                      icon: Icon(Icons.dark_mode_outlined, size: 18),
+                      label: Text(l10n.themeDark),
+                      icon: const Icon(Icons.dark_mode_outlined, size: 18),
                     ),
                     ButtonSegment(
                       value: ThemeMode.system,
-                      label: Text('Sistem'),
-                      icon: Icon(Icons.brightness_auto_outlined, size: 18),
+                      label: Text(l10n.themeSystem),
+                      icon:
+                          const Icon(Icons.brightness_auto_outlined, size: 18),
                     ),
                   ],
                   selected: {app.themeMode},
@@ -835,7 +836,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Renk paleti',
+                  l10n.colorPalette,
                   style: Theme.of(ctx).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 8),
@@ -895,7 +896,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Icon(Icons.cloud_off, size: 48, color: scheme.error),
               const SizedBox(height: 12),
               Text(
-                'Hastalar yüklenemedi.',
+                context.l10n.patientsLoadFailed,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: scheme.error),
               ),
@@ -908,7 +909,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => _load(reset: true),
-                child: const Text('Tekrar dene'),
+                child: Text(context.l10n.retry),
               ),
             ],
           ),
@@ -936,8 +937,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _query.isEmpty
-                          ? 'Henüz hasta yok.\nSağ üstten ekleyin.'
-                          : 'Aramanızla eşleşen hasta bulunamadı.',
+                          ? context.l10n.noPatientsYet
+                          : context.l10n.noPatientsMatch,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),

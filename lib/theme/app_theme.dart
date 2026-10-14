@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
+
 /// Renk paleti seçenekleri.
 enum AppColorPalette {
   /// Soft slate-mavi klinik görünüm.
@@ -21,19 +23,19 @@ enum AppColorPalette {
 
 extension AppColorPaletteX on AppColorPalette {
   String get label => switch (this) {
-        AppColorPalette.clinic => 'Klinik mavi',
-        AppColorPalette.ocean => 'Okyanus',
-        AppColorPalette.sage => 'Adaçayı',
-        AppColorPalette.graphite => 'Grafit',
-        AppColorPalette.classic => 'Klasik yeşil',
+        AppColorPalette.clinic => currentL10n.paletteClinic,
+        AppColorPalette.ocean => currentL10n.paletteOcean,
+        AppColorPalette.sage => currentL10n.paletteSage,
+        AppColorPalette.graphite => currentL10n.paletteGraphite,
+        AppColorPalette.classic => currentL10n.paletteClassic,
       };
 
   String get description => switch (this) {
-        AppColorPalette.clinic => 'Sakin, klinik slate-mavi',
-        AppColorPalette.ocean => 'Derin cyan, ferah klinik',
-        AppColorPalette.sage => 'Mat yeşil, yumuşak tıbbi',
-        AppColorPalette.graphite => 'Nötr grafit, buz mavisi vurgu',
-        AppColorPalette.classic => 'Canlı yeşil vurgu',
+        AppColorPalette.clinic => currentL10n.paletteClinicDesc,
+        AppColorPalette.ocean => currentL10n.paletteOceanDesc,
+        AppColorPalette.sage => currentL10n.paletteSageDesc,
+        AppColorPalette.graphite => currentL10n.paletteGraphiteDesc,
+        AppColorPalette.classic => currentL10n.paletteClassicDesc,
       };
 
   Color get previewColor => switch (this) {
@@ -118,8 +120,7 @@ class AppTheme {
         AppColorPalette.classic => classicGreen,
       };
 
-  static Color voiceAccentDarkFor(AppColorPalette palette) =>
-      switch (palette) {
+  static Color voiceAccentDarkFor(AppColorPalette palette) => switch (palette) {
         AppColorPalette.clinic => const Color(0xFFB45309),
         AppColorPalette.ocean => const Color(0xFFD97706),
         AppColorPalette.sage => const Color(0xFF9A3412),

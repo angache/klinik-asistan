@@ -40,6 +40,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     # PDF dışa aktarma (Türkçe karakterler; SIL Open Font License)
     - assets/fonts/NotoSans-Regular.ttf

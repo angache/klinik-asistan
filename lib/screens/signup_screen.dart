@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic.dart';
 import '../services/session_controller.dart';
 import '../widgets/legal_consent_field.dart';
@@ -32,17 +33,18 @@ class _SignupScreenState extends State<SignupScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kayıt ol'),
+        title: Text(l10n.signupTitle),
         bottom: TabBar(
           controller: _tabs,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: 'Klinik oluştur'),
-            Tab(text: 'Kliniğe katıl'),
+          tabs: [
+            Tab(text: l10n.createClinic),
+            Tab(text: l10n.joinClinic),
           ],
         ),
       ),
@@ -112,14 +114,14 @@ class _CreateClinicFormState extends State<_CreateClinicForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Form(
       key: _formKey,
       child: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            'Yeni klinik açarsınız; siz yönetici + doktor olursunuz. '
-            'Asistanları klinik kodu ile davet edersiniz.',
+            l10n.signupCreateIntro,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -128,27 +130,28 @@ class _CreateClinicFormState extends State<_CreateClinicForm> {
           TextFormField(
             controller: _clinic,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Klinik adı'),
-            validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Klinik adı gerekli' : null,
+            decoration: InputDecoration(labelText: l10n.clinicNameLabel),
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? l10n.clinicNameRequired
+                : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _name,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Ad Soyad'),
+            decoration: InputDecoration(labelText: l10n.fullNameLabel),
             validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Ad soyad gerekli' : null,
+                (v == null || v.trim().isEmpty) ? l10n.fullNameRequired : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(labelText: 'E-posta'),
+            decoration: InputDecoration(labelText: l10n.emailLabel),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'E-posta gerekli';
-              if (!v.contains('@')) return 'Geçerli e-posta girin';
+              if (v == null || v.trim().isEmpty) return l10n.emailRequired;
+              if (!v.contains('@')) return l10n.emailInvalid;
               return null;
             },
           ),
@@ -158,14 +161,14 @@ class _CreateClinicFormState extends State<_CreateClinicForm> {
             obscureText: _obscure,
             autofillHints: const [AutofillHints.newPassword],
             decoration: InputDecoration(
-              labelText: 'Şifre',
+              labelText: l10n.passwordLabel,
               suffixIcon: IconButton(
                 onPressed: () => setState(() => _obscure = !_obscure),
                 icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
               ),
             ),
             validator: (v) {
-              if (v == null || v.length < 6) return 'En az 6 karakter';
+              if (v == null || v.length < 6) return l10n.passwordMinLength;
               return null;
             },
           ),
@@ -180,7 +183,7 @@ class _CreateClinicFormState extends State<_CreateClinicForm> {
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Klinik oluştur'),
+                : Text(l10n.createClinic),
           ),
           TextButton(
             onPressed: _busy
@@ -192,7 +195,7 @@ class _CreateClinicFormState extends State<_CreateClinicForm> {
                       ),
                     );
                   },
-            child: const Text('Zaten hesabım var'),
+            child: Text(l10n.alreadyHaveAccount),
           ),
         ],
       ),
@@ -252,14 +255,14 @@ class _JoinClinicFormState extends State<_JoinClinicForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Form(
       key: _formKey,
       child: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            'Yöneticiden aldığınız klinik kodu ile katılım isteği gönderin. '
-            'Yönetici onayladıktan sonra kliniğe erişirsiniz.',
+            l10n.signupJoinIntro,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -268,27 +271,28 @@ class _JoinClinicFormState extends State<_JoinClinicForm> {
           TextFormField(
             controller: _code,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
-              labelText: 'Klinik kodu',
-              hintText: 'örn. A3K9PX',
+            decoration: InputDecoration(
+              labelText: l10n.clinicCodeLabel,
+              hintText: l10n.clinicCodeHint,
             ),
-            validator: (v) =>
-                (v == null || v.trim().length < 4) ? 'Kod gerekli' : null,
+            validator: (v) => (v == null || v.trim().length < 4)
+                ? l10n.clinicCodeRequired
+                : null,
           ),
           const SizedBox(height: 12),
-          Text('Rolüm', style: Theme.of(context).textTheme.titleSmall),
+          Text(l10n.myRole, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           SegmentedButton<ClinicRole>(
-            segments: const [
+            segments: [
               ButtonSegment(
                 value: ClinicRole.doktor,
-                label: Text('Doktor'),
-                icon: Icon(Icons.medical_services_outlined),
+                label: Text(ClinicRole.doktor.label),
+                icon: const Icon(Icons.medical_services_outlined),
               ),
               ButtonSegment(
                 value: ClinicRole.asistan,
-                label: Text('Asistan'),
-                icon: Icon(Icons.support_agent),
+                label: Text(ClinicRole.asistan.label),
+                icon: const Icon(Icons.support_agent),
               ),
             ],
             selected: {_role},
@@ -298,18 +302,18 @@ class _JoinClinicFormState extends State<_JoinClinicForm> {
           TextFormField(
             controller: _name,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Ad Soyad'),
+            decoration: InputDecoration(labelText: l10n.fullNameLabel),
             validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Ad soyad gerekli' : null,
+                (v == null || v.trim().isEmpty) ? l10n.fullNameRequired : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'E-posta'),
+            decoration: InputDecoration(labelText: l10n.emailLabel),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'E-posta gerekli';
-              if (!v.contains('@')) return 'Geçerli e-posta girin';
+              if (v == null || v.trim().isEmpty) return l10n.emailRequired;
+              if (!v.contains('@')) return l10n.emailInvalid;
               return null;
             },
           ),
@@ -318,14 +322,14 @@ class _JoinClinicFormState extends State<_JoinClinicForm> {
             controller: _password,
             obscureText: _obscure,
             decoration: InputDecoration(
-              labelText: 'Şifre',
+              labelText: l10n.passwordLabel,
               suffixIcon: IconButton(
                 onPressed: () => setState(() => _obscure = !_obscure),
                 icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
               ),
             ),
             validator: (v) {
-              if (v == null || v.length < 6) return 'En az 6 karakter';
+              if (v == null || v.length < 6) return l10n.passwordMinLength;
               return null;
             },
           ),
@@ -340,7 +344,7 @@ class _JoinClinicFormState extends State<_JoinClinicForm> {
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Katıl'),
+                : Text(l10n.joinButton),
           ),
         ],
       ),

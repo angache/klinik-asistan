@@ -101,10 +101,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   String _rangeText(DateTime start, DateTime endExclusive) {
     final last = endExclusive.subtract(const Duration(days: 1));
-    final full = DateFormat('d MMM yyyy', 'tr_TR');
+    final full = DateFormat('d MMM yyyy');
     if (start == last) return full.format(start);
     final sameYear = start.year == last.year;
-    final first = DateFormat(sameYear ? 'd MMM' : 'd MMM yyyy', 'tr_TR');
+    final first = DateFormat(sameYear ? 'd MMM' : 'd MMM yyyy');
     return '${first.format(start)} – ${full.format(last)}';
   }
 
@@ -687,7 +687,7 @@ class _DailyChart extends StatelessWidget {
 
     // Uzun dönemlerde haftalık toplam gösterilir.
     final weekly = daily.length > 31;
-    final dayFmt = DateFormat('d MMM', 'tr_TR');
+    final dayFmt = DateFormat('d MMM');
     final bars = <(String, String, int)>[]; // (eksen etiketi, ipucu, adet)
     if (weekly) {
       for (var i = 0; i < daily.length; i += 7) {
@@ -869,7 +869,7 @@ class _StalledPatients extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fmt = DateFormat('d MMM yyyy', 'tr_TR');
+    final fmt = DateFormat('d MMM yyyy');
     final now = DateTime.now();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

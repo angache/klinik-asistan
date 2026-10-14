@@ -172,14 +172,14 @@ class _RecallScreenState extends State<RecallScreen> {
       confirmText: 'Kaydet',
     );
     if (date == null || !mounted) return;
-    final dateText = DateFormat('d MMMM yyyy', 'tr_TR').format(date);
+    final dateText = DateFormat('d MMMM yyyy').format(date);
     try {
       final followUp = await widget.db.createFollowUp(
         hastaId: p.id,
         baslik: 'Periyodik kontrol',
         planlananTarih: date,
         aciklama: 'Kontrol nedeni: ${p.kontrolIslem} '
-            '(${DateFormat('d MMM yyyy', 'tr_TR').format(p.kontrolIslemTarihi)})',
+            '(${DateFormat('d MMM yyyy').format(p.kontrolIslemTarihi)})',
       );
       await NotificationService.instance.scheduleFollowUp(followUp);
       await widget.db.logRecallCall(
@@ -369,7 +369,7 @@ class _RecallTile extends StatelessWidget {
     final p = patient;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final fmt = DateFormat('d MMM yyyy', 'tr_TR');
+    final fmt = DateFormat('d MMM yyyy');
     final overdue = p.monthsOverdue(DateTime.now());
     final dueText = overdue == 0
         ? 'Kontrol: ${fmt.format(p.kontrolTarihi)}'
@@ -380,7 +380,7 @@ class _RecallTile extends StatelessWidget {
       callText = [
         'Son arama: ${p.lastCallResult!.label}',
         if (p.lastCallAt != null)
-          DateFormat('d MMM', 'tr_TR').format(p.lastCallAt!),
+          DateFormat('d MMM').format(p.lastCallAt!),
         if ((p.lastCallBy ?? '').trim().isNotEmpty) p.lastCallBy!,
       ].join(' · ');
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../screens/patient_detail_screen.dart';
 import '../services/database_service.dart';
@@ -41,7 +42,7 @@ class PatientCard extends StatelessWidget {
     );
     if (note == null || !context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('İşlem kaydedildi')),
+      SnackBar(content: Text(context.l10n.procedureSaved)),
     );
   }
 
@@ -58,12 +59,9 @@ class PatientCard extends StatelessWidget {
         selected: selected,
         onTap: () => _openDetail(context),
         leading: CircleAvatar(
-          backgroundColor: selected
-              ? scheme.primary
-              : scheme.primaryContainer,
-          foregroundColor: selected
-              ? scheme.onPrimary
-              : scheme.onPrimaryContainer,
+          backgroundColor: selected ? scheme.primary : scheme.primaryContainer,
+          foregroundColor:
+              selected ? scheme.onPrimary : scheme.onPrimaryContainer,
           child: Text(
             patient.adSoyad.isNotEmpty ? patient.adSoyad[0].toUpperCase() : '?',
             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -75,12 +73,12 @@ class PatientCard extends StatelessWidget {
         ),
         subtitle: Text(
           [
-            (phone != null && phone.isNotEmpty) ? phone : 'Telefon yok',
+            (phone != null && phone.isNotEmpty) ? phone : context.l10n.noPhone,
             if (patient.planlananBasliklar.isNotEmpty)
               '→ ${patient.planlananBasliklar.join(', ')}',
             if (patient.sonIslemBaslik?.trim().isNotEmpty == true)
               patient.sonIslemTarih != null
-                  ? '${DateFormat('dd.MM.yyyy HH:mm').format(patient.sonIslemTarih!.toLocal())} · ${patient.sonIslemBaslik!.trim()}'
+                  ? '${DateFormat.yMd().add_Hm().format(patient.sonIslemTarih!.toLocal())} · ${patient.sonIslemBaslik!.trim()}'
                   : patient.sonIslemBaslik!.trim(),
           ].join('\n'),
         ),
@@ -88,7 +86,7 @@ class PatientCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              tooltip: 'Yeni işlem',
+              tooltip: context.l10n.newProcedure,
               onPressed: () => _openNewSession(context),
               icon: const Icon(Icons.add_circle_outline),
             ),

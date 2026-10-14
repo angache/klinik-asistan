@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic.dart';
 import '../services/session_controller.dart';
 import 'settings_screen.dart';
@@ -35,31 +36,32 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
       await widget.session.approveJoinRequest(r.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${r.adSoyad} onaylandı')),
+        SnackBar(content: Text(context.l10n.approvedName(r.adSoyad))),
       );
       await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Onaylanamadı: $e')),
+        SnackBar(content: Text(context.l10n.approveFailed('$e'))),
       );
     }
   }
 
   Future<void> _reject(ClinicJoinRequest r) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('İsteği reddet'),
-        content: Text('${r.adSoyad} isteğini reddetmek istiyor musunuz?'),
+        title: Text(l10n.rejectRequestTitle),
+        content: Text(l10n.rejectRequestConfirm(r.adSoyad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Reddet'),
+            child: Text(l10n.reject),
           ),
         ],
       ),
@@ -70,24 +72,25 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
       await widget.session.rejectJoinRequest(r.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${r.adSoyad} reddedildi')),
+        SnackBar(content: Text(l10n.rejectedName(r.adSoyad))),
       );
       await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reddedilemedi: $e')),
+        SnackBar(content: Text(l10n.rejectFailed('$e'))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final clinicName = widget.session.clinic?.ad ?? 'Klinik';
+    final l10n = context.l10n;
+    final clinicName = widget.session.clinic?.ad ?? l10n.clinicFallback;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Katılım istekleri'),
+        title: Text(l10n.joinRequests),
       ),
       body: FutureBuilder<List<ClinicJoinRequest>>(
         future: _future,
@@ -102,11 +105,11 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Yüklenemedi: ${snap.error}'),
+                    Text(l10n.loadFailed('${snap.error}')),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: _reload,
-                      child: const Text('Tekrar dene'),
+                      child: Text(l10n.retry),
                     ),
                   ],
                 ),
@@ -125,7 +128,7 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
                     height: MediaQuery.sizeOf(context).height * 0.4,
                     child: Center(
                       child: Text(
-                        '$clinicName için bekleyen istek yok.',
+                        l10n.noPendingRequests(clinicName),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -154,21 +157,21 @@ class _JoinRequestsScreenState extends State<JoinRequestsScreen> {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 4),
-                        Text('${r.rol.label} olarak katılmak istiyor'),
+                        Text(l10n.wantsToJoinAs(r.rol.label)),
                         const SizedBox(height: 12),
                         Row(
                           children: [
                             Expanded(
                               child: OutlinedButton(
                                 onPressed: () => _reject(r),
-                                child: const Text('Reddet'),
+                                child: Text(l10n.reject),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: FilledButton(
                                 onPressed: () => _approve(r),
-                                child: const Text('Onayla'),
+                                child: Text(l10n.approve),
                               ),
                             ),
                           ],
@@ -200,13 +203,14 @@ class PendingJoinScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pending = session.myPendingRequests;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Onay bekleniyor'),
+        title: Text(l10n.awaitingApprovalTitle),
         actions: [
           IconButton(
-            tooltip: 'Ayarlar ve hesap',
+            tooltip: l10n.settingsAndAccount,
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -216,7 +220,7 @@ class PendingJoinScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => session.signOut(),
-            child: const Text('Çıkış'),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -224,8 +228,7 @@ class PendingJoinScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            'Katılım isteğiniz klinik yöneticisinin onayını bekliyor. '
-            'Onaylanınca buradan otomatik geçebilirsiniz.',
+            l10n.awaitingApprovalBody,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -235,7 +238,7 @@ class PendingJoinScreen extends StatelessWidget {
             (r) => Card(
               child: ListTile(
                 leading: const Icon(Icons.hourglass_top),
-                title: Text(r.clinic?.ad ?? 'Klinik'),
+                title: Text(r.clinic?.ad ?? l10n.clinicFallback),
                 subtitle: Text('${r.rol.label} · ${r.durum.label}'),
               ),
             ),
@@ -244,13 +247,13 @@ class PendingJoinScreen extends StatelessWidget {
           FilledButton.tonalIcon(
             onPressed: () => session.refreshMembership(),
             icon: const Icon(Icons.refresh),
-            label: const Text('Durumu yenile'),
+            label: Text(l10n.refreshStatus),
           ),
           if (onCreateOrJoin != null) ...[
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: onCreateOrJoin,
-              child: const Text('Başka klinik oluştur / katıl'),
+              child: Text(l10n.createOrJoinOtherClinic),
             ),
           ],
         ],

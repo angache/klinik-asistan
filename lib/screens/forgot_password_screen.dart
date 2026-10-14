@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../services/session_controller.dart';
 
 /// E-postaya gelen kodla şifre sıfırlama (deep link gerektirmez; Windows'ta da
@@ -57,9 +58,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         if (!mounted) return;
         setState(() => _codeSent = true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kayıtlıysa e-posta adresinize kod gönderildi'),
-          ),
+          SnackBar(content: Text(context.l10n.resetCodeSent)),
         );
       });
 
@@ -71,7 +70,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Şifreniz güncellendi')),
+          SnackBar(content: Text(context.l10n.passwordUpdated)),
         );
         Navigator.of(context).popUntil((r) => r.isFirst);
       });
@@ -79,8 +78,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Şifremi unuttum')),
+      appBar: AppBar(title: Text(l10n.forgotPassword)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -90,10 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               padding: const EdgeInsets.all(24),
               children: [
                 Text(
-                  _codeSent
-                      ? 'E-postanıza gelen kodu ve yeni şifrenizi girin.'
-                      : 'Hesabınızın e-posta adresini girin; size bir '
-                          'sıfırlama kodu gönderelim.',
+                  _codeSent ? l10n.resetIntroCode : l10n.resetIntroEmail,
                   style: TextStyle(color: muted),
                 ),
                 const SizedBox(height: 20),
@@ -102,10 +99,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   enabled: !_codeSent,
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(labelText: 'E-posta'),
+                  decoration: InputDecoration(labelText: l10n.emailLabel),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'E-posta gerekli';
-                    if (!v.contains('@')) return 'Geçerli e-posta girin';
+                    if (v == null || v.trim().isEmpty) {
+                      return l10n.emailRequired;
+                    }
+                    if (!v.contains('@')) return l10n.emailInvalid;
                     return null;
                   },
                 ),
@@ -115,11 +114,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     controller: _code,
                     keyboardType: TextInputType.number,
                     autofillHints: const [AutofillHints.oneTimeCode],
-                    decoration: const InputDecoration(labelText: 'Kod'),
+                    decoration: InputDecoration(labelText: l10n.resetCodeLabel),
                     validator: (v) {
                       final t = v?.trim() ?? '';
                       if (!RegExp(r'^\d{6,10}$').hasMatch(t)) {
-                        return 'E-postadaki kodu girin';
+                        return l10n.resetCodeInvalid;
                       }
                       return null;
                     },
@@ -130,7 +129,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     obscureText: _obscure,
                     autofillHints: const [AutofillHints.newPassword],
                     decoration: InputDecoration(
-                      labelText: 'Yeni şifre',
+                      labelText: l10n.newPasswordLabel,
                       suffixIcon: IconButton(
                         onPressed: () => setState(() => _obscure = !_obscure),
                         icon: Icon(
@@ -138,17 +137,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                       ),
                     ),
-                    validator: (v) =>
-                        (v == null || v.length < 6) ? 'En az 6 karakter' : null,
+                    validator: (v) => (v == null || v.length < 6)
+                        ? l10n.passwordMinLength
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _password2,
                     obscureText: _obscure,
-                    decoration:
-                        const InputDecoration(labelText: 'Yeni şifre (tekrar)'),
+                    decoration: InputDecoration(
+                      labelText: l10n.newPasswordRepeatLabel,
+                    ),
                     validator: (v) =>
-                        v != _password.text ? 'Şifreler aynı değil' : null,
+                        v != _password.text ? l10n.passwordsDoNotMatch : null,
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -160,7 +161,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           height: 22,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(_codeSent ? 'Şifreyi güncelle' : 'Kod gönder'),
+                      : Text(
+                          _codeSent
+                              ? l10n.updatePasswordButton
+                              : l10n.sendCodeButton,
+                        ),
                 ),
                 if (_codeSent)
                   TextButton(
@@ -170,7 +175,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               _codeSent = false;
                               _code.clear();
                             }),
-                    child: const Text('Yeni kod iste / e-postayı değiştir'),
+                    child: Text(l10n.resetRequestNewCode),
                   ),
               ],
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic.dart';
 import '../services/database_service.dart';
 import '../services/session_controller.dart';
@@ -34,9 +35,10 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
 
   Future<void> _changeRole(ClinicMember m) async {
     if (!widget.session.isActiveClinicAdmin) return;
+    final l10n = context.l10n;
     if (m.userId == widget.session.user?.id && m.isAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kendi yönetici rolünüzü değiştiremezsiniz')),
+        SnackBar(content: Text(l10n.cannotChangeOwnAdmin)),
       );
       return;
     }
@@ -48,9 +50,13 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text('Rol: ${m.adSoyad}'),
+              title: Text(l10n.roleFor(m.adSoyad)),
             ),
-            for (final r in [ClinicRole.admin, ClinicRole.doktor, ClinicRole.asistan])
+            for (final r in [
+              ClinicRole.admin,
+              ClinicRole.doktor,
+              ClinicRole.asistan
+            ])
               ListTile(
                 title: Text(r.label),
                 trailing: m.rol == r ? const Icon(Icons.check) : null,
@@ -68,7 +74,7 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Rol güncellenemedi: $e')),
+        SnackBar(content: Text(l10n.roleUpdateFailed('$e'))),
       );
     }
   }
@@ -78,11 +84,10 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
         m.userId != widget.session.user?.id) {
       return;
     }
+    final l10n = context.l10n;
     if (m.userId == widget.session.user?.id && m.isAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Yönetici hesabınızı buradan silemezsiniz'),
-        ),
+        SnackBar(content: Text(l10n.cannotRemoveOwnAdmin)),
       );
       return;
     }
@@ -90,16 +95,16 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Üyeyi çıkar'),
-        content: Text('${m.adSoyad} klinikten çıkarılsın mı?'),
+        title: Text(l10n.removeMemberTitle),
+        content: Text(l10n.removeMemberConfirm(m.adSoyad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Çıkar'),
+            child: Text(l10n.remove),
           ),
         ],
       ),
@@ -117,7 +122,7 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Çıkarılamadı: $e')),
+        SnackBar(content: Text(l10n.removeFailed('$e'))),
       );
     }
   }
@@ -125,9 +130,10 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = widget.session.isActiveClinicAdmin;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Klinik üyeleri')),
+      appBar: AppBar(title: Text(l10n.clinicMembersTitle)),
       body: FutureBuilder<List<ClinicMember>>(
         future: _future,
         builder: (context, snap) {
@@ -135,7 +141,7 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError) {
-            return Center(child: Text('Yüklenemedi: ${snap.error}'));
+            return Center(child: Text(l10n.loadFailed('${snap.error}')));
           }
           final items = snap.data ?? [];
           return RefreshIndicator(
@@ -150,7 +156,7 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
                 return Card(
                   child: ListTile(
                     title: Text(
-                      me ? '${m.adSoyad} (siz)' : m.adSoyad,
+                      me ? l10n.memberYou(m.adSoyad) : m.adSoyad,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(m.rol.label),
@@ -161,13 +167,13 @@ class _ClinicMembersScreenState extends State<ClinicMembersScreen> {
                               if (v == 'cikar') _remove(m);
                             },
                             itemBuilder: (_) => [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'rol',
-                                child: Text('Rol değiştir'),
+                                child: Text(l10n.changeRole),
                               ),
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'cikar',
-                                child: Text('Çıkar'),
+                                child: Text(l10n.remove),
                               ),
                             ],
                           )

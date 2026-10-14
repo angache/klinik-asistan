@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/legal_config.dart';
+import '../l10n/l10n.dart';
 import '../screens/settings_screen.dart';
 
 /// Kayıtta zorunlu KVKK / gizlilik onayı.
@@ -8,18 +9,18 @@ class LegalConsentField extends FormField<bool> {
   LegalConsentField({super.key})
       : super(
           initialValue: false,
-          validator: (v) =>
-              v == true ? null : 'Devam etmek için onaylamanız gerekir',
+          validator: (v) => v == true ? null : currentL10n.legalConsentRequired,
           builder: (state) {
             final context = state.context;
             final scheme = Theme.of(context).colorScheme;
+            final l10n = context.l10n;
             final links = [
               if (LegalConfig.kvkkNoticeUrl.isNotEmpty)
-                ('KVKK aydınlatma metni', LegalConfig.kvkkNoticeUrl),
+                (l10n.privacyNotice, LegalConfig.kvkkNoticeUrl),
               if (LegalConfig.privacyPolicyUrl.isNotEmpty)
-                ('Gizlilik politikası', LegalConfig.privacyPolicyUrl),
+                (l10n.privacyPolicy, LegalConfig.privacyPolicyUrl),
               if (LegalConfig.termsUrl.isNotEmpty)
-                ('Kullanım koşulları', LegalConfig.termsUrl),
+                (l10n.termsOfUse, LegalConfig.termsUrl),
             ];
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,12 +30,9 @@ class LegalConsentField extends FormField<bool> {
                   onChanged: state.didChange,
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
-                  title: const Text(
-                    'KVKK aydınlatma metnini, gizlilik politikasını ve '
-                    'kullanım koşullarını okudum; hasta verilerini yalnızca '
-                    'teşhis ve tedavi hizmeti amacıyla, KVKK\'ya uygun '
-                    'şekilde işleyeceğimi kabul ediyorum.',
-                    style: TextStyle(fontSize: 13),
+                  title: Text(
+                    l10n.legalConsentText,
+                    style: const TextStyle(fontSize: 13),
                   ),
                 ),
                 if (links.isNotEmpty)
@@ -50,7 +48,7 @@ class LegalConsentField extends FormField<bool> {
                   ),
                 if (state.hasError)
                   Padding(
-                    padding: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsetsDirectional.only(start: 12),
                     child: Text(
                       state.errorText!,
                       style: TextStyle(color: scheme.error, fontSize: 12),

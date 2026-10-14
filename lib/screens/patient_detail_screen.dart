@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/l10n.dart';
 import '../models/follow_up.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
@@ -99,7 +100,9 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            saved.planlandi ? 'Sonraki seansa planlandı' : 'İşlem kaydedildi',
+            saved.planlandi
+                ? context.l10n.plannedForNextSession
+                : context.l10n.procedureSaved,
           ),
         ),
       );
@@ -115,7 +118,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     );
     if (saved == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesli not kaydedildi')),
+        SnackBar(content: Text(context.l10n.voiceNoteSaved)),
       );
       await _reload();
     }
@@ -127,7 +130,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     final updated = await showDialog<Patient>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hastayı düzenle'),
+        title: Text(context.l10n.editPatientTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -135,20 +138,21 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               controller: nameCtrl,
               autofocus: true,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Ad Soyad'),
+              decoration:
+                  InputDecoration(labelText: context.l10n.fullNameLabel),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phoneCtrl,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Telefon'),
+              decoration: InputDecoration(labelText: context.l10n.phoneLabel),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('İptal'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -160,7 +164,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               );
               if (ctx.mounted) Navigator.pop(ctx, patient);
             },
-            child: const Text('Kaydet'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -172,16 +176,16 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hastayı sil'),
-        content: Text('${_patient.adSoyad} ve ilişkili kayıtları silinsin mi?'),
+        title: Text(context.l10n.deletePatientTitle),
+        content: Text(context.l10n.deletePatientConfirm(_patient.adSoyad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -198,7 +202,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hasta silinemedi: $e')),
+        SnackBar(content: Text(context.l10n.patientDeleteFailed('$e'))),
       );
     }
   }
@@ -207,19 +211,16 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tedavi geçmişini paylaş'),
-        content: const Text(
-          'PDF, hastanın sağlık verilerini içerir. Yalnızca hastanın kendisine '
-          'veya onun onayıyla yetkili kişilere gönderin.',
-        ),
+        title: Text(context.l10n.sharePdfTitle),
+        content: Text(context.l10n.sharePdfWarning),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('PDF oluştur'),
+            child: Text(context.l10n.createPdf),
           ),
         ],
       ),
@@ -230,7 +231,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       context,
       patient: _patient,
       notes: _notes,
-      clinicName: session.clinic?.ad ?? 'Klinik',
+      clinicName: session.clinic?.ad ?? context.l10n.clinicFallback,
       preparedBy: session.displayName,
     );
   }
@@ -243,7 +244,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     );
     if (created == null || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Takip eklendi: ${created.baslik}')),
+      SnackBar(content: Text(context.l10n.followUpAdded(created.baslik))),
     );
     await _reload();
   }
@@ -253,15 +254,13 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       await widget.db.completePlannedNote(note.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İşlem yapıldı olarak kaydedildi')),
+        SnackBar(content: Text(context.l10n.markedAsDone)),
       );
       await _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Tamamlanamadı: $e'),
-        ),
+        SnackBar(content: Text(context.l10n.completeFailed('$e'))),
       );
     }
   }
@@ -274,7 +273,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Takip tamamlanamadı: $e')),
+        SnackBar(content: Text(context.l10n.followUpCompleteFailed('$e'))),
       );
     }
   }
@@ -283,16 +282,16 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Takibi sil'),
-        content: Text('${followUp.baslik} silinsin mi?'),
+        title: Text(context.l10n.deleteFollowUpTitle),
+        content: Text(context.l10n.deleteItemConfirm(followUp.baslik)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -305,7 +304,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Takip silinemedi: $e')),
+        SnackBar(content: Text(context.l10n.followUpDeleteFailed('$e'))),
       );
     }
   }
@@ -318,6 +317,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     final pending = _voices.where((v) => !v.islenen).toList();
     final done = _voices.where((v) => v.islenen).toList();
     final planned = _notes.where((n) => n.planlandi).toList();
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: widget.embedded
@@ -326,12 +326,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               title: Text(patient.adSoyad),
               actions: [
                 IconButton(
-                  tooltip: 'Takip ekle',
+                  tooltip: l10n.addFollowUp,
                   onPressed: _openAddFollowUp,
                   icon: const Icon(Icons.event_note_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Sesli not',
+                  tooltip: l10n.voiceNote,
                   onPressed: _openVoiceRecord,
                   icon: const Icon(Icons.mic_outlined),
                 ),
@@ -342,13 +342,13 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                     if (value == 'delete') _deletePatient();
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-                    const PopupMenuItem(
+                    PopupMenuItem(value: 'edit', child: Text(l10n.edit)),
+                    PopupMenuItem(
                       value: 'pdf',
-                      child: Text('PDF olarak paylaş'),
+                      child: Text(l10n.shareAsPdf),
                     ),
                     if (widget.db.canManageRecords)
-                      const PopupMenuItem(value: 'delete', child: Text('Sil')),
+                      PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
                   ],
                 ),
               ],
@@ -356,7 +356,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewSession,
         icon: const Icon(Icons.add),
-        label: const Text('Yeni İşlem'),
+        label: Text(l10n.newProcedure),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -397,7 +397,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                         Text(
                           (phone != null && phone.isNotEmpty)
                               ? phone
-                              : 'Telefon yok',
+                              : l10n.noPhone,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: scheme.onSurfaceVariant,
@@ -408,12 +408,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                   ),
                   if (widget.embedded) ...[
                     IconButton(
-                      tooltip: 'Takip ekle',
+                      tooltip: l10n.addFollowUp,
                       onPressed: _openAddFollowUp,
                       icon: const Icon(Icons.event_note_outlined),
                     ),
                     IconButton(
-                      tooltip: 'Sesli not',
+                      tooltip: l10n.voiceNote,
                       onPressed: _openVoiceRecord,
                       icon: const Icon(Icons.mic_outlined),
                     ),
@@ -424,23 +424,23 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                         if (value == 'delete') _deletePatient();
                       },
                       itemBuilder: (_) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'edit',
-                          child: Text('Düzenle'),
+                          child: Text(l10n.edit),
                         ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'pdf',
-                          child: Text('PDF olarak paylaş'),
+                          child: Text(l10n.shareAsPdf),
                         ),
                         if (widget.db.canManageRecords)
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'delete',
-                            child: Text('Sil'),
+                            child: Text(l10n.delete),
                           ),
                       ],
                     ),
                     IconButton(
-                      tooltip: 'Kapat',
+                      tooltip: l10n.close,
                       onPressed: widget.onClose,
                       icon: const Icon(Icons.close),
                     ),
@@ -467,9 +467,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            planned.length == 1
-                                ? 'Planlanan işlem'
-                                : 'Planlanan işlemler (${planned.length})',
+                            l10n.plannedProcedures(planned.length),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -503,7 +501,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                             TextButton(
                               onPressed: () => _completePlannedNote(note),
                               child: Text(
-                                'Yapıldı',
+                                l10n.markDone,
                                 style: TextStyle(
                                   color: scheme.onErrorContainer,
                                   fontWeight: FontWeight.w800,
@@ -529,6 +527,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     List<VoiceMemo> pending,
     List<VoiceMemo> done,
   ) {
+    final l10n = context.l10n;
     if (_loading && _notes.isEmpty && _voices.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -541,14 +540,14 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Veriler yüklenemedi: $_error',
+                l10n.dataLoadFailed('$_error'),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: scheme.error),
               ),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: _reload,
-                child: const Text('Tekrar dene'),
+                child: Text(l10n.retry),
               ),
             ],
           ),
@@ -577,7 +576,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                     Icon(Icons.notes_outlined, size: 48, color: scheme.outline),
                     const SizedBox(height: 12),
                     Text(
-                      'Henüz kayıt yok.\nSesli not veya işlem ekleyin.',
+                      l10n.noRecordsYet,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),
@@ -601,7 +600,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Açık takipler',
+                    l10n.openFollowUps,
                     style: Theme.of(context)
                         .textTheme
                         .titleSmall
@@ -611,7 +610,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 TextButton.icon(
                   onPressed: _openAddFollowUp,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Ekle'),
+                  label: Text(l10n.add),
                 ),
               ],
             ),
@@ -628,23 +627,20 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                   title: Text(followUp.baslik),
                   subtitle: Text(
                     followUp.isLab
-                        ? 'Lab hatırlatma: '
-                            '${followUp.planDateOnly.day.toString().padLeft(2, '0')}.'
-                            '${followUp.planDateOnly.month.toString().padLeft(2, '0')}.'
-                            '${followUp.planDateOnly.year}'
-                        : '${followUp.planDateOnly.day.toString().padLeft(2, '0')}.'
-                            '${followUp.planDateOnly.month.toString().padLeft(2, '0')}.'
-                            '${followUp.planDateOnly.year}',
+                        ? l10n.labReminderOn(
+                            DateFormat.yMd().format(followUp.planDateOnly),
+                          )
+                        : DateFormat.yMd().format(followUp.planDateOnly),
                   ),
                   trailing: Wrap(
                     children: [
                       IconButton(
-                        tooltip: 'Tamamla',
+                        tooltip: l10n.complete,
                         onPressed: () => _completeFollowUp(followUp),
                         icon: const Icon(Icons.check_circle_outline),
                       ),
                       IconButton(
-                        tooltip: 'Sil',
+                        tooltip: l10n.delete,
                         onPressed: () => _deleteFollowUp(followUp),
                         icon: const Icon(Icons.delete_outline),
                       ),
@@ -657,7 +653,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           ],
           if (pending.isNotEmpty) ...[
             Text(
-              'Bekleyen sesli notlar',
+              l10n.pendingVoiceNotes,
               style: Theme.of(context)
                   .textTheme
                   .titleSmall
@@ -675,7 +671,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             const SizedBox(height: 12),
           ],
           Text(
-            'İşlem geçmişi',
+            l10n.procedureHistory,
             style: Theme.of(context)
                 .textTheme
                 .titleSmall
@@ -686,7 +682,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                'Henüz işlem yok.',
+                l10n.noProceduresYet,
                 style: TextStyle(color: scheme.onSurfaceVariant),
               ),
             )
@@ -695,7 +691,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           if (done.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
-              'İşlenmiş sesli notlar',
+              l10n.processedVoiceNotes,
               style: Theme.of(context)
                   .textTheme
                   .titleSmall
@@ -753,22 +749,9 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   }
 
   String _visitDateLabel(DateTime day, DateTime today, DateTime yesterday) {
-    if (day == today) return 'Bugün';
-    if (day == yesterday) return 'Dün';
-    return '${_turkishWeekday(day)}, ${DateFormat('dd.MM.yyyy').format(day)}';
-  }
-
-  String _turkishWeekday(DateTime day) {
-    const names = [
-      'Pazartesi',
-      'Salı',
-      'Çarşamba',
-      'Perşembe',
-      'Cuma',
-      'Cumartesi',
-      'Pazar',
-    ];
-    return names[day.weekday - 1];
+    if (day == today) return context.l10n.today;
+    if (day == yesterday) return context.l10n.yesterday;
+    return '${DateFormat.EEEE().format(day)}, ${DateFormat.yMd().format(day)}';
   }
 }
 
@@ -804,7 +787,7 @@ class _VisitDateHeader extends StatelessWidget {
             ),
           ),
           Text(
-            count == 1 ? '1 işlem' : '$count işlem',
+            context.l10n.procedureCount(count),
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: scheme.onPrimaryContainer,
                   fontWeight: FontWeight.w600,
