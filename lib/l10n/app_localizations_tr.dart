@@ -1679,4 +1679,454 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get errInvalidFilePath => 'Geçersiz dosya yolu';
+
+  @override
+  String get periodThisWeek => 'Bu hafta';
+
+  @override
+  String get periodLastWeek => 'Geçen hafta';
+
+  @override
+  String get periodThisMonth => 'Bu ay';
+
+  @override
+  String get periodLastMonth => 'Geçen ay';
+
+  @override
+  String get reportPeriod => 'Rapor dönemi';
+
+  @override
+  String comparedWith(String range) {
+    return 'Karşılaştırma: $range';
+  }
+
+  @override
+  String get topProcedures => 'En çok yapılan işlemler';
+
+  @override
+  String get noProceduresInPeriod => 'Bu dönemde yapılan işlem kaydı yok.';
+
+  @override
+  String get byCategory => 'Kategorilere göre';
+
+  @override
+  String get dailyActivity => 'Günlere göre yoğunluk';
+
+  @override
+  String get followUpStatus => 'Takip durumu';
+
+  @override
+  String get patientsToRecall => 'Geri çağrılacak hastalar';
+
+  @override
+  String daysPlus(int days) {
+    return '$days+ gün';
+  }
+
+  @override
+  String get noRecallsDue => 'Kontrol zamanı gelen hasta yok.';
+
+  @override
+  String recallsWaiting(int count) {
+    return '$count hasta kontrol bekliyor';
+  }
+
+  @override
+  String oldRecallsCount(int count) {
+    return '+ $count eski hasta (kontrol tarihi 12 aydan önce geçmiş)';
+  }
+
+  @override
+  String get openList => 'Listeyi aç';
+
+  @override
+  String get statProceduresDone => 'Yapılan işlem';
+
+  @override
+  String get statProceduresHint => 'Çok dişli işlemler diş başına sayılır';
+
+  @override
+  String get statPatientsTreated => 'Tedavi gören hasta';
+
+  @override
+  String get statVisits => 'Hasta ziyareti';
+
+  @override
+  String get statVisitsHint =>
+      'Aynı hastanın farklı günlerdeki gelişleri ayrı sayılır';
+
+  @override
+  String get statNewPatients => 'Yeni hasta';
+
+  @override
+  String get statTotalPatients => 'Toplam hasta';
+
+  @override
+  String get statPendingPlanned => 'Bekleyen planlı işlem';
+
+  @override
+  String get sameAsPrevious => 'Önceki dönemle aynı';
+
+  @override
+  String weekOf(String label) {
+    return '$label haftası';
+  }
+
+  @override
+  String busiestDay(String day, String procedures) {
+    return 'En yoğun gün: $day ($procedures)';
+  }
+
+  @override
+  String overdueCount(int count) {
+    return '$count gecikmiş';
+  }
+
+  @override
+  String get labPending => 'Lab\'da bekleyen iş';
+
+  @override
+  String get controlPending => 'Bekleyen kontrol';
+
+  @override
+  String get openTasks => 'Açık görev';
+
+  @override
+  String completedInPeriod(int lab, int control, int task) {
+    return 'Bu dönemde tamamlanan: $lab lab, $control kontrol, $task görev';
+  }
+
+  @override
+  String stalledHint(int days) {
+    return 'Planlanmış işlemi olup $days gündür gelmeyen ve ileri tarihli kontrolü olmayan hastalar.';
+  }
+
+  @override
+  String get noPatientsToRecall => 'Geri çağrılacak hasta yok.';
+
+  @override
+  String lastProcedure(String date, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days gün önce',
+      zero: 'bugün',
+    );
+    return 'Son işlem: $date ($_temp0)';
+  }
+
+  @override
+  String plannedList(String items) {
+    return 'Planlanan: $items';
+  }
+
+  @override
+  String callPhone(String phone) {
+    return 'Ara: $phone';
+  }
+
+  @override
+  String firstNPatients(int count) {
+    return 'İlk $count hasta gösteriliyor.';
+  }
+
+  @override
+  String get moreAfterLogging => 'Arama sonucu kaydettikçe sıradakiler gelir.';
+
+  @override
+  String get call => 'Ara';
+
+  @override
+  String get recallResultAppointment => 'Randevu verildi';
+
+  @override
+  String get recallResultUnreachable => 'Ulaşılamadı';
+
+  @override
+  String get recallResultDeclined => 'İstemiyor';
+
+  @override
+  String get recallAppointmentHint => 'Kontrol tarihi seçilir, takip oluşur';
+
+  @override
+  String get recallUnreachableHint => '7 gün sonra listeye geri gelir';
+
+  @override
+  String get recallDeclinedHint =>
+      'Yeni bir işlem yapılana kadar listede görünmez';
+
+  @override
+  String get openPatientCard => 'Hasta kartını aç';
+
+  @override
+  String recallLogged(String name, String result) {
+    return '$name: \"$result\" olarak kaydedildi';
+  }
+
+  @override
+  String get undo => 'Geri al';
+
+  @override
+  String undoFailed(String error) {
+    return 'Geri alınamadı: $error';
+  }
+
+  @override
+  String recallDateHelp(String name) {
+    return '$name · kontrol tarihi';
+  }
+
+  @override
+  String get periodicCheckup => 'Periyodik kontrol';
+
+  @override
+  String checkupReason(String procedure, String date) {
+    return 'Kontrol nedeni: $procedure ($date)';
+  }
+
+  @override
+  String checkupScheduled(String name, String date) {
+    return '$name: kontrol $date tarihine planlandı';
+  }
+
+  @override
+  String appointmentSaveFailed(String error) {
+    return 'Randevu kaydedilemedi: $error';
+  }
+
+  @override
+  String get recallCurrent => 'Güncel';
+
+  @override
+  String get recallOld => 'Eski hastalar';
+
+  @override
+  String get recallOldHint =>
+      'Kontrol tarihi 12 aydan önce geçmiş hastalar. Uzun süredir gelmedikleri için ayrı tutulur.';
+
+  @override
+  String get recallCurrentHint =>
+      'Periyodik kontrol süresi tanımlı bir işlemden sonra süresi dolan hastalar. Süreler İşlem şablonları ekranından ayarlanır. Randevusu, planlı işlemi veya ileri tarihli takibi olan hastalar listede görünmez.';
+
+  @override
+  String get noOldRecalls => 'Eski kontrol bekleyen hasta yok.';
+
+  @override
+  String checkupDue(String date) {
+    return 'Kontrol: $date';
+  }
+
+  @override
+  String checkupOverdue(String date, int months) {
+    return 'Kontrol: $date ($months ay gecikti)';
+  }
+
+  @override
+  String lastCall(String result) {
+    return 'Son arama: $result';
+  }
+
+  @override
+  String get noMissingDefaults => 'Eksik varsayılan yok';
+
+  @override
+  String defaultsAdded(int count) {
+    return '$count varsayılan işlem eklendi';
+  }
+
+  @override
+  String addFailed(String error) {
+    return 'Eklenemedi: $error';
+  }
+
+  @override
+  String updateFailed(String error) {
+    return 'Güncellenemedi: $error';
+  }
+
+  @override
+  String deleteTemplateConfirm(String name) {
+    return '\"$name\" listeden silinsin mi?\nGeçmiş hasta kayıtları etkilenmez.';
+  }
+
+  @override
+  String get seedMissingTooltip => 'Varsayılanlardan eksikleri getir';
+
+  @override
+  String get hideInactive => 'Pasifleri gizle';
+
+  @override
+  String get showInactive => 'Pasifleri göster';
+
+  @override
+  String get addProcedure => 'İşlem ekle';
+
+  @override
+  String get templatesIntro =>
+      'Klinik işlem listesi. Yeni işlem formunda bunlar görünür. Geçmiş kayıtlar değişmez.';
+
+  @override
+  String get templatesEditRestricted =>
+      'Düzenleme için doktor veya yönetici olun.';
+
+  @override
+  String get tagCanal => 'Kanal';
+
+  @override
+  String get tagToothRequired => 'Diş zorunlu';
+
+  @override
+  String get tagJawOk => 'Çene/ağız OK';
+
+  @override
+  String get tagLabTracking => 'Lab takibi';
+
+  @override
+  String tagCheckupMonths(int months) {
+    return 'Kontrol: $months ay';
+  }
+
+  @override
+  String get tagInactive => 'Pasif';
+
+  @override
+  String get deactivate => 'Pasifle';
+
+  @override
+  String get activate => 'Aktifleştir';
+
+  @override
+  String get noTemplatesYet => 'Henüz işlem yok.';
+
+  @override
+  String get category => 'Kategori';
+
+  @override
+  String get procedureName => 'İşlem adı';
+
+  @override
+  String get nameRequired => 'Ad gerekli';
+
+  @override
+  String get canalProcedure => 'Kanal işlemi';
+
+  @override
+  String get canalProcedureHint => 'Kanal boyu / eğe alanları açılır';
+
+  @override
+  String get toothRequired => 'Diş seçimi zorunlu';
+
+  @override
+  String get toothRequiredHint =>
+      'Kapalıysa alt/üst çene / tüm ağız seçilebilir';
+
+  @override
+  String get labTracking => 'Lab takibi';
+
+  @override
+  String get labTrackingHint =>
+      'Yeni işlemde “Lab’a gitti” ve dönüş tarihi görünür';
+
+  @override
+  String get periodicCheckupHelper =>
+      'Bu işlemden sonra hasta kontrol çağrıları listesine düşer';
+
+  @override
+  String get none => 'Yok';
+
+  @override
+  String monthsAfter(int months) {
+    return '$months ay sonra';
+  }
+
+  @override
+  String get active => 'Aktif';
+
+  @override
+  String get catDiagnosis => 'Teşhis ve Planlama';
+
+  @override
+  String get catTreatment => 'Tedavi';
+
+  @override
+  String get catProsthetics => 'Protez';
+
+  @override
+  String get catGeneral => 'Genel';
+
+  @override
+  String pdfDocTitle(String name) {
+    return 'Tedavi geçmişi - $name';
+  }
+
+  @override
+  String pdfHeader(String name) {
+    return '$name · Tedavi geçmişi';
+  }
+
+  @override
+  String get pdfConfidential =>
+      'Gizli: özel nitelikli kişisel veri içerir (KVKK md. 6).';
+
+  @override
+  String pdfPage(int page, int total) {
+    return 'Sayfa $page / $total';
+  }
+
+  @override
+  String get pdfSubtitle => 'Hasta tedavi geçmişi';
+
+  @override
+  String get pdfRegistered => 'Kayıt tarihi';
+
+  @override
+  String get pdfReportDate => 'Rapor tarihi';
+
+  @override
+  String pdfPreparedBy(String name) {
+    return 'Hazırlayan: $name';
+  }
+
+  @override
+  String pdfDoneProcedures(int count) {
+    return 'Yapılan işlemler ($count)';
+  }
+
+  @override
+  String get pdfNoProcedures => 'Kayıtlı işlem yok.';
+
+  @override
+  String pdfPlannedProcedures(int count) {
+    return 'Planlanan işlemler ($count)';
+  }
+
+  @override
+  String get pdfColAdded => 'Eklenme';
+
+  @override
+  String get pdfColDetails => 'Detay';
+
+  @override
+  String pdfLabReturn(String date) {
+    return 'Lab · dönüş $date';
+  }
+
+  @override
+  String photoCountShort(int count) {
+    return '$count fotoğraf';
+  }
+
+  @override
+  String get preparingPdf => 'PDF hazırlanıyor…';
+
+  @override
+  String get pdfFilePrefix => 'tedavi_gecmisi';
+
+  @override
+  String pdfCreateFailed(String error) {
+    return 'PDF oluşturulamadı: $error';
+  }
+
+  @override
+  String get pdfTreatmentHistory => 'Tedavi geçmişi';
 }

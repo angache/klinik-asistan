@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 class TreatmentTemplate {
   final String? id;
   final String kategori;
@@ -217,9 +219,18 @@ const List<String> kKanalIlaclari = [
   'İlaçsız',
 ];
 
+/// Veritabanında saklanan kategori adları; dil değişse de aynı kalmalı.
 const List<String> kIslemKategorileri = [
   'Teşhis ve Planlama',
   'Tedavi',
   'Protez',
   'Genel',
 ];
+
+String categoryLabel(String kod) => switch (kod) {
+      'Teşhis ve Planlama' => currentL10n.catDiagnosis,
+      'Tedavi' => currentL10n.catTreatment,
+      'Protez' => currentL10n.catProsthetics,
+      'Genel' => currentL10n.catGeneral,
+      _ => kod,
+    };

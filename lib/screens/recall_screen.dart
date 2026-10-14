@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/l10n.dart';
 import '../models/clinic_report.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
@@ -58,7 +59,7 @@ class _RecallScreenState extends State<RecallScreen> {
       );
       if (mounted) await _reload();
     } catch (e) {
-      if (mounted) _snack('Hasta açılamadı: $e');
+      if (mounted) _snack(context.l10n.patientOpenFailed('$e'));
     }
   }
 
@@ -69,6 +70,7 @@ class _RecallScreenState extends State<RecallScreen> {
 
   Future<void> _showActions(RecallPatient p) async {
     final hasPhone = (p.telefon ?? '').trim().isNotEmpty;
+    final l10n = context.l10n;
     final choice = await showModalBottomSheet<_RecallAction>(
       context: context,
       showDragHandle: true,
@@ -83,38 +85,36 @@ class _RecallScreenState extends State<RecallScreen> {
                   p.adSoyad,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                subtitle: Text(hasPhone ? p.telefon! : 'Telefon kayıtlı değil'),
+                subtitle: Text(hasPhone ? p.telefon! : l10n.noPhone),
               ),
               const Divider(height: 1),
               if (hasPhone)
                 ListTile(
                   leading: const Icon(Icons.call_outlined),
-                  title: const Text('Ara'),
+                  title: Text(l10n.call),
                   onTap: () => Navigator.pop(context, _RecallAction.call),
                 ),
               ListTile(
                 leading: const Icon(Icons.event_available_outlined),
                 title: Text(RecallCallResult.randevu.label),
-                subtitle: const Text('Kontrol tarihi seçilir, takip oluşur'),
+                subtitle: Text(l10n.recallAppointmentHint),
                 onTap: () => Navigator.pop(context, _RecallAction.randevu),
               ),
               ListTile(
                 leading: const Icon(Icons.phone_missed_outlined),
                 title: Text(RecallCallResult.ulasilamadi.label),
-                subtitle: const Text('7 gün sonra listeye geri gelir'),
+                subtitle: Text(l10n.recallUnreachableHint),
                 onTap: () => Navigator.pop(context, _RecallAction.ulasilamadi),
               ),
               ListTile(
                 leading: const Icon(Icons.do_not_disturb_on_outlined),
                 title: Text(RecallCallResult.istemiyor.label),
-                subtitle: const Text(
-                  'Yeni bir işlem yapılana kadar listede görünmez',
-                ),
+                subtitle: Text(l10n.recallDeclinedHint),
                 onTap: () => Navigator.pop(context, _RecallAction.istemiyor),
               ),
               ListTile(
                 leading: const Icon(Icons.person_outline),
-                title: const Text('Hasta kartını aç'),
+                title: Text(l10n.openPatientCard),
                 onTap: () => Navigator.pop(context, _RecallAction.open),
               ),
             ],
@@ -138,48 +138,52 @@ class _RecallScreenState extends State<RecallScreen> {
   }
 
   Future<void> _log(RecallPatient p, RecallCallResult result) async {
+    final l10n = context.l10n;
     try {
       final id = await widget.db.logRecallCall(p.id, result);
       if (!mounted) return;
       _snack(
-        '${p.adSoyad}: ${result.label.toLowerCase()} olarak kaydedildi',
+        l10n.recallLogged(p.adSoyad, result.label),
         action: SnackBarAction(
-          label: 'Geri al',
+          label: l10n.undo,
           onPressed: () async {
             try {
               await widget.db.deleteRecallCall(id);
               if (mounted) await _reload();
             } catch (e) {
-              if (mounted) _snack('Geri alınamadı: $e');
+              if (mounted) _snack(l10n.undoFailed('$e'));
             }
           },
         ),
       );
       await _reload();
     } catch (e) {
-      if (mounted) _snack('Kaydedilemedi: $e');
+      if (mounted) _snack(l10n.saveFailed('$e'));
     }
   }
 
   Future<void> _giveAppointment(RecallPatient p) async {
     final now = DateTime.now();
+    final l10n = context.l10n;
     final date = await showDatePicker(
       context: context,
       initialDate: DateTime(now.year, now.month, now.day + 1),
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(now.year + 1, now.month, now.day),
-      helpText: '${p.adSoyad} · kontrol tarihi',
-      confirmText: 'Kaydet',
+      helpText: l10n.recallDateHelp(p.adSoyad),
+      confirmText: l10n.save,
     );
     if (date == null || !mounted) return;
-    final dateText = DateFormat('d MMMM yyyy').format(date);
+    final dateText = DateFormat.yMMMMd().format(date);
     try {
       final followUp = await widget.db.createFollowUp(
         hastaId: p.id,
-        baslik: 'Periyodik kontrol',
+        baslik: l10n.periodicCheckup,
         planlananTarih: date,
-        aciklama: 'Kontrol nedeni: ${p.kontrolIslem} '
-            '(${DateFormat('d MMM yyyy').format(p.kontrolIslemTarihi)})',
+        aciklama: l10n.checkupReason(
+          p.kontrolIslem,
+          DateFormat.yMMMd().format(p.kontrolIslemTarihi),
+        ),
       );
       await NotificationService.instance.scheduleFollowUp(followUp);
       await widget.db.logRecallCall(
@@ -188,10 +192,10 @@ class _RecallScreenState extends State<RecallScreen> {
         aciklama: dateText,
       );
       if (!mounted) return;
-      _snack('${p.adSoyad}: kontrol $dateText tarihine planlandı');
+      _snack(l10n.checkupScheduled(p.adSoyad, dateText));
       await _reload();
     } catch (e) {
-      if (mounted) _snack('Randevu kaydedilemedi: $e');
+      if (mounted) _snack(l10n.appointmentSaveFailed('$e'));
     }
   }
 
@@ -199,10 +203,10 @@ class _RecallScreenState extends State<RecallScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kontrol çağrıları'),
+        title: Text(context.l10n.recalls),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: context.l10n.refresh,
             onPressed: _reload,
             icon: const Icon(Icons.refresh),
           ),
@@ -251,6 +255,7 @@ class _RecallScreenState extends State<RecallScreen> {
 
   Widget _header(BuildContext context, RecallList? counts) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     String label(String text, int? n) => n == null ? text : '$text ($n)';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -260,12 +265,12 @@ class _RecallScreenState extends State<RecallScreen> {
             ButtonSegment(
               value: false,
               icon: const Icon(Icons.event_repeat_outlined),
-              label: Text(label('Güncel', counts?.total)),
+              label: Text(label(l10n.recallCurrent, counts?.total)),
             ),
             ButtonSegment(
               value: true,
               icon: const Icon(Icons.history),
-              label: Text(label('Eski hastalar', counts?.oldTotal)),
+              label: Text(label(l10n.recallOld, counts?.oldTotal)),
             ),
           ],
           selected: {_old},
@@ -273,13 +278,7 @@ class _RecallScreenState extends State<RecallScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          _old
-              ? 'Kontrol tarihi 12 aydan önce geçmiş hastalar. Uzun süredir '
-                  'gelmedikleri için ayrı tutulur.'
-              : 'Periyodik kontrol süresi tanımlı bir işlemden sonra süresi '
-                  'dolan hastalar. Süreler İşlem şablonları ekranından '
-                  'ayarlanır. Randevusu, planlı işlemi veya ileri tarihli '
-                  'takibi olan hastalar listede görünmez.',
+          _old ? l10n.recallOldHint : l10n.recallCurrentHint,
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -296,7 +295,7 @@ class _RecallScreenState extends State<RecallScreen> {
       child: Column(
         children: [
           Text(
-            'Liste yüklenemedi.\n\n$error',
+            context.l10n.loadFailed('$error'),
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.error),
           ),
@@ -304,7 +303,7 @@ class _RecallScreenState extends State<RecallScreen> {
           FilledButton.icon(
             onPressed: _reload,
             icon: const Icon(Icons.refresh),
-            label: const Text('Tekrar dene'),
+            label: Text(context.l10n.retry),
           ),
         ],
       ),
@@ -313,14 +312,13 @@ class _RecallScreenState extends State<RecallScreen> {
 
   List<Widget> _patientTiles(BuildContext context, RecallList list) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     if (list.patients.isEmpty) {
       return [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 32),
           child: Text(
-            _old
-                ? 'Eski kontrol bekleyen hasta yok.'
-                : 'Kontrol zamanı gelen hasta yok.',
+            _old ? l10n.noOldRecalls : l10n.noRecallsDue,
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.onSurfaceVariant),
           ),
@@ -345,8 +343,7 @@ class _RecallScreenState extends State<RecallScreen> {
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Text(
-            'İlk $shown hasta gösteriliyor. Arama sonucu kaydettikçe '
-            'sıradakiler gelir.',
+            '${l10n.firstNPatients(shown)} ${l10n.moreAfterLogging}',
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.onSurfaceVariant),
           ),
@@ -369,18 +366,18 @@ class _RecallTile extends StatelessWidget {
     final p = patient;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final fmt = DateFormat('d MMM yyyy');
+    final l10n = context.l10n;
+    final fmt = DateFormat.yMMMd();
     final overdue = p.monthsOverdue(DateTime.now());
     final dueText = overdue == 0
-        ? 'Kontrol: ${fmt.format(p.kontrolTarihi)}'
-        : 'Kontrol: ${fmt.format(p.kontrolTarihi)} ($overdue ay gecikti)';
+        ? l10n.checkupDue(fmt.format(p.kontrolTarihi))
+        : l10n.checkupOverdue(fmt.format(p.kontrolTarihi), overdue);
 
     String? callText;
     if (p.lastCallResult != null) {
       callText = [
-        'Son arama: ${p.lastCallResult!.label}',
-        if (p.lastCallAt != null)
-          DateFormat('d MMM').format(p.lastCallAt!),
+        l10n.lastCall(p.lastCallResult!.label),
+        if (p.lastCallAt != null) DateFormat.MMMd().format(p.lastCallAt!),
         if ((p.lastCallBy ?? '').trim().isNotEmpty) p.lastCallBy!,
       ].join(' · ');
     }
@@ -411,7 +408,7 @@ class _RecallTile extends StatelessWidget {
       trailing: onCall == null
           ? const Icon(Icons.more_vert)
           : IconButton(
-              tooltip: 'Ara: ${p.telefon}',
+              tooltip: l10n.callPhone(p.telefon!),
               icon: const Icon(Icons.call_outlined),
               onPressed: onCall,
             ),

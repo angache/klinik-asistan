@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/treatment_templates.dart';
+import '../l10n/l10n.dart';
 import '../services/database_service.dart';
 
 class TreatmentTemplatesScreen extends StatefulWidget {
@@ -56,6 +57,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
   }
 
   Future<void> _seedMissing() async {
+    final l10n = context.l10n;
     setState(() => _busy = true);
     try {
       final n = await widget.db.seedMissingTreatmentDefaults();
@@ -65,15 +67,15 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
         SnackBar(
           content: Text(
             n == 0
-                ? 'Eksik varsayılan yok'
-                : '$n varsayılan işlem eklendi',
+                ? l10n.noMissingDefaults
+                : l10n.defaultsAdded(n),
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Eklenemedi: $e')),
+        SnackBar(content: Text(l10n.addFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -115,7 +117,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kaydedilemedi: $e')),
+        SnackBar(content: Text(context.l10n.saveFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -141,7 +143,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Güncellenemedi: $e')),
+        SnackBar(content: Text(context.l10n.updateFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -153,19 +155,16 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('İşlemi sil'),
-        content: Text(
-          '"${t.baslik}" listeden silinsin mi?\n'
-          'Geçmiş hasta kayıtları etkilenmez.',
-        ),
+        title: Text(ctx.l10n.deleteProcedureTitle),
+        content: Text(ctx.l10n.deleteTemplateConfirm(t.baslik)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(ctx.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(ctx.l10n.delete),
           ),
         ],
       ),
@@ -178,7 +177,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silinemedi: $e')),
+        SnackBar(content: Text(context.l10n.deleteFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -188,19 +187,20 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('İşlem şablonları'),
+        title: Text(l10n.treatmentTemplates),
         actions: [
           if (_canEdit)
             IconButton(
-              tooltip: 'Varsayılanlardan eksikleri getir',
+              tooltip: l10n.seedMissingTooltip,
               onPressed: _busy ? null : _seedMissing,
               icon: const Icon(Icons.playlist_add_check),
             ),
           IconButton(
-            tooltip: _showInactive ? 'Pasifleri gizle' : 'Pasifleri göster',
+            tooltip: _showInactive ? l10n.hideInactive : l10n.showInactive,
             onPressed: () => setState(() => _showInactive = !_showInactive),
             icon: Icon(
               _showInactive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -212,7 +212,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
           ? FloatingActionButton.extended(
               onPressed: _busy ? null : () => _openEditor(),
               icon: const Icon(Icons.add),
-              label: const Text('İşlem ekle'),
+              label: Text(l10n.addProcedure),
             )
           : null,
       body: _loading
@@ -225,14 +225,14 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Liste yüklenemedi.\n\n$_error',
+                          l10n.loadFailed('$_error'),
                           textAlign: TextAlign.center,
                           style: TextStyle(color: scheme.error),
                         ),
                         const SizedBox(height: 12),
                         FilledButton(
                           onPressed: _load,
-                          child: const Text('Tekrar dene'),
+                          child: Text(l10n.retry),
                         ),
                       ],
                     ),
@@ -244,8 +244,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                     children: [
                       Text(
-                        'Klinik işlem listesi. Yeni işlem formunda bunlar görünür. '
-                        'Geçmiş kayıtlar değişmez.',
+                        l10n.templatesIntro,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -253,7 +252,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                       if (!_canEdit) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'Düzenleme için doktor veya yönetici olun.',
+                          l10n.templatesEditRestricted,
                           style: TextStyle(color: scheme.tertiary),
                         ),
                       ],
@@ -262,7 +261,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                         ...{for (final t in _visible) t.kategori},
                       ]) ...[
                         Text(
-                          cat,
+                          categoryLabel(cat),
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: scheme.primary,
@@ -286,12 +285,12 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                               ),
                               subtitle: Text(
                                 [
-                                  if (t.isKanal) 'Kanal',
-                                  if (t.requiresTooth) 'Diş zorunlu' else 'Çene/ağız OK',
-                                  if (t.labTakip) 'Lab takibi',
+                                  if (t.isKanal) l10n.tagCanal,
+                                  if (t.requiresTooth) l10n.tagToothRequired else l10n.tagJawOk,
+                                  if (t.labTakip) l10n.tagLabTracking,
                                   if (t.kontrolAy != null)
-                                    'Kontrol: ${t.kontrolAy} ay',
-                                  if (!t.aktif) 'Pasif',
+                                    l10n.tagCheckupMonths(t.kontrolAy!),
+                                  if (!t.aktif) l10n.tagInactive,
                                 ].join(' · '),
                               ),
                               onTap: _canEdit ? () => _openEditor(existing: t) : null,
@@ -307,19 +306,19 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                                         }
                                       },
                                       itemBuilder: (_) => [
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                           value: 'edit',
-                                          child: Text('Düzenle'),
+                                          child: Text(l10n.edit),
                                         ),
                                         PopupMenuItem(
                                           value: 'toggle',
                                           child: Text(
-                                            t.aktif ? 'Pasifle' : 'Aktifleştir',
+                                            t.aktif ? l10n.deactivate : l10n.activate,
                                           ),
                                         ),
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                           value: 'delete',
-                                          child: Text('Sil'),
+                                          child: Text(l10n.delete),
                                         ),
                                       ],
                                     )
@@ -334,7 +333,7 @@ class _TreatmentTemplatesScreenState extends State<TreatmentTemplatesScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Center(
                             child: Text(
-                              'Henüz işlem yok.',
+                              l10n.noTemplatesYet,
                               style: TextStyle(color: scheme.onSurfaceVariant),
                             ),
                           ),
@@ -412,8 +411,9 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
   @override
   Widget build(BuildContext context) {
     final editing = widget.existing != null;
+    final l10n = context.l10n;
     return AlertDialog(
-      title: Text(editing ? 'İşlemi düzenle' : 'Yeni işlem'),
+      title: Text(editing ? l10n.editProcedureTitle : l10n.newProcedure),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -422,9 +422,9 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
             children: [
               DropdownButtonFormField<String>(
                 initialValue: _kategori,
-                decoration: const InputDecoration(labelText: 'Kategori'),
+                decoration: InputDecoration(labelText: l10n.category),
                 items: kIslemKategorileri
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .map((c) => DropdownMenuItem(value: c, child: Text(categoryLabel(c))))
                     .toList(),
                 onChanged: (v) {
                   if (v == null) return;
@@ -435,15 +435,15 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
               TextFormField(
                 controller: _baslik,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(labelText: 'İşlem adı'),
+                decoration: InputDecoration(labelText: l10n.procedureName),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Ad gerekli' : null,
+                    (v == null || v.trim().isEmpty) ? l10n.nameRequired : null,
               ),
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Kanal işlemi'),
-                subtitle: const Text('Kanal boyu / eğe alanları açılır'),
+                title: Text(l10n.canalProcedure),
+                subtitle: Text(l10n.canalProcedureHint),
                 value: _isKanal,
                 onChanged: (v) => setState(() {
                   _isKanal = v;
@@ -452,8 +452,8 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Diş seçimi zorunlu'),
-                subtitle: const Text('Kapalıysa alt/üst çene / tüm ağız seçilebilir'),
+                title: Text(l10n.toothRequired),
+                subtitle: Text(l10n.toothRequiredHint),
                 value: _requiresTooth,
                 onChanged: _isKanal
                     ? null
@@ -461,36 +461,33 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Lab takibi'),
-                subtitle: const Text(
-                  'Yeni işlemde “Lab’a gitti” ve dönüş tarihi görünür',
-                ),
+                title: Text(l10n.labTracking),
+                subtitle: Text(l10n.labTrackingHint),
                 value: _labTakip,
                 onChanged: (v) => setState(() => _labTakip = v),
               ),
               const SizedBox(height: 4),
               DropdownButtonFormField<int?>(
                 initialValue: _kontrolAy,
-                decoration: const InputDecoration(
-                  labelText: 'Periyodik kontrol',
-                  helperText: 'Bu işlemden sonra hasta kontrol çağrıları '
-                      'listesine düşer',
+                decoration: InputDecoration(
+                  labelText: l10n.periodicCheckup,
+                  helperText: l10n.periodicCheckupHelper,
                   helperMaxLines: 2,
                 ),
                 items: [
-                  const DropdownMenuItem<int?>(child: Text('Yok')),
+                  DropdownMenuItem<int?>(child: Text(l10n.none)),
                   for (final m in {
                     ..._kontrolOptions,
                     if (_kontrolAy != null) _kontrolAy!,
                   })
-                    DropdownMenuItem<int?>(value: m, child: Text('$m ay sonra')),
+                    DropdownMenuItem<int?>(value: m, child: Text(l10n.monthsAfter(m))),
                 ],
                 onChanged: (v) => setState(() => _kontrolAy = v),
               ),
               if (editing)
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Aktif'),
+                  title: Text(l10n.active),
                   value: _aktif,
                   onChanged: (v) => setState(() => _aktif = v),
                 ),
@@ -501,7 +498,7 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('İptal'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () {
@@ -519,7 +516,7 @@ class _TemplateEditDialogState extends State<_TemplateEditDialog> {
               ),
             );
           },
-          child: const Text('Kaydet'),
+          child: Text(l10n.save),
         ),
       ],
     );

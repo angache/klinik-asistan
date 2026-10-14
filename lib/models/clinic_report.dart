@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 /// Rapor dönemi ve karşılaştırılan önceki dönem. Başlangıçlar dahil,
 /// bitişler hariç (yerel gün başları).
 ///
@@ -137,13 +139,18 @@ class StalledPatient {
 }
 
 enum RecallCallResult {
-  randevu('randevu', 'Randevu verildi'),
-  ulasilamadi('ulasilamadi', 'Ulaşılamadı'),
-  istemiyor('istemiyor', 'İstemiyor');
+  randevu('randevu'),
+  ulasilamadi('ulasilamadi'),
+  istemiyor('istemiyor');
 
-  const RecallCallResult(this.value, this.label);
+  const RecallCallResult(this.value);
   final String value;
-  final String label;
+
+  String get label => switch (this) {
+        RecallCallResult.randevu => currentL10n.recallResultAppointment,
+        RecallCallResult.ulasilamadi => currentL10n.recallResultUnreachable,
+        RecallCallResult.istemiyor => currentL10n.recallResultDeclined,
+      };
 
   static RecallCallResult? tryParse(String? value) {
     for (final r in values) {

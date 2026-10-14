@@ -1718,4 +1718,499 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errInvalidFilePath => 'Недопустимый путь к файлу';
+
+  @override
+  String get periodThisWeek => 'Эта неделя';
+
+  @override
+  String get periodLastWeek => 'Прошлая неделя';
+
+  @override
+  String get periodThisMonth => 'Этот месяц';
+
+  @override
+  String get periodLastMonth => 'Прошлый месяц';
+
+  @override
+  String get reportPeriod => 'Период отчёта';
+
+  @override
+  String comparedWith(String range) {
+    return 'Сравнение: $range';
+  }
+
+  @override
+  String get topProcedures => 'Самые частые процедуры';
+
+  @override
+  String get noProceduresInPeriod => 'За этот период процедур не записано.';
+
+  @override
+  String get byCategory => 'По категориям';
+
+  @override
+  String get dailyActivity => 'Загрузка по дням';
+
+  @override
+  String get followUpStatus => 'Состояние напоминаний';
+
+  @override
+  String get patientsToRecall => 'Пациенты для обзвона';
+
+  @override
+  String daysPlus(int days) {
+    return '$days+ дн.';
+  }
+
+  @override
+  String get noRecallsDue => 'Нет пациентов, которым пора на осмотр.';
+
+  @override
+  String recallsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count пациентам пора на осмотр',
+      many: '$count пациентам пора на осмотр',
+      few: '$count пациентам пора на осмотр',
+      one: '$count пациенту пора на осмотр',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String oldRecallsCount(int count) {
+    return '+ $count давних пациентов (срок осмотра прошёл более 12 месяцев назад)';
+  }
+
+  @override
+  String get openList => 'Открыть список';
+
+  @override
+  String get statProceduresDone => 'Выполнено процедур';
+
+  @override
+  String get statProceduresHint =>
+      'Процедуры на нескольких зубах считаются по каждому зубу';
+
+  @override
+  String get statPatientsTreated => 'Пролечено пациентов';
+
+  @override
+  String get statVisits => 'Визиты пациентов';
+
+  @override
+  String get statVisitsHint =>
+      'Визиты одного пациента в разные дни считаются отдельно';
+
+  @override
+  String get statNewPatients => 'Новые пациенты';
+
+  @override
+  String get statTotalPatients => 'Всего пациентов';
+
+  @override
+  String get statPendingPlanned => 'Ожидающие запланированные процедуры';
+
+  @override
+  String get sameAsPrevious => 'Как в прошлом периоде';
+
+  @override
+  String weekOf(String label) {
+    return 'Неделя с $label';
+  }
+
+  @override
+  String busiestDay(String day, String procedures) {
+    return 'Самый загруженный день: $day ($procedures)';
+  }
+
+  @override
+  String overdueCount(int count) {
+    return 'Просрочено: $count';
+  }
+
+  @override
+  String get labPending => 'Работы в лаборатории';
+
+  @override
+  String get controlPending => 'Ожидающие осмотры';
+
+  @override
+  String get openTasks => 'Открытые задачи';
+
+  @override
+  String completedInPeriod(int lab, int control, int task) {
+    return 'Выполнено за период — лаборатория: $lab, осмотры: $control, задачи: $task';
+  }
+
+  @override
+  String stalledHint(int days) {
+    return 'Пациенты с запланированными процедурами, которые не приходили $days дней и не записаны на осмотр.';
+  }
+
+  @override
+  String get noPatientsToRecall => 'Нет пациентов для обзвона.';
+
+  @override
+  String lastProcedure(String date, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days дня назад',
+      many: '$days дней назад',
+      few: '$days дня назад',
+      one: '$days день назад',
+      zero: 'сегодня',
+    );
+    return 'Последняя процедура: $date ($_temp0)';
+  }
+
+  @override
+  String plannedList(String items) {
+    return 'Запланировано: $items';
+  }
+
+  @override
+  String callPhone(String phone) {
+    return 'Позвонить: $phone';
+  }
+
+  @override
+  String firstNPatients(int count) {
+    return 'Показаны первые $count пациентов.';
+  }
+
+  @override
+  String get moreAfterLogging =>
+      'Следующие появятся по мере записи результатов звонков.';
+
+  @override
+  String get call => 'Позвонить';
+
+  @override
+  String get recallResultAppointment => 'Записан на приём';
+
+  @override
+  String get recallResultUnreachable => 'Не дозвонились';
+
+  @override
+  String get recallResultDeclined => 'Отказался';
+
+  @override
+  String get recallAppointmentHint =>
+      'Выберите дату осмотра — будет создано напоминание';
+
+  @override
+  String get recallUnreachableHint => 'Вернётся в список через 7 дней';
+
+  @override
+  String get recallDeclinedHint => 'Не показывается до новой процедуры';
+
+  @override
+  String get openPatientCard => 'Открыть карту пациента';
+
+  @override
+  String recallLogged(String name, String result) {
+    return '$name: сохранено как «$result»';
+  }
+
+  @override
+  String get undo => 'Отменить';
+
+  @override
+  String undoFailed(String error) {
+    return 'Не удалось отменить: $error';
+  }
+
+  @override
+  String recallDateHelp(String name) {
+    return '$name · дата осмотра';
+  }
+
+  @override
+  String get periodicCheckup => 'Плановый осмотр';
+
+  @override
+  String checkupReason(String procedure, String date) {
+    return 'Причина осмотра: $procedure ($date)';
+  }
+
+  @override
+  String checkupScheduled(String name, String date) {
+    return '$name: осмотр назначен на $date';
+  }
+
+  @override
+  String appointmentSaveFailed(String error) {
+    return 'Не удалось сохранить запись: $error';
+  }
+
+  @override
+  String get recallCurrent => 'Текущие';
+
+  @override
+  String get recallOld => 'Давние пациенты';
+
+  @override
+  String get recallOldHint =>
+      'Пациенты, у которых срок осмотра прошёл более 12 месяцев назад. Они вынесены отдельно, так как давно не приходили.';
+
+  @override
+  String get recallCurrentHint =>
+      'Пациенты, у которых истёк срок осмотра после процедуры. Сроки задаются на экране «Шаблоны процедур». Пациенты с записью, запланированной процедурой или будущим напоминанием в список не попадают.';
+
+  @override
+  String get noOldRecalls => 'Нет давних пациентов, ожидающих осмотра.';
+
+  @override
+  String checkupDue(String date) {
+    return 'Осмотр: $date';
+  }
+
+  @override
+  String checkupOverdue(String date, int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months месяца',
+      many: '$months месяцев',
+      few: '$months месяца',
+      one: '$months месяц',
+    );
+    return 'Осмотр: $date (просрочено на $_temp0)';
+  }
+
+  @override
+  String lastCall(String result) {
+    return 'Последний звонок: $result';
+  }
+
+  @override
+  String get noMissingDefaults => 'Недостающих стандартных процедур нет';
+
+  @override
+  String defaultsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Добавлено $count стандартной процедуры',
+      many: 'Добавлено $count стандартных процедур',
+      few: 'Добавлено $count стандартные процедуры',
+      one: 'Добавлена $count стандартная процедура',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String addFailed(String error) {
+    return 'Не удалось добавить: $error';
+  }
+
+  @override
+  String updateFailed(String error) {
+    return 'Не удалось обновить: $error';
+  }
+
+  @override
+  String deleteTemplateConfirm(String name) {
+    return 'Удалить «$name» из списка?\nПрошлые записи пациентов не изменятся.';
+  }
+
+  @override
+  String get seedMissingTooltip => 'Вернуть недостающие стандартные процедуры';
+
+  @override
+  String get hideInactive => 'Скрыть неактивные';
+
+  @override
+  String get showInactive => 'Показать неактивные';
+
+  @override
+  String get addProcedure => 'Добавить процедуру';
+
+  @override
+  String get templatesIntro =>
+      'Список процедур клиники. Они отображаются в форме новой процедуры. Прошлые записи не меняются.';
+
+  @override
+  String get templatesEditRestricted =>
+      'Редактировать могут только врачи и администраторы.';
+
+  @override
+  String get tagCanal => 'Каналы';
+
+  @override
+  String get tagToothRequired => 'Нужен зуб';
+
+  @override
+  String get tagJawOk => 'Челюсть/рот допустимы';
+
+  @override
+  String get tagLabTracking => 'Контроль лаборатории';
+
+  @override
+  String tagCheckupMonths(int months) {
+    return 'Осмотр: $months мес.';
+  }
+
+  @override
+  String get tagInactive => 'Неактивна';
+
+  @override
+  String get deactivate => 'Деактивировать';
+
+  @override
+  String get activate => 'Активировать';
+
+  @override
+  String get noTemplatesYet => 'Процедур пока нет.';
+
+  @override
+  String get category => 'Категория';
+
+  @override
+  String get procedureName => 'Название процедуры';
+
+  @override
+  String get nameRequired => 'Укажите название';
+
+  @override
+  String get canalProcedure => 'Эндодонтическая процедура';
+
+  @override
+  String get canalProcedureHint => 'Открывает поля длины канала / файлов';
+
+  @override
+  String get toothRequired => 'Выбор зуба обязателен';
+
+  @override
+  String get toothRequiredHint =>
+      'Если выключено, можно выбрать верхнюю/нижнюю челюсть или всю полость рта';
+
+  @override
+  String get labTracking => 'Контроль лаборатории';
+
+  @override
+  String get labTrackingHint =>
+      'В форме процедуры появляется «Отправлено в лабораторию» и дата возврата';
+
+  @override
+  String get periodicCheckupHelper =>
+      'После этой процедуры пациент попадёт в список плановых осмотров';
+
+  @override
+  String get none => 'Нет';
+
+  @override
+  String monthsAfter(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: 'через $months месяца',
+      many: 'через $months месяцев',
+      few: 'через $months месяца',
+      one: 'через $months месяц',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get active => 'Активна';
+
+  @override
+  String get catDiagnosis => 'Диагностика и планирование';
+
+  @override
+  String get catTreatment => 'Лечение';
+
+  @override
+  String get catProsthetics => 'Протезирование';
+
+  @override
+  String get catGeneral => 'Общее';
+
+  @override
+  String pdfDocTitle(String name) {
+    return 'История лечения - $name';
+  }
+
+  @override
+  String pdfHeader(String name) {
+    return '$name · История лечения';
+  }
+
+  @override
+  String get pdfConfidential =>
+      'Конфиденциально: содержит персональные данные особой категории (данные о здоровье).';
+
+  @override
+  String pdfPage(int page, int total) {
+    return 'Страница $page / $total';
+  }
+
+  @override
+  String get pdfSubtitle => 'История лечения пациента';
+
+  @override
+  String get pdfRegistered => 'Дата регистрации';
+
+  @override
+  String get pdfReportDate => 'Дата отчёта';
+
+  @override
+  String pdfPreparedBy(String name) {
+    return 'Подготовил(а): $name';
+  }
+
+  @override
+  String pdfDoneProcedures(int count) {
+    return 'Выполненные процедуры ($count)';
+  }
+
+  @override
+  String get pdfNoProcedures => 'Процедур не записано.';
+
+  @override
+  String pdfPlannedProcedures(int count) {
+    return 'Запланированные процедуры ($count)';
+  }
+
+  @override
+  String get pdfColAdded => 'Добавлено';
+
+  @override
+  String get pdfColDetails => 'Подробности';
+
+  @override
+  String pdfLabReturn(String date) {
+    return 'Лаборатория · возврат $date';
+  }
+
+  @override
+  String photoCountShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count фото',
+      many: '$count фото',
+      few: '$count фото',
+      one: '$count фото',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get preparingPdf => 'Подготовка PDF…';
+
+  @override
+  String get pdfFilePrefix => 'история_лечения';
+
+  @override
+  String pdfCreateFailed(String error) {
+    return 'Не удалось создать PDF: $error';
+  }
+
+  @override
+  String get pdfTreatmentHistory => 'История лечения';
 }

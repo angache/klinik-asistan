@@ -3003,6 +3003,726 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid file path'**
   String get errInvalidFilePath;
+
+  /// No description provided for @periodThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get periodThisWeek;
+
+  /// No description provided for @periodLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last week'**
+  String get periodLastWeek;
+
+  /// No description provided for @periodThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get periodThisMonth;
+
+  /// No description provided for @periodLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get periodLastMonth;
+
+  /// No description provided for @reportPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Report period'**
+  String get reportPeriod;
+
+  /// No description provided for @comparedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with: {range}'**
+  String comparedWith(String range);
+
+  /// No description provided for @topProcedures.
+  ///
+  /// In en, this message translates to:
+  /// **'Most performed procedures'**
+  String get topProcedures;
+
+  /// No description provided for @noProceduresInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'No procedures recorded in this period.'**
+  String get noProceduresInPeriod;
+
+  /// No description provided for @byCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get byCategory;
+
+  /// No description provided for @dailyActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity by day'**
+  String get dailyActivity;
+
+  /// No description provided for @followUpStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up status'**
+  String get followUpStatus;
+
+  /// No description provided for @patientsToRecall.
+  ///
+  /// In en, this message translates to:
+  /// **'Patients to call back'**
+  String get patientsToRecall;
+
+  /// No description provided for @daysPlus.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}+ days'**
+  String daysPlus(int days);
+
+  /// No description provided for @noRecallsDue.
+  ///
+  /// In en, this message translates to:
+  /// **'No patients are due for a check-up.'**
+  String get noRecallsDue;
+
+  /// No description provided for @recallsWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 patient is due for a check-up} other{{count} patients are due for a check-up}}'**
+  String recallsWaiting(int count);
+
+  /// No description provided for @oldRecallsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count} older patients (check-up date passed more than 12 months ago)'**
+  String oldRecallsCount(int count);
+
+  /// No description provided for @openList.
+  ///
+  /// In en, this message translates to:
+  /// **'Open list'**
+  String get openList;
+
+  /// No description provided for @statProceduresDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedures performed'**
+  String get statProceduresDone;
+
+  /// No description provided for @statProceduresHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-tooth procedures are counted per tooth'**
+  String get statProceduresHint;
+
+  /// No description provided for @statPatientsTreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Patients treated'**
+  String get statPatientsTreated;
+
+  /// No description provided for @statVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient visits'**
+  String get statVisits;
+
+  /// No description provided for @statVisitsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits by the same patient on different days are counted separately'**
+  String get statVisitsHint;
+
+  /// No description provided for @statNewPatients.
+  ///
+  /// In en, this message translates to:
+  /// **'New patients'**
+  String get statNewPatients;
+
+  /// No description provided for @statTotalPatients.
+  ///
+  /// In en, this message translates to:
+  /// **'Total patients'**
+  String get statTotalPatients;
+
+  /// No description provided for @statPendingPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending planned procedures'**
+  String get statPendingPlanned;
+
+  /// No description provided for @sameAsPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as previous period'**
+  String get sameAsPrevious;
+
+  /// No description provided for @weekOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Week of {label}'**
+  String weekOf(String label);
+
+  /// No description provided for @busiestDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Busiest day: {day} ({procedures})'**
+  String busiestDay(String day, String procedures);
+
+  /// No description provided for @overdueCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} overdue'**
+  String overdueCount(int count);
+
+  /// No description provided for @labPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Work pending at the lab'**
+  String get labPending;
+
+  /// No description provided for @controlPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending check-ups'**
+  String get controlPending;
+
+  /// No description provided for @openTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Open tasks'**
+  String get openTasks;
+
+  /// No description provided for @completedInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed in this period — lab: {lab}, check-ups: {control}, tasks: {task}'**
+  String completedInPeriod(int lab, int control, int task);
+
+  /// No description provided for @stalledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Patients with planned procedures who haven\'t visited for {days} days and have no future check-up.'**
+  String stalledHint(int days);
+
+  /// No description provided for @noPatientsToRecall.
+  ///
+  /// In en, this message translates to:
+  /// **'No patients to call back.'**
+  String get noPatientsToRecall;
+
+  /// No description provided for @lastProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Last procedure: {date} ({days, plural, =0{today} =1{1 day ago} other{{days} days ago}})'**
+  String lastProcedure(String date, int days);
+
+  /// No description provided for @plannedList.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned: {items}'**
+  String plannedList(String items);
+
+  /// No description provided for @callPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Call: {phone}'**
+  String callPhone(String phone);
+
+  /// No description provided for @firstNPatients.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first {count} patients.'**
+  String firstNPatients(int count);
+
+  /// No description provided for @moreAfterLogging.
+  ///
+  /// In en, this message translates to:
+  /// **'More appear as you record call results.'**
+  String get moreAfterLogging;
+
+  /// No description provided for @call.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get call;
+
+  /// No description provided for @recallResultAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment given'**
+  String get recallResultAppointment;
+
+  /// No description provided for @recallResultUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unreachable'**
+  String get recallResultUnreachable;
+
+  /// No description provided for @recallResultDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get recallResultDeclined;
+
+  /// No description provided for @recallAppointmentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a check-up date; a follow-up is created'**
+  String get recallAppointmentHint;
+
+  /// No description provided for @recallUnreachableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns to the list in 7 days'**
+  String get recallUnreachableHint;
+
+  /// No description provided for @recallDeclinedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from the list until a new procedure is done'**
+  String get recallDeclinedHint;
+
+  /// No description provided for @openPatientCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Open patient card'**
+  String get openPatientCard;
+
+  /// No description provided for @recallLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: saved as \"{result}\"'**
+  String recallLogged(String name, String result);
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @undoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not undo: {error}'**
+  String undoFailed(String error);
+
+  /// No description provided for @recallDateHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · check-up date'**
+  String recallDateHelp(String name);
+
+  /// No description provided for @periodicCheckup.
+  ///
+  /// In en, this message translates to:
+  /// **'Periodic check-up'**
+  String get periodicCheckup;
+
+  /// No description provided for @checkupReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up reason: {procedure} ({date})'**
+  String checkupReason(String procedure, String date);
+
+  /// No description provided for @checkupScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: check-up scheduled for {date}'**
+  String checkupScheduled(String name, String date);
+
+  /// No description provided for @appointmentSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save appointment: {error}'**
+  String appointmentSaveFailed(String error);
+
+  /// No description provided for @recallCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get recallCurrent;
+
+  /// No description provided for @recallOld.
+  ///
+  /// In en, this message translates to:
+  /// **'Older patients'**
+  String get recallOld;
+
+  /// No description provided for @recallOldHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Patients whose check-up date passed more than 12 months ago. They are listed separately because they haven\'t visited for a long time.'**
+  String get recallOldHint;
+
+  /// No description provided for @recallCurrentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Patients whose check-up period after a procedure has expired. Periods are set on the Procedure templates screen. Patients with an appointment, a planned procedure or a future follow-up are not listed.'**
+  String get recallCurrentHint;
+
+  /// No description provided for @noOldRecalls.
+  ///
+  /// In en, this message translates to:
+  /// **'No older patients are awaiting a check-up.'**
+  String get noOldRecalls;
+
+  /// No description provided for @checkupDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up: {date}'**
+  String checkupDue(String date);
+
+  /// No description provided for @checkupOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up: {date} ({months, plural, =1{1 month overdue} other{{months} months overdue}})'**
+  String checkupOverdue(String date, int months);
+
+  /// No description provided for @lastCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Last call: {result}'**
+  String lastCall(String result);
+
+  /// No description provided for @noMissingDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'No missing defaults'**
+  String get noMissingDefaults;
+
+  /// No description provided for @defaultsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 default procedure added} other{{count} default procedures added}}'**
+  String defaultsAdded(int count);
+
+  /// No description provided for @addFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add: {error}'**
+  String addFailed(String error);
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update: {error}'**
+  String updateFailed(String error);
+
+  /// No description provided for @deleteTemplateConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\" from the list?\nPast patient records are not affected.'**
+  String deleteTemplateConfirm(String name);
+
+  /// No description provided for @seedMissingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore missing defaults'**
+  String get seedMissingTooltip;
+
+  /// No description provided for @hideInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide inactive'**
+  String get hideInactive;
+
+  /// No description provided for @showInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Show inactive'**
+  String get showInactive;
+
+  /// No description provided for @addProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Add procedure'**
+  String get addProcedure;
+
+  /// No description provided for @templatesIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'The clinic\'s procedure list. These appear in the new procedure form. Past records don\'t change.'**
+  String get templatesIntro;
+
+  /// No description provided for @templatesEditRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'Only doctors or admins can edit.'**
+  String get templatesEditRestricted;
+
+  /// No description provided for @tagCanal.
+  ///
+  /// In en, this message translates to:
+  /// **'Root canal'**
+  String get tagCanal;
+
+  /// No description provided for @tagToothRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth required'**
+  String get tagToothRequired;
+
+  /// No description provided for @tagJawOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Jaw/mouth OK'**
+  String get tagJawOk;
+
+  /// No description provided for @tagLabTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab tracking'**
+  String get tagLabTracking;
+
+  /// No description provided for @tagCheckupMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-up: {months} mo'**
+  String tagCheckupMonths(int months);
+
+  /// No description provided for @tagInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get tagInactive;
+
+  /// No description provided for @deactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get deactivate;
+
+  /// No description provided for @activate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get activate;
+
+  /// No description provided for @noTemplatesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No procedures yet.'**
+  String get noTemplatesYet;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @procedureName.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure name'**
+  String get procedureName;
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get nameRequired;
+
+  /// No description provided for @canalProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Root canal procedure'**
+  String get canalProcedure;
+
+  /// No description provided for @canalProcedureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows canal length / file fields'**
+  String get canalProcedureHint;
+
+  /// No description provided for @toothRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Tooth selection required'**
+  String get toothRequired;
+
+  /// No description provided for @toothRequiredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If off, upper/lower jaw or full mouth can be selected'**
+  String get toothRequiredHint;
+
+  /// No description provided for @labTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab tracking'**
+  String get labTracking;
+
+  /// No description provided for @labTrackingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows “Sent to lab” and the return date in the new procedure form'**
+  String get labTrackingHint;
+
+  /// No description provided for @periodicCheckupHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'After this procedure the patient is added to the recall list'**
+  String get periodicCheckupHelper;
+
+  /// No description provided for @none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
+
+  /// No description provided for @monthsAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'{months, plural, =1{1 month later} other{{months} months later}}'**
+  String monthsAfter(int months);
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @catDiagnosis.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnosis and planning'**
+  String get catDiagnosis;
+
+  /// No description provided for @catTreatment.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment'**
+  String get catTreatment;
+
+  /// No description provided for @catProsthetics.
+  ///
+  /// In en, this message translates to:
+  /// **'Prosthetics'**
+  String get catProsthetics;
+
+  /// No description provided for @catGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get catGeneral;
+
+  /// No description provided for @pdfDocTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment history - {name}'**
+  String pdfDocTitle(String name);
+
+  /// No description provided for @pdfHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · Treatment history'**
+  String pdfHeader(String name);
+
+  /// No description provided for @pdfConfidential.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidential: contains special category personal data (health data).'**
+  String get pdfConfidential;
+
+  /// No description provided for @pdfPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} / {total}'**
+  String pdfPage(int page, int total);
+
+  /// No description provided for @pdfSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient treatment history'**
+  String get pdfSubtitle;
+
+  /// No description provided for @pdfRegistered.
+  ///
+  /// In en, this message translates to:
+  /// **'Registered'**
+  String get pdfRegistered;
+
+  /// No description provided for @pdfReportDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Report date'**
+  String get pdfReportDate;
+
+  /// No description provided for @pdfPreparedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepared by: {name}'**
+  String pdfPreparedBy(String name);
+
+  /// No description provided for @pdfDoneProcedures.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedures performed ({count})'**
+  String pdfDoneProcedures(int count);
+
+  /// No description provided for @pdfNoProcedures.
+  ///
+  /// In en, this message translates to:
+  /// **'No procedures recorded.'**
+  String get pdfNoProcedures;
+
+  /// No description provided for @pdfPlannedProcedures.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned procedures ({count})'**
+  String pdfPlannedProcedures(int count);
+
+  /// No description provided for @pdfColAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get pdfColAdded;
+
+  /// No description provided for @pdfColDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get pdfColDetails;
+
+  /// No description provided for @pdfLabReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab · return {date}'**
+  String pdfLabReturn(String date);
+
+  /// No description provided for @photoCountShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo} other{{count} photos}}'**
+  String photoCountShort(int count);
+
+  /// No description provided for @preparingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing PDF…'**
+  String get preparingPdf;
+
+  /// No description provided for @pdfFilePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'treatment_history'**
+  String get pdfFilePrefix;
+
+  /// No description provided for @pdfCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create PDF: {error}'**
+  String pdfCreateFailed(String error);
+
+  /// No description provided for @pdfTreatmentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment history'**
+  String get pdfTreatmentHistory;
 }
 
 class _AppLocalizationsDelegate

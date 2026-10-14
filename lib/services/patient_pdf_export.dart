@@ -9,6 +9,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
+import '../data/tooth_canals.dart';
+import '../l10n/l10n.dart';
 import '../models/patient.dart';
 import '../models/treatment_note.dart';
 
@@ -16,8 +18,8 @@ import '../models/treatment_note.dart';
 class PatientPdfExport {
   PatientPdfExport._();
 
-  static final _date = DateFormat('dd.MM.yyyy');
-  static final _dateTime = DateFormat('dd.MM.yyyy HH:mm');
+  static DateFormat get _date => DateFormat.yMd();
+  static DateFormat get _dateTime => DateFormat.yMd().add_Hm();
 
   static Future<Uint8List> build({
     required Patient patient,
@@ -37,9 +39,10 @@ class PatientPdfExport {
       ..sort((a, b) => a.tarih.compareTo(b.tarih));
     final planned = notes.where((n) => n.planlandi).toList();
     final now = DateTime.now();
+    final l10n = currentL10n;
 
     final doc = pw.Document(
-      title: 'Tedavi geçmişi - ${patient.adSoyad}',
+      title: l10n.pdfDocTitle(patient.adSoyad),
       author: clinicName,
       creator: 'Klinik Asistan',
     );
@@ -54,7 +57,7 @@ class PatientPdfExport {
             : pw.Padding(
                 padding: const pw.EdgeInsets.only(bottom: 8),
                 child: pw.Text(
-                  '${patient.adSoyad} · Tedavi geçmişi',
+                  l10n.pdfHeader(patient.adSoyad),
                   style: const pw.TextStyle(
                     fontSize: 9,
                     color: PdfColors.grey700,
@@ -65,11 +68,11 @@ class PatientPdfExport {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'Gizli: özel nitelikli kişisel veri içerir (KVKK md. 6).',
+              l10n.pdfConfidential,
               style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
             ),
             pw.Text(
-              'Sayfa ${ctx.pageNumber} / ${ctx.pagesCount}',
+              l10n.pdfPage(ctx.pageNumber, ctx.pagesCount),
               style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
             ),
           ],
@@ -77,32 +80,33 @@ class PatientPdfExport {
         build: (ctx) => [
           pw.Text(
             clinicName,
-            style: const pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            style: const pw.TextStyle(
+                fontSize: 18, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 2),
           pw.Text(
-            'Hasta tedavi geçmişi',
+            l10n.pdfSubtitle,
             style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
           ),
           pw.Divider(),
-          _infoRow('Hasta', patient.adSoyad),
+          _infoRow(l10n.patientFallback, patient.adSoyad),
           if (patient.telefon?.trim().isNotEmpty == true)
-            _infoRow('Telefon', patient.telefon!.trim()),
-          _infoRow('Kayıt tarihi', _date.format(patient.olusturmaTarihi)),
+            _infoRow(l10n.phoneLabel, patient.telefon!.trim()),
+          _infoRow(l10n.pdfRegistered, _date.format(patient.olusturmaTarihi)),
           _infoRow(
-            'Rapor tarihi',
+            l10n.pdfReportDate,
             '${_dateTime.format(now)}'
-                '${preparedBy == null ? '' : ' · Hazırlayan: $preparedBy'}',
+            '${preparedBy == null ? '' : ' · ${l10n.pdfPreparedBy(preparedBy)}'}',
           ),
           pw.SizedBox(height: 16),
-          _sectionTitle('Yapılan işlemler (${done.length})'),
+          _sectionTitle(l10n.pdfDoneProcedures(done.length)),
           if (done.isEmpty)
-            pw.Text('Kayıtlı işlem yok.')
+            pw.Text(l10n.pdfNoProcedures)
           else
             _notesTable(done, showDate: true),
           if (planned.isNotEmpty) ...[
             pw.SizedBox(height: 16),
-            _sectionTitle('Planlanan işlemler (${planned.length})'),
+            _sectionTitle(l10n.pdfPlannedProcedures(planned.length)),
             _notesTable(planned, showDate: false),
           ],
         ],
@@ -133,7 +137,8 @@ class PatientPdfExport {
         padding: const pw.EdgeInsets.only(bottom: 6),
         child: pw.Text(
           text,
-          style: const pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
+          style:
+              const pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
         ),
       );
 
@@ -155,7 +160,12 @@ class PatientPdfExport {
         2: const pw.FixedColumnWidth(62),
         3: const pw.FlexColumnWidth(4),
       },
-      headers: [showDate ? 'Tarih' : 'Eklenme', 'İşlem', 'Kapsam', 'Detay'],
+      headers: [
+        showDate ? currentL10n.fieldDate : currentL10n.pdfColAdded,
+        currentL10n.procedureSection,
+        currentL10n.fieldScope,
+        currentL10n.pdfColDetails,
+      ],
       data: [
         for (final n in notes)
           [
@@ -170,18 +180,25 @@ class PatientPdfExport {
 
   static String _scope(TreatmentNote n) =>
       n.kapsam == TreatmentScope.tekDis && (n.disNo?.isNotEmpty ?? false)
-          ? 'Diş ${n.disNo}'
+          ? currentL10n.toothNumber(n.disNo!)
           : n.kapsam.label;
 
   static String _details(TreatmentNote n) {
+    final l10n = currentL10n;
     final lines = <String>[
-      if (n.kanalBoyu?.isNotEmpty ?? false) 'Kanal boyu: ${n.kanalBoyu}',
-      if (n.egeSistemi?.isNotEmpty ?? false) 'Eğe: ${n.egeSistemi}',
-      if (n.kanalIlaci?.isNotEmpty ?? false) 'İlaç: ${n.kanalIlaci}',
+      if (n.kanalBoyu?.isNotEmpty ?? false)
+        '${l10n.fieldCanalLength}: ${localizeKanalBoyu(n.kanalBoyu!)}',
+      if (n.egeSistemi?.isNotEmpty ?? false)
+        '${l10n.fieldFile}: ${egeLabel(n.egeSistemi)}',
+      if (n.kanalIlaci?.isNotEmpty ?? false)
+        '${l10n.fieldMedicament}: ${ilacLabel(n.kanalIlaci)}',
       if (n.labGitti)
-        'Lab${n.labBeklenenTarih == null ? '' : ' · dönüş ${_date.format(n.labBeklenenTarih!)}'}',
+        n.labBeklenenTarih == null
+            ? l10n.labShort
+            : l10n.pdfLabReturn(_date.format(n.labBeklenenTarih!)),
       if (n.notIcerik.trim().isNotEmpty) n.notIcerik.trim(),
-      if (n.fotografUrls.isNotEmpty) '${n.fotografUrls.length} fotoğraf',
+      if (n.fotografUrls.isNotEmpty)
+        l10n.photoCountShort(n.fotografUrls.length),
     ];
     return lines.isEmpty ? '-' : lines.join('\n');
   }
@@ -195,14 +212,15 @@ class PatientPdfExport {
     String? preparedBy,
   }) async {
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     final box = context.findRenderObject() as RenderBox?;
     final origin =
         box == null ? null : box.localToGlobal(Offset.zero) & box.size;
 
     messenger.showSnackBar(
-      const SnackBar(
-        content: Text('PDF hazırlanıyor…'),
-        duration: Duration(seconds: 30),
+      SnackBar(
+        content: Text(l10n.preparingPdf),
+        duration: const Duration(seconds: 30),
       ),
     );
     try {
@@ -216,11 +234,12 @@ class PatientPdfExport {
         '${(await getTemporaryDirectory()).path}/paylasim',
       ).create(recursive: true);
       final safeName = patient.adSoyad
-          .replaceAll(RegExp(r'[^\wçğıöşüÇĞİÖŞÜ ]'), '')
+          .replaceAll(RegExp(r'[^\p{L}\p{N}_ ]', unicode: true), '')
           .trim()
           .replaceAll(RegExp(r'\s+'), '_');
       final file = File(
-        '${dir.path}/tedavi_gecmisi_${safeName.isEmpty ? 'hasta' : safeName}'
+        '${dir.path}/${l10n.pdfFilePrefix}_'
+        '${safeName.isEmpty ? l10n.patientFallback.toLowerCase() : safeName}'
         '_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
       );
       await file.writeAsBytes(bytes, flush: true);
@@ -229,14 +248,14 @@ class PatientPdfExport {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(file.path, mimeType: 'application/pdf')],
-          subject: 'Tedavi geçmişi',
+          subject: l10n.pdfTreatmentHistory,
           sharePositionOrigin: origin,
         ),
       );
     } catch (e) {
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('PDF oluşturulamadı: $e')));
+        ..showSnackBar(SnackBar(content: Text(l10n.pdfCreateFailed('$e'))));
     }
   }
 }

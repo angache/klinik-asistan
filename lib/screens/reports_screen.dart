@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../data/treatment_templates.dart';
+import '../l10n/l10n.dart';
 import '../models/clinic_report.dart';
 import '../services/database_service.dart';
 import 'patient_detail_screen.dart';
@@ -8,14 +10,19 @@ import 'recall_screen.dart';
 import 'settings_screen.dart' show openExternalUrl;
 
 enum _PeriodKind {
-  thisWeek('Bu hafta'),
-  lastWeek('Geçen hafta'),
-  thisMonth('Bu ay'),
-  lastMonth('Geçen ay'),
-  custom('Tarih seç');
+  thisWeek,
+  lastWeek,
+  thisMonth,
+  lastMonth,
+  custom;
 
-  const _PeriodKind(this.label);
-  final String label;
+  String get label => switch (this) {
+        _PeriodKind.thisWeek => currentL10n.periodThisWeek,
+        _PeriodKind.lastWeek => currentL10n.periodLastWeek,
+        _PeriodKind.thisMonth => currentL10n.periodThisMonth,
+        _PeriodKind.lastMonth => currentL10n.periodLastMonth,
+        _PeriodKind.custom => currentL10n.pickDate,
+      };
 }
 
 class ReportsScreen extends StatefulWidget {
@@ -70,8 +77,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
             start: _period.start,
             end: _period.end.subtract(const Duration(days: 1)),
           ),
-          helpText: 'Rapor dönemi',
-          saveText: 'Uygula',
+          helpText: context.l10n.reportPeriod,
+          saveText: context.l10n.apply,
         );
         if (range == null) return;
         period = ReportPeriod.custom(range.start, range.end);
@@ -94,28 +101,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hasta açılamadı: $e')),
+        SnackBar(content: Text(context.l10n.patientOpenFailed('$e'))),
       );
     }
   }
 
   String _rangeText(DateTime start, DateTime endExclusive) {
     final last = endExclusive.subtract(const Duration(days: 1));
-    final full = DateFormat('d MMM yyyy');
+    final full = DateFormat.yMMMd();
     if (start == last) return full.format(start);
     final sameYear = start.year == last.year;
-    final first = DateFormat(sameYear ? 'd MMM' : 'd MMM yyyy');
+    final first = sameYear ? DateFormat.MMMd() : DateFormat.yMMMd();
     return '${first.format(start)} – ${full.format(last)}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Raporlar'),
+        title: Text(l10n.reports),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: l10n.refresh,
             onPressed: _reload,
             icon: const Icon(Icons.refresh),
           ),
@@ -187,7 +195,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         Text(
-          'Karşılaştırma: ${_rangeText(_period.previousStart, _period.previousEnd)}',
+          context.l10n.comparedWith(
+            _rangeText(_period.previousStart, _period.previousEnd),
+          ),
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -198,49 +208,53 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   List<Widget> _reportSections(BuildContext context, ClinicReport r) {
+    final l10n = context.l10n;
     return [
       _SummaryGrid(report: r),
       const SizedBox(height: 16),
       _Section(
-        title: 'En çok yapılan işlemler',
+        title: l10n.topProcedures,
         icon: Icons.leaderboard_outlined,
         child: r.topProcedures.isEmpty
-            ? const _EmptyText('Bu dönemde yapılan işlem kaydı yok.')
+            ? _EmptyText(l10n.noProceduresInPeriod)
             : _BarList(items: r.topProcedures),
       ),
       if (r.categories.length > 1) ...[
         const SizedBox(height: 16),
         _Section(
-          title: 'Kategorilere göre',
+          title: l10n.byCategory,
           icon: Icons.category_outlined,
           child: _BarList(
-            items: r.categories,
+            items: [
+              for (final c in r.categories)
+                ReportCount(categoryLabel(c.label), c.count),
+            ],
             color: Theme.of(context).colorScheme.tertiary,
           ),
         ),
       ],
       const SizedBox(height: 16),
       _Section(
-        title: 'Günlere göre yoğunluk',
+        title: l10n.dailyActivity,
         icon: Icons.bar_chart,
         child: _DailyChart(report: r, period: _period),
       ),
       const SizedBox(height: 16),
       _Section(
-        title: 'Takip durumu',
+        title: l10n.followUpStatus,
         icon: Icons.event_note_outlined,
         child: _FollowUpStatus(report: r),
       ),
       const SizedBox(height: 16),
       _Section(
-        title: 'Geri çağrılacak hastalar',
+        title: l10n.patientsToRecall,
         icon: Icons.phone_callback_outlined,
         trailing: DropdownButton<int>(
           value: _stalledDays,
           underline: const SizedBox.shrink(),
           items: [
             for (final d in _stalledOptions)
-              DropdownMenuItem(value: d, child: Text('$d+ gün')),
+              DropdownMenuItem(value: d, child: Text(l10n.daysPlus(d))),
           ],
           onChanged: (v) {
             if (v == null || v == _stalledDays) return;
@@ -302,8 +316,9 @@ class _RecallSummaryState extends State<_RecallSummary> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     return _Section(
-      title: 'Kontrol çağrıları',
+      title: l10n.recalls,
       icon: Icons.event_repeat_outlined,
       child: FutureBuilder<RecallList>(
         future: _future,
@@ -316,7 +331,7 @@ class _RecallSummaryState extends State<_RecallSummary> {
           }
           if (snap.hasError) {
             return Text(
-              'Yüklenemedi.\n\n${snap.error}',
+              l10n.loadFailed('${snap.error}'),
               style: TextStyle(color: scheme.error),
             );
           }
@@ -326,25 +341,22 @@ class _RecallSummaryState extends State<_RecallSummary> {
             children: [
               Text(
                 list.total == 0
-                    ? 'Kontrol zamanı gelen hasta yok.'
-                    : '${list.total} hasta kontrol bekliyor',
+                    ? l10n.noRecallsDue
+                    : l10n.recallsWaiting(list.total),
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
               if (list.oldTotal > 0)
-                _EmptyText(
-                  '+ ${list.oldTotal} eski hasta (kontrol tarihi 12 aydan '
-                  'önce geçmiş)',
-                ),
+                _EmptyText(l10n.oldRecallsCount(list.oldTotal)),
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
                 child: FilledButton.tonalIcon(
                   onPressed: widget.onOpen,
                   icon: const Icon(Icons.list_alt_outlined),
-                  label: const Text('Listeyi aç'),
+                  label: Text(l10n.openList),
                 ),
               ),
             ],
@@ -374,7 +386,7 @@ class _ErrorBox extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Rapor yüklenemedi.\n\n$error',
+            context.l10n.loadFailed('$error'),
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.error),
           ),
@@ -382,7 +394,7 @@ class _ErrorBox extends StatelessWidget {
           FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('Tekrar dene'),
+            label: Text(context.l10n.retry),
           ),
         ],
       ),
@@ -460,40 +472,41 @@ class _SummaryGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = report;
+    final l10n = context.l10n;
     final tiles = [
       _StatTile(
-        label: 'Yapılan işlem',
+        label: l10n.statProceduresDone,
         value: r.count('yapilan_islem'),
         previous: r.count('yapilan_islem_onceki'),
         icon: Icons.medical_services_outlined,
-        hint: 'Çok dişli işlemler diş başına sayılır',
+        hint: l10n.statProceduresHint,
       ),
       _StatTile(
-        label: 'Tedavi gören hasta',
+        label: l10n.statPatientsTreated,
         value: r.count('tedavi_goren_hasta'),
         previous: r.count('tedavi_goren_hasta_onceki'),
         icon: Icons.people_alt_outlined,
       ),
       _StatTile(
-        label: 'Hasta ziyareti',
+        label: l10n.statVisits,
         value: r.count('hasta_ziyareti'),
         previous: r.count('hasta_ziyareti_onceki'),
         icon: Icons.event_available_outlined,
-        hint: 'Aynı hastanın farklı günlerdeki gelişleri ayrı sayılır',
+        hint: l10n.statVisitsHint,
       ),
       _StatTile(
-        label: 'Yeni hasta',
+        label: l10n.statNewPatients,
         value: r.count('yeni_hasta'),
         previous: r.count('yeni_hasta_onceki'),
         icon: Icons.person_add_alt_1_outlined,
       ),
       _StatTile(
-        label: 'Toplam hasta',
+        label: l10n.statTotalPatients,
         value: r.count('toplam_hasta'),
         icon: Icons.folder_shared_outlined,
       ),
       _StatTile(
-        label: 'Bekleyen planlı işlem',
+        label: l10n.statPendingPlanned,
         value: r.count('planlanan_bekleyen'),
         icon: Icons.pending_actions_outlined,
       ),
@@ -586,12 +599,13 @@ class _Delta extends StatelessWidget {
     final Color color;
     final IconData icon;
     if (diff == 0) {
-      text = 'Önceki dönemle aynı';
+      text = context.l10n.sameAsPrevious;
       color = scheme.onSurfaceVariant;
       icon = Icons.remove;
     } else {
-      final percent =
-          previous == 0 ? '' : ' (%${(diff.abs() * 100 / previous).round()})';
+      final percent = previous == 0
+          ? ''
+          : ' (${NumberFormat.percentPattern().format(diff.abs() / previous)})';
       text = '${diff > 0 ? '+' : '−'}${diff.abs()}$percent';
       color = diff > 0 ? Colors.green.shade700 : scheme.error;
       icon = diff > 0 ? Icons.trending_up : Icons.trending_down;
@@ -666,28 +680,22 @@ class _DailyChart extends StatelessWidget {
   final ClinicReport report;
   final ReportPeriod period;
 
-  static const _weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-  static const _weekdaysLong = [
-    'Pazartesi',
-    'Salı',
-    'Çarşamba',
-    'Perşembe',
-    'Cuma',
-    'Cumartesi',
-    'Pazar',
-  ];
+  /// 1 Ocak 2024 Pazartesi; [weekday] 1–7 için o haftanın günü.
+  static DateTime _weekdayDate(int weekday) => DateTime(2024, 1, weekday);
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final daily = report.dailySeries(period);
     if (daily.every((e) => e.$2 == 0)) {
-      return const _EmptyText('Bu dönemde yapılan işlem kaydı yok.');
+      return _EmptyText(l10n.noProceduresInPeriod);
     }
 
     // Uzun dönemlerde haftalık toplam gösterilir.
     final weekly = daily.length > 31;
-    final dayFmt = DateFormat('d MMM');
+    final dayFmt = DateFormat.MMMd();
+    final weekdayFmt = DateFormat.E();
     final bars = <(String, String, int)>[]; // (eksen etiketi, ipucu, adet)
     if (weekly) {
       for (var i = 0; i < daily.length; i += 7) {
@@ -695,12 +703,16 @@ class _DailyChart extends StatelessWidget {
             daily.sublist(i, i + 7 > daily.length ? daily.length : i + 7);
         final total = chunk.fold<int>(0, (s, e) => s + e.$2);
         final label = dayFmt.format(chunk.first.$1);
-        bars.add((label, '$label haftası: $total işlem', total));
+        bars.add((
+          label,
+          '${l10n.weekOf(label)}: ${l10n.procedureCount(total)}',
+          total,
+        ));
       }
     } else {
       for (final (d, c) in daily) {
-        final label = daily.length <= 7 ? _weekdays[d.weekday - 1] : '${d.day}';
-        bars.add((label, '${dayFmt.format(d)}: $c işlem', c));
+        final label = daily.length <= 7 ? weekdayFmt.format(d) : '${d.day}';
+        bars.add((label, '${dayFmt.format(d)}: ${l10n.procedureCount(c)}', c));
       }
     }
     final max = bars.fold<int>(1, (m, e) => e.$3 > m ? e.$3 : m);
@@ -776,8 +788,10 @@ class _DailyChart extends StatelessWidget {
         if (period.dayCount >= 7 && busiest.value > 0) ...[
           const SizedBox(height: 8),
           Text(
-            'En yoğun gün: ${_weekdaysLong[busiest.key - 1]} '
-            '(${busiest.value} işlem)',
+            l10n.busiestDay(
+              DateFormat.EEEE().format(_weekdayDate(busiest.key)),
+              l10n.procedureCount(busiest.value),
+            ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
@@ -794,6 +808,7 @@ class _FollowUpStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = report;
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     Widget row(IconData icon, String label, int open, int overdue) {
       return ListTile(
@@ -803,7 +818,7 @@ class _FollowUpStatus extends StatelessWidget {
         title: Text(label),
         subtitle: overdue > 0
             ? Text(
-                '$overdue gecikmiş',
+                l10n.overdueCount(overdue),
                 style: TextStyle(color: scheme.error),
               )
             : null,
@@ -817,34 +832,34 @@ class _FollowUpStatus extends StatelessWidget {
       );
     }
 
-    final doneLab = r.followUp('lab_tamamlanan');
-    final doneControl = r.followUp('kontrol_tamamlanan');
-    final doneTask = r.followUp('gorev_tamamlanan');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         row(
           Icons.science_outlined,
-          'Lab\'da bekleyen iş',
+          l10n.labPending,
           r.followUp('lab_bekleyen'),
           r.followUp('lab_geciken'),
         ),
         row(
           Icons.event_repeat_outlined,
-          'Bekleyen kontrol',
+          l10n.controlPending,
           r.followUp('kontrol_bekleyen'),
           r.followUp('kontrol_geciken'),
         ),
         row(
           Icons.checklist_rtl_outlined,
-          'Açık görev',
+          l10n.openTasks,
           r.followUp('gorev_acik'),
           r.followUp('gorev_geciken'),
         ),
         const Divider(),
         Text(
-          'Bu dönemde tamamlanan: $doneLab lab, $doneControl kontrol, '
-          '$doneTask görev',
+          l10n.completedInPeriod(
+            r.followUp('lab_tamamlanan'),
+            r.followUp('kontrol_tamamlanan'),
+            r.followUp('gorev_tamamlanan'),
+          ),
           style: Theme.of(context)
               .textTheme
               .bodyMedium
@@ -869,14 +884,14 @@ class _StalledPatients extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fmt = DateFormat('d MMM yyyy');
+    final l10n = context.l10n;
+    final fmt = DateFormat.yMMMd();
     final now = DateTime.now();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Planlanmış işlemi olup $days gündür gelmeyen ve ileri tarihli '
-          'kontrolü olmayan hastalar.',
+          l10n.stalledHint(days),
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -884,7 +899,7 @@ class _StalledPatients extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         if (patients.isEmpty)
-          const _EmptyText('Geri çağrılacak hasta yok.')
+          _EmptyText(l10n.noPatientsToRecall)
         else ...[
           for (final p in patients)
             ListTile(
@@ -894,24 +909,25 @@ class _StalledPatients extends StatelessWidget {
               subtitle: Text(
                 [
                   if (p.sonIslemTarihi != null)
-                    'Son işlem: ${fmt.format(p.sonIslemTarihi!)} '
-                        '(${now.difference(p.sonIslemTarihi!).inDays} gün önce)'
+                    l10n.lastProcedure(
+                      fmt.format(p.sonIslemTarihi!),
+                      now.difference(p.sonIslemTarihi!).inDays,
+                    )
                   else
-                    'Henüz yapılan işlem yok',
-                  'Planlanan: ${p.planlanan.join(', ')}',
+                    l10n.noProceduresYet,
+                  l10n.plannedList(p.planlanan.join(', ')),
                 ].join('\n'),
               ),
               isThreeLine: true,
               trailing: (p.telefon ?? '').trim().isEmpty
                   ? null
                   : IconButton(
-                      tooltip: 'Ara: ${p.telefon}',
+                      tooltip: l10n.callPhone(p.telefon!),
                       icon: const Icon(Icons.call_outlined),
                       onPressed: () => _call(context, p.telefon!),
                     ),
             ),
-          if (patients.length >= 100)
-            const _EmptyText('İlk 100 hasta gösteriliyor.'),
+          if (patients.length >= 100) _EmptyText(l10n.firstNPatients(100)),
         ],
       ],
     );

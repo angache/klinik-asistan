@@ -1719,4 +1719,486 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errInvalidFilePath => 'Invalid file path';
+
+  @override
+  String get periodThisWeek => 'This week';
+
+  @override
+  String get periodLastWeek => 'Last week';
+
+  @override
+  String get periodThisMonth => 'This month';
+
+  @override
+  String get periodLastMonth => 'Last month';
+
+  @override
+  String get reportPeriod => 'Report period';
+
+  @override
+  String comparedWith(String range) {
+    return 'Compared with: $range';
+  }
+
+  @override
+  String get topProcedures => 'Most performed procedures';
+
+  @override
+  String get noProceduresInPeriod => 'No procedures recorded in this period.';
+
+  @override
+  String get byCategory => 'By category';
+
+  @override
+  String get dailyActivity => 'Activity by day';
+
+  @override
+  String get followUpStatus => 'Follow-up status';
+
+  @override
+  String get patientsToRecall => 'Patients to call back';
+
+  @override
+  String daysPlus(int days) {
+    return '$days+ days';
+  }
+
+  @override
+  String get noRecallsDue => 'No patients are due for a check-up.';
+
+  @override
+  String recallsWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count patients are due for a check-up',
+      one: '1 patient is due for a check-up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String oldRecallsCount(int count) {
+    return '+ $count older patients (check-up date passed more than 12 months ago)';
+  }
+
+  @override
+  String get openList => 'Open list';
+
+  @override
+  String get statProceduresDone => 'Procedures performed';
+
+  @override
+  String get statProceduresHint =>
+      'Multi-tooth procedures are counted per tooth';
+
+  @override
+  String get statPatientsTreated => 'Patients treated';
+
+  @override
+  String get statVisits => 'Patient visits';
+
+  @override
+  String get statVisitsHint =>
+      'Visits by the same patient on different days are counted separately';
+
+  @override
+  String get statNewPatients => 'New patients';
+
+  @override
+  String get statTotalPatients => 'Total patients';
+
+  @override
+  String get statPendingPlanned => 'Pending planned procedures';
+
+  @override
+  String get sameAsPrevious => 'Same as previous period';
+
+  @override
+  String weekOf(String label) {
+    return 'Week of $label';
+  }
+
+  @override
+  String busiestDay(String day, String procedures) {
+    return 'Busiest day: $day ($procedures)';
+  }
+
+  @override
+  String overdueCount(int count) {
+    return '$count overdue';
+  }
+
+  @override
+  String get labPending => 'Work pending at the lab';
+
+  @override
+  String get controlPending => 'Pending check-ups';
+
+  @override
+  String get openTasks => 'Open tasks';
+
+  @override
+  String completedInPeriod(int lab, int control, int task) {
+    return 'Completed in this period — lab: $lab, check-ups: $control, tasks: $task';
+  }
+
+  @override
+  String stalledHint(int days) {
+    return 'Patients with planned procedures who haven\'t visited for $days days and have no future check-up.';
+  }
+
+  @override
+  String get noPatientsToRecall => 'No patients to call back.';
+
+  @override
+  String lastProcedure(String date, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days ago',
+      one: '1 day ago',
+      zero: 'today',
+    );
+    return 'Last procedure: $date ($_temp0)';
+  }
+
+  @override
+  String plannedList(String items) {
+    return 'Planned: $items';
+  }
+
+  @override
+  String callPhone(String phone) {
+    return 'Call: $phone';
+  }
+
+  @override
+  String firstNPatients(int count) {
+    return 'Showing the first $count patients.';
+  }
+
+  @override
+  String get moreAfterLogging => 'More appear as you record call results.';
+
+  @override
+  String get call => 'Call';
+
+  @override
+  String get recallResultAppointment => 'Appointment given';
+
+  @override
+  String get recallResultUnreachable => 'Unreachable';
+
+  @override
+  String get recallResultDeclined => 'Declined';
+
+  @override
+  String get recallAppointmentHint =>
+      'Pick a check-up date; a follow-up is created';
+
+  @override
+  String get recallUnreachableHint => 'Returns to the list in 7 days';
+
+  @override
+  String get recallDeclinedHint =>
+      'Hidden from the list until a new procedure is done';
+
+  @override
+  String get openPatientCard => 'Open patient card';
+
+  @override
+  String recallLogged(String name, String result) {
+    return '$name: saved as \"$result\"';
+  }
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String undoFailed(String error) {
+    return 'Could not undo: $error';
+  }
+
+  @override
+  String recallDateHelp(String name) {
+    return '$name · check-up date';
+  }
+
+  @override
+  String get periodicCheckup => 'Periodic check-up';
+
+  @override
+  String checkupReason(String procedure, String date) {
+    return 'Check-up reason: $procedure ($date)';
+  }
+
+  @override
+  String checkupScheduled(String name, String date) {
+    return '$name: check-up scheduled for $date';
+  }
+
+  @override
+  String appointmentSaveFailed(String error) {
+    return 'Could not save appointment: $error';
+  }
+
+  @override
+  String get recallCurrent => 'Current';
+
+  @override
+  String get recallOld => 'Older patients';
+
+  @override
+  String get recallOldHint =>
+      'Patients whose check-up date passed more than 12 months ago. They are listed separately because they haven\'t visited for a long time.';
+
+  @override
+  String get recallCurrentHint =>
+      'Patients whose check-up period after a procedure has expired. Periods are set on the Procedure templates screen. Patients with an appointment, a planned procedure or a future follow-up are not listed.';
+
+  @override
+  String get noOldRecalls => 'No older patients are awaiting a check-up.';
+
+  @override
+  String checkupDue(String date) {
+    return 'Check-up: $date';
+  }
+
+  @override
+  String checkupOverdue(String date, int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months overdue',
+      one: '1 month overdue',
+    );
+    return 'Check-up: $date ($_temp0)';
+  }
+
+  @override
+  String lastCall(String result) {
+    return 'Last call: $result';
+  }
+
+  @override
+  String get noMissingDefaults => 'No missing defaults';
+
+  @override
+  String defaultsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count default procedures added',
+      one: '1 default procedure added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String addFailed(String error) {
+    return 'Could not add: $error';
+  }
+
+  @override
+  String updateFailed(String error) {
+    return 'Could not update: $error';
+  }
+
+  @override
+  String deleteTemplateConfirm(String name) {
+    return 'Remove \"$name\" from the list?\nPast patient records are not affected.';
+  }
+
+  @override
+  String get seedMissingTooltip => 'Restore missing defaults';
+
+  @override
+  String get hideInactive => 'Hide inactive';
+
+  @override
+  String get showInactive => 'Show inactive';
+
+  @override
+  String get addProcedure => 'Add procedure';
+
+  @override
+  String get templatesIntro =>
+      'The clinic\'s procedure list. These appear in the new procedure form. Past records don\'t change.';
+
+  @override
+  String get templatesEditRestricted => 'Only doctors or admins can edit.';
+
+  @override
+  String get tagCanal => 'Root canal';
+
+  @override
+  String get tagToothRequired => 'Tooth required';
+
+  @override
+  String get tagJawOk => 'Jaw/mouth OK';
+
+  @override
+  String get tagLabTracking => 'Lab tracking';
+
+  @override
+  String tagCheckupMonths(int months) {
+    return 'Check-up: $months mo';
+  }
+
+  @override
+  String get tagInactive => 'Inactive';
+
+  @override
+  String get deactivate => 'Deactivate';
+
+  @override
+  String get activate => 'Activate';
+
+  @override
+  String get noTemplatesYet => 'No procedures yet.';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get procedureName => 'Procedure name';
+
+  @override
+  String get nameRequired => 'Name is required';
+
+  @override
+  String get canalProcedure => 'Root canal procedure';
+
+  @override
+  String get canalProcedureHint => 'Shows canal length / file fields';
+
+  @override
+  String get toothRequired => 'Tooth selection required';
+
+  @override
+  String get toothRequiredHint =>
+      'If off, upper/lower jaw or full mouth can be selected';
+
+  @override
+  String get labTracking => 'Lab tracking';
+
+  @override
+  String get labTrackingHint =>
+      'Shows “Sent to lab” and the return date in the new procedure form';
+
+  @override
+  String get periodicCheckupHelper =>
+      'After this procedure the patient is added to the recall list';
+
+  @override
+  String get none => 'None';
+
+  @override
+  String monthsAfter(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months later',
+      one: '1 month later',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get catDiagnosis => 'Diagnosis and planning';
+
+  @override
+  String get catTreatment => 'Treatment';
+
+  @override
+  String get catProsthetics => 'Prosthetics';
+
+  @override
+  String get catGeneral => 'General';
+
+  @override
+  String pdfDocTitle(String name) {
+    return 'Treatment history - $name';
+  }
+
+  @override
+  String pdfHeader(String name) {
+    return '$name · Treatment history';
+  }
+
+  @override
+  String get pdfConfidential =>
+      'Confidential: contains special category personal data (health data).';
+
+  @override
+  String pdfPage(int page, int total) {
+    return 'Page $page / $total';
+  }
+
+  @override
+  String get pdfSubtitle => 'Patient treatment history';
+
+  @override
+  String get pdfRegistered => 'Registered';
+
+  @override
+  String get pdfReportDate => 'Report date';
+
+  @override
+  String pdfPreparedBy(String name) {
+    return 'Prepared by: $name';
+  }
+
+  @override
+  String pdfDoneProcedures(int count) {
+    return 'Procedures performed ($count)';
+  }
+
+  @override
+  String get pdfNoProcedures => 'No procedures recorded.';
+
+  @override
+  String pdfPlannedProcedures(int count) {
+    return 'Planned procedures ($count)';
+  }
+
+  @override
+  String get pdfColAdded => 'Added';
+
+  @override
+  String get pdfColDetails => 'Details';
+
+  @override
+  String pdfLabReturn(String date) {
+    return 'Lab · return $date';
+  }
+
+  @override
+  String photoCountShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos',
+      one: '1 photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get preparingPdf => 'Preparing PDF…';
+
+  @override
+  String get pdfFilePrefix => 'treatment_history';
+
+  @override
+  String pdfCreateFailed(String error) {
+    return 'Could not create PDF: $error';
+  }
+
+  @override
+  String get pdfTreatmentHistory => 'Treatment history';
 }
